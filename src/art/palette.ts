@@ -1,0 +1,77 @@
+// Paleta central. Mude aqui para recolorir o jogo inteiro.
+
+export const PAL = {
+  outline: 0x1c1418,
+
+  spider: {
+    outline: 0x1c1418,
+    abdomen: 0x5e3d2e,
+    abdomenLight: 0x86593f,
+    pattern: 0xd2ad78,
+    head: 0x4a3026,
+    headLight: 0x6b4634,
+    eye: 0x0d0a0c,
+    eyeShine: 0xf4f0f2,
+    legNear: 0x3a2721,
+    legFar: 0x24181a,
+  },
+
+  sky: { top: 0x7fb6e0, bottom: 0xcbe5f2, cloud: 0xf6fbff, cloudShade: 0xd9e9f4 },
+
+  brick: { base: [0x8a4b3c, 0x96533f, 0x7c4133], light: 0xa8664f, dark: 0x6b372b, mortar: 0x4a332e },
+  floor: { board: [0xa86f42, 0xb07746, 0x9d673d], boardLight: 0xc98a55, seam: 0x6e4528, beam: 0x5a4030, beamDark: 0x47321f, plaster: 0xcfc2ad },
+  roof: { base: 0x4d4a63, light: 0x625f7c, dark: 0x37354a },
+
+  wood: { base: [0x9a6236, 0x935c32, 0xa1683a], light: 0xbd8250, grain: 0x7f4f2b, dark: 0x5e391f },
+  cushion: { base: 0xa13d3d, light: 0xbf5555, dark: 0x7a2b2b },
+  mattress: { sheet: 0xece6d8, sheetShade: 0xcfc6b2, blanket: 0x4f6fa8, blanketLight: 0x6487c2, blanketDark: 0x3d5687 },
+  cabinet: { base: 0x3e7c78, light: 0x55978f, dark: 0x2c5b58, knob: 0xd8b25a, top: 0xdcd6cb, topLight: 0xf2eee6 },
+  fridge: { base: 0xe3e8ec, light: 0xf6f8fa, shade: 0xc4ccd3, dark: 0x8f9aa3 },
+  books: [0x9c3b3b, 0x3b5f9c, 0x3b8c5a, 0xc9a23f, 0x7b4b8c, 0xd0cfc8, 0x8c5a3b, 0x2f6f73],
+  ceramic: { base: 0xeef0ee, light: 0xffffff, shade: 0xcfd8dc, grout: 0xdde3e5 },
+
+  wall: {
+    attic: [0x4a3428, 0x52392c, 0x45302a],
+    atticGap: 0x2e2019,
+    bedroom: 0x8a6f8f,
+    bedroomLight: 0x9c82a1,
+    bathroom: 0x9fc7c9,
+    bathroomGrout: 0x86aeb0,
+    living: 0x5f7d5b,
+    livingLight: 0x6a8865,
+    kitchen: 0xcdbf98,
+    kitchenAlt: 0xd6c9a4,
+    kitchenGrout: 0xb5a57d,
+    cavity: 0x2f221c,
+    baseboard: 0xe0d6c4,
+    baseboardDark: 0xa99b85,
+  },
+
+  decor: {
+    frame: 0x6b4a2e,
+    frameLight: 0x8c6640,
+    glassTop: 0x9ccbe8,
+    glassBottom: 0xd2ecf7,
+    sill: 0xe8dcc8,
+    curtain: 0xc0574a,
+    curtainDark: 0x963f36,
+    gold: 0xc9a14a,
+    goldDark: 0x8f6b2a,
+    lampShade: 0xe6c06a,
+    lampShadeDark: 0xb08a3e,
+    lampLight: 0xfff1c4,
+    cord: 0x2a2224,
+    clockFace: 0xf4efe2,
+    plantPot: 0xb4603c,
+    plantPotDark: 0x8a4529,
+    leaf: 0x4f9a4a,
+    leafDark: 0x356f36,
+    leafLight: 0x77c06a,
+    silver: 0xb9c1c8,
+    silverDark: 0x7d868e,
+    mirror: 0xc8dde6,
+    web: 0xe6e6ea,
+  },
+
+  ui: { reticle: 0xffffff },
+};

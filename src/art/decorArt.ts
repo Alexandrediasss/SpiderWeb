@@ -1,0 +1,202 @@
+// Decorações de fundo desenhadas em código (janelas, quadros, luminárias...).
+// Cada função recebe a posição em pixels do canto superior esquerdo.
+import type { DecorKind } from '../level/houseMap';
+import { type PixelCanvas, hash } from './PixelCanvas';
+import { PAL } from './palette';
+import { mixColor, shadeColor } from './tilePainters';
+
+const D = PAL.decor;
+
+type DecorPainter = (pc: PixelCanvas, x: number, y: number, flipX: boolean) => void;
+
+function frameRect(pc: PixelCanvas, x: number, y: number, w: number, h: number, light: number, dark: number, t = 2): void {
+  pc.rect(x, y, w, h, dark);
+  pc.rect(x + 1, y + 1, w - 2, h - 2, light);
+  pc.rect(x + t, y + t, w - t * 2, h - t * 2, dark);
+}
+
+const windowDecor: DecorPainter = (pc, x, y) => {
+  const w = 44;
+  const h = 40;
+  const gx = x + 2;
+  // Vidro com degradê de céu
+  frameRect(pc, gx, y, w, h, D.frameLight, D.frame, 3);
+  for (let yy = 3; yy < h - 3; yy++) pc.rect(gx + 3, y + yy, w - 6, 1, mixColor(D.glassTop, D.glassBottom, yy / h));
+  // Reflexos diagonais
+  for (let i = 0; i < 10; i++) {
+    pc.set(gx + 8 + i, y + 18 - i, 0xffffff, 0.55);
+    pc.set(gx + 12 + i, y + 18 - i, 0xffffff, 0.35);
+  }
+  // Caixilhos
+  pc.rect(gx + w / 2 - 1, y + 3, 2, h - 6, D.frame);
+  pc.rect(gx + 3, y + h / 2 - 1, w - 6, 2, D.frame);
+  // Peitoril
+  pc.rect(gx - 2, y + h, w + 4, 3, D.sill);
+  pc.rect(gx - 2, y + h + 3, w + 4, 1, shadeColor(D.sill, 0.7));
+  // Cortinas
+  for (const side of [0, 1]) {
+    const cx = side === 0 ? x : x + w - 4;
+    for (let yy = -2; yy < h - 4; yy++) {
+      const sway = Math.round(Math.sin(yy / 5) * 0.8);
+      for (let xx = 0; xx < 8; xx++) {
+        const fold = (xx + sway) % 3 === 0;
+        pc.set(cx + xx, y + yy, fold ? D.curtainDark : D.curtain);
+      }
+    }
+  }
+  pc.rect(x - 2, y - 3, w + 8, 2, D.goldDark);
+};
+
+const roundWindow: DecorPainter = (pc, x, y) => {
+  const cx = x + 16;
+  const cy = y + 16;
+  pc.disc(cx, cy, 14, D.frame);
+  pc.disc(cx, cy, 12, D.frameLight);
+  pc.disc(cx, cy, 11, D.frame);
+  for (let yy = -10; yy <= 10; yy++) {
+    for (let xx = -10; xx <= 10; xx++) {
+      if (xx * xx + yy * yy <= 100) pc.set(cx + xx, cy + yy, mixColor(D.glassTop, D.glassBottom, (yy + 10) / 20));
+    }
+  }
+  pc.rect(cx - 1, cy - 10, 2, 21, D.frame);
+  pc.rect(cx - 10, cy - 1, 21, 2, D.frame);
+  for (let i = 0; i < 5; i++) pc.set(cx - 6 + i, cy - 3 - i, 0xffffff, 0.6);
+};
+
+const painting: DecorPainter = (pc, x, y) => {
+  const w = 40;
+  const h = 28;
+  frameRect(pc, x, y, w, h, D.gold, D.goldDark, 3);
+  // Paisagem: céu, sol, morros
+  for (let yy = 3; yy < h - 3; yy++) {
+    for (let xx = 3; xx < w - 3; xx++) {
+      const hill1 = 16 + Math.round(Math.sin(xx / 6) * 3);
+      const hill2 = 19 + Math.round(Math.sin(xx / 4 + 2) * 2);
+      let c = mixColor(0x87b9dc, 0xf3d9a4, yy / h);
+      if (yy > hill1) c = 0x5c8a4f;
+      if (yy > hill2) c = 0x46713e;
+      pc.set(x + xx, y + yy, c);
+    }
+  }
+  pc.disc(x + 29, y + 9, 3, 0xf6d36b);
+  // Fio do quadro
+  pc.line(x + 10, y, x + w / 2, y - 6, D.cord);
+  pc.line(x + w - 10, y, x + w / 2, y - 6, D.cord);
+};
+
+const lamp: DecorPainter = (pc, x, y) => {
+  const cx = x + 8;
+  pc.rect(cx, y, 1, 14, D.cord);
+  // Cúpula trapezoidal
+  for (let i = 0; i < 7; i++) {
+    const half = 3 + i;
+    pc.rect(cx - half, y + 14 + i, half * 2 + 1, 1, i === 6 ? D.lampShadeDark : D.lampShade);
+    pc.set(cx - half, y + 14 + i, D.lampShadeDark);
+    pc.set(cx + half, y + 14 + i, D.lampShadeDark);
+  }
+  pc.rect(cx - 1, y + 21, 3, 2, D.lampLight);
+  // Cone de luz suave
+  for (let yy = 0; yy < 70; yy++) {
+    const half = 8 + yy * 0.55;
+    const alpha = 0.16 * (1 - yy / 70);
+    for (let xx = -half; xx <= half; xx++) {
+      const edge = 1 - Math.abs(xx) / half;
+      pc.set(cx + xx, y + 23 + yy, D.lampLight, alpha * Math.min(1, edge * 2.5));
+    }
+  }
+};
+
+const clock: DecorPainter = (pc, x, y) => {
+  const cx = x + 8;
+  const cy = y + 8;
+  pc.disc(cx, cy, 7, D.frame);
+  pc.disc(cx, cy, 6, D.clockFace);
+  for (const [dx, dy] of [
+    [0, -5],
+    [5, 0],
+    [0, 5],
+    [-5, 0],
+  ]) {
+    pc.set(cx + dx, cy + dy, D.cord);
+  }
+  pc.line(cx, cy, cx, cy - 4, D.cord);
+  pc.line(cx, cy, cx + 3, cy + 1, D.cord);
+  pc.set(cx - 3, cy - 3, 0xffffff);
+};
+
+const plant: DecorPainter = (pc, x, y) => {
+  // Vaso (encosta no chão: y + 48 = base do tile de baixo)
+  const base = y + 32;
+  for (let i = 0; i < 10; i++) {
+    const half = 5 - Math.floor(i / 4);
+    pc.rect(x + 8 - half, base - 10 + i, half * 2, 1, i < 2 ? D.plantPot : shadeColor(D.plantPot, 0.95));
+    pc.set(x + 8 + half - 1, base - 10 + i, D.plantPotDark);
+  }
+  pc.rect(x + 2, base - 11, 12, 2, D.plantPotDark);
+  // Folhas
+  const leaves = [
+    [8, -12, 2, -26],
+    [8, -12, 13, -24],
+    [8, -12, 3, -20],
+    [8, -12, 15, -17],
+    [8, -12, 8, -28],
+    [8, -12, 0, -14],
+  ];
+  leaves.forEach(([x0, y0, x1, y1], i) => {
+    pc.line(x + x0, base + y0, x + x1, base + y1, i % 2 ? D.leafDark : D.leaf);
+    pc.line(x + x0 + 1, base + y0, x + x1 + 1, base + y1, i % 2 ? D.leaf : D.leafLight);
+  });
+};
+
+const mirror: DecorPainter = (pc, x, y) => {
+  const w = 32;
+  const h = 38;
+  frameRect(pc, x, y, w, h, D.silver, D.silverDark, 2);
+  pc.rect(x + 2, y + 2, w - 4, h - 4, D.mirror);
+  for (let i = 0; i < 12; i++) {
+    pc.set(x + 6 + i, y + 20 - i, 0xffffff, 0.7);
+    pc.set(x + 9 + i, y + 20 - i, 0xffffff, 0.4);
+  }
+};
+
+const cobweb: DecorPainter = (pc, x, y, flipX) => {
+  const size = 30;
+  const ox = flipX ? x + 31 : x;
+  const sx = flipX ? -1 : 1;
+  const angles = [0, 0.3, 0.65, 1.0, 1.35, Math.PI / 2];
+  const ends = angles.map((a) => ({ x: Math.cos(a) * size, y: Math.sin(a) * size }));
+  ends.forEach((e) => pc.line(ox, y, ox + sx * e.x, y + e.y, D.web, 0.55));
+  for (const r of [7, 13, 19, 25]) {
+    for (let i = 0; i < angles.length - 1; i++) {
+      const sag = 1 + hash(r, i, 9) * 1.5;
+      const a = { x: Math.cos(angles[i]) * r, y: Math.sin(angles[i]) * r };
+      const b = { x: Math.cos(angles[i + 1]) * r, y: Math.sin(angles[i + 1]) * r };
+      const m = { x: (a.x + b.x) / 2 - sag * 0.7, y: (a.y + b.y) / 2 - sag * 0.7 };
+      pc.line(ox + sx * a.x, y + a.y, ox + sx * m.x, y + m.y, D.web, 0.4);
+      pc.line(ox + sx * m.x, y + m.y, ox + sx * b.x, y + b.y, D.web, 0.4);
+    }
+  }
+};
+
+const cloud: DecorPainter = (pc, x, y) => {
+  const blobs = [
+    [10, 10, 7],
+    [20, 7, 9],
+    [31, 10, 7],
+    [40, 12, 5],
+  ];
+  for (const [bx, by, r] of blobs) pc.disc(x + bx, y + by + 1, r, PAL.sky.cloudShade);
+  for (const [bx, by, r] of blobs) pc.disc(x + bx, y + by - 1, r - 1, PAL.sky.cloud);
+};
+
+export const DECOR_PAINTERS: Record<DecorKind, DecorPainter> = {
+  window: windowDecor,
+  roundWindow,
+  painting,
+  lamp,
+  clock,
+  plant,
+  mirror,
+  cobweb,
+  cloud,
+};
