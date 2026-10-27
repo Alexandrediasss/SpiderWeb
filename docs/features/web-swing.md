@@ -6,7 +6,7 @@ Testes: `tests/webRope.test.ts`.
 
 ## Regras
 
-1. **Mirar:** o cursor do mouse define a direção. A mira fica branca quando um raio a partir do centro da aranha acerta sólido dentro de `WEB.range` (240 px), e cinza quando não acerta.
+1. **Mirar:** o cursor do mouse define a direção (no controle, o analógico direito; veja [gamepad.md](gamepad.md)). A mira fica branca quando um raio a partir do centro da aranha acerta sólido dentro de `WEB.range` (240 px), e cinza quando não acerta.
 2. **Disparar:** ao *pressionar* o botão esquerdo:
    - acertou → cria a corda `{anchor, length = distância atual, anchorSurface}`; a aranha passa para `air` (se estava grudada, solta);
    - errou → só um risco visual rápido (`WEB.missFlashSec`), sem efeito.

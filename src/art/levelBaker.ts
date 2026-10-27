@@ -3,7 +3,7 @@ import { TILE } from '../config';
 import { type Decor, type Room } from '../level/houseMap';
 import { tileDef } from '../level/legend';
 import { PixelCanvas } from './PixelCanvas';
-import { DECOR_PAINTERS } from './decorArt';
+import { paintDecor } from './decorArt';
 import { PAL } from './palette';
 import { BACKGROUND_PAINTERS, type BackgroundStyle, MATERIAL_PAINTERS, type TileCtx, shadeColor } from './tilePainters';
 
@@ -11,10 +11,17 @@ const BACKGROUND_FURNITURE_SHADE = 0.6;
 const AO_TOP = [0.55, 0.7, 0.82, 0.92];
 const AO_SIDE = [0.65, 0.82, 0.93];
 
-export function bakeLevel(map: string[], rooms: Room[], decorations: Decor[]): PixelCanvas {
+export interface BakedLevel {
+  canvas: PixelCanvas;
+  /** 1 onde o pixel mostra o lado de fora (céu e vidro das janelas), 0 no resto. Uma entrada por pixel. */
+  outside: Uint8Array;
+}
+
+export function bakeLevel(map: string[], rooms: Room[], decorations: Decor[]): BakedLevel {
   const rows = map.length;
   const cols = map[0].length;
   const pc = new PixelCanvas(cols * TILE, rows * TILE);
+  const outside = new Uint8Array(pc.width * pc.height);
   const charAt = (x: number, y: number) => (x < 0 || y < 0 || x >= cols || y >= rows ? '#' : map[y][x]);
 
   const makeCtx = (tx: number, ty: number): TileCtx => ({
@@ -53,6 +60,9 @@ export function bakeLevel(map: string[], rooms: Room[], decorations: Decor[]): P
       const style: BackgroundStyle = c.ch === '~' ? 'sky' : roomStyleAt(tx, ty);
       const bg = BACKGROUND_PAINTERS[style];
       paint(pc, ox, oy, (px, py) => bg(px, py, c));
+      if (style === 'sky') {
+        for (let py = 0; py < TILE; py++) outside.fill(1, (oy + py) * pc.width + ox, (oy + py) * pc.width + ox + TILE);
+      }
       if (style !== 'sky' && style !== 'attic' && style !== 'cavity' && tileDef(c.at(0, 1)).structural) {
         drawBaseboard(pc, ox, oy);
       }
@@ -71,8 +81,11 @@ export function bakeLevel(map: string[], rooms: Room[], decorations: Decor[]): P
     }
   }
 
-  for (const d of decorations) DECOR_PAINTERS[d.kind](pc, d.tx * TILE, d.ty * TILE, d.flipX ?? false);
-  return pc;
+  const mark = (x: number, y: number, isOutside: boolean) => {
+    if (x >= 0 && y >= 0 && x < pc.width && y < pc.height) outside[y * pc.width + x] = isOutside ? 1 : 0;
+  };
+  for (const d of decorations) paintDecor(d.kind, pc, d.tx * TILE, d.ty * TILE, d.flipX ?? false, mark);
+  return { canvas: pc, outside };
 }
 
 function paint(pc: PixelCanvas, ox: number, oy: number, fn: (px: number, py: number) => number | null): void {

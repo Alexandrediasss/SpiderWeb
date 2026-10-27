@@ -9,6 +9,9 @@ export interface SpiderInput {
   jumpPressed: boolean;
   webPressed: boolean;
   webHeld: boolean;
+  /** Teia de ataque (tira vida) e teia que prende, só no frame em que foram apertadas. */
+  attackPressed: boolean;
+  trapPressed: boolean;
   /** Ponto mirado, em coordenadas do mundo. */
   aim: Vec2;
 }
@@ -20,6 +23,8 @@ export function emptyInput(): SpiderInput {
     jumpPressed: false,
     webPressed: false,
     webHeld: false,
+    attackPressed: false,
+    trapPressed: false,
     aim: { x: 0, y: 0 },
   };
 }

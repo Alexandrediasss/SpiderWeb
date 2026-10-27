@@ -39,6 +39,43 @@ export class LevelGrid {
     return this.isSolidTile(Math.floor(px / this.tileSize), Math.floor(py / this.tileSize));
   }
 
+  /**
+   * Distância (px) de (x0, y0) até o primeiro tile sólido no segmento até (x1, y1), ou Infinity.
+   * Percorre tile a tile (DDA), então é rápido mesmo para segmentos longos. Usado pela luz.
+   */
+  firstSolidDistance(x0: number, y0: number, x1: number, y1: number): number {
+    const t = this.tileSize;
+    let tx = Math.floor(x0 / t);
+    let ty = Math.floor(y0 / t);
+    if (this.isSolidTile(tx, ty)) return 0;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return Infinity;
+    const ux = dx / len;
+    const uy = dy / len;
+    const stepX = Math.sign(ux);
+    const stepY = Math.sign(uy);
+    let nextX = stepX > 0 ? ((tx + 1) * t - x0) / ux : stepX < 0 ? (tx * t - x0) / ux : Infinity;
+    let nextY = stepY > 0 ? ((ty + 1) * t - y0) / uy : stepY < 0 ? (ty * t - y0) / uy : Infinity;
+    const deltaX = stepX !== 0 ? t / Math.abs(ux) : Infinity;
+    const deltaY = stepY !== 0 ? t / Math.abs(uy) : Infinity;
+    for (;;) {
+      let dist: number;
+      if (nextX < nextY) {
+        tx += stepX;
+        dist = nextX;
+        nextX += deltaX;
+      } else {
+        ty += stepY;
+        dist = nextY;
+        nextY += deltaY;
+      }
+      if (dist > len) return Infinity;
+      if (this.isSolidTile(tx, ty)) return dist;
+    }
+  }
+
   /** Retângulo [left, right) × [top, bottom) encosta em algum tile sólido? */
   rectOverlapsSolid(left: number, top: number, right: number, bottom: number): boolean {
     const t = this.tileSize;

@@ -1,11 +1,25 @@
 // HUD em HTML/CSS por cima do canvas (texto nítido, fácil de estilizar). Elementos em index.html.
 
+/** Preferência do jogador (H): vale também depois de morrer ou reiniciar. */
+let helpWanted = true;
+
 export class Hud {
   private readonly help = document.getElementById('help');
   private readonly debug = document.getElementById('debug');
 
+  /** H: liga/desliga a ajuda e lembra a escolha. */
   toggleHelp(): void {
-    this.help?.classList.toggle('hidden');
+    helpWanted = !helpWanted;
+    this.showHelp(helpWanted);
+  }
+
+  /** Mostra a ajuda se o jogador quer vê-la (ou sempre, com `force`, como na pausa). */
+  applyHelpPreference(force = false): void {
+    this.showHelp(force || helpWanted);
+  }
+
+  showHelp(on: boolean): void {
+    this.help?.classList.toggle('hidden', !on);
   }
 
   showDebug(on: boolean): void {
