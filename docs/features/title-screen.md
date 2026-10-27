@@ -13,15 +13,18 @@ Código: `src/scenes/TitleScreen.ts` (controlador do HTML), o elemento `#title` 
 
 1. **Começar:** clicar em PLAY, ou `Enter`/`Espaço`, ou `A`/`Start` no controle. Vale só uma vez.
 2. **Ao começar:**
-   - a tela some com fade;
+   - o título some com fade;
    - a música some em `MUSIC.fadeOutSec`;
-   - a câmera desce até a aranha mais devagar que o normal (`TITLE.introLerp` por `TITLE.introSec`);
-   - o painel de ajuda aparece (`H` / `Start` esconde).
-3. **Sem pulo acidental:** por `TITLE.inputGraceSec` depois do Play, pulo e teia são ignorados. Assim o `Espaço` ou `A` usado para começar não vira pulo.
-4. Na tela inicial a aranha não recebe input e a mira fica escondida.
-5. `M` / `Select` deixa tudo mudo, também na tela inicial.
+   - a tela escurece em `TITLE.toIntroFadeSec` e começa a **cutscene de abertura** ([intro.md](intro.md));
+   - quando ela termina (ou é pulada), a aranha sai do buraco de rato na sala e aparecem os corações e o painel de ajuda (se o jogador não o escondeu com `H`).
+3. **Voltar:** "Main Menu" no menu de pausa reinicia a cena com a tela inicial, e a música recomeça (veja `pause-menu.md`). Depois de morrer ou de "Restart", a tela inicial e a cutscene são puladas.
+4. **Sem pulo acidental:** por `TITLE.inputGraceSec` depois do Play, pulo e teias são ignorados. Assim o `Espaço` ou `A` usado para começar não vira pulo.
+5. Na tela inicial a aranha não recebe input, e a mira e os corações ficam escondidos. Os ratos já patrulham atrás do título.
+6. `M` / `Select` deixa tudo mudo, também na tela inicial.
 
 ## Casos de borda
+
+- **CSS:** o "escondido" do título precisa ser `#title.hidden` e não só `.hidden`, porque `#title { display: flex }` ganha de uma classe sozinha. Um bug antigo vinha disso: o título voltava por cima do jogo depois de morrer.
 
 - **Áudio bloqueado:** o navegador só libera o som depois de um clique ou tecla na página. Se o jogo abrir sem nenhum gesto, a música começa no primeiro clique ou tecla. Se esse primeiro gesto já for o PLAY, a música nem chega a tocar. O controle não conta como gesto no Chrome.
 - **Aba em segundo plano:** o Phaser pausa a animação e a cena só termina de iniciar quando a aba fica visível.

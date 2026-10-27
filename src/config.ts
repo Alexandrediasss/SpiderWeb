@@ -64,6 +64,68 @@ export const GAMEPAD = {
   reticleDistance: 56,
   /** Tranco quando a teia gruda (intensidades 0..1). */
   rumbleWeb: { durationMs: 70, strong: 0.25, weak: 0.6 },
+  /** Tranco forte quando um rato morde. */
+  rumbleHurt: { durationMs: 200, strong: 0.8, weak: 0.5 },
+};
+
+/** Vida da aranha. Spec: docs/features/combat.md */
+export const PLAYER = {
+  maxHp: 3,
+  /** Depois de uma mordida fica invencível (piscando) por este tempo (s). */
+  invulnSec: 1.2,
+  /** Empurrão da mordida (px/s): para longe do rato e para cima. */
+  knockbackX: 170,
+  knockbackY: 170,
+  /** Quanto tempo a tela leva para escurecer antes de reiniciar (s). */
+  deathFadeSec: 1.4,
+};
+
+/** Teias de combate (X / B no controle). Spec: docs/features/combat.md */
+export const SHOTS = {
+  attack: { speed: 340, range: 230, cooldownSec: 0.3 },
+  trap: { speed: 260, range: 210, cooldownSec: 1.0 },
+  /** Dano da teia de ataque. */
+  damage: 1,
+  /** Quanto tempo um rato fica preso na teia (s). */
+  trapSec: 5,
+  /** Controle: a teia vira para um rato que esteja até este ângulo da mira. */
+  aimAssistDeg: 12,
+};
+
+/** Ratos. Spec: docs/features/combat.md */
+export const RAT = {
+  /** Metade do lado da hitbox (12×12). */
+  half: 6,
+  hp: 3,
+  patrolSpeed: 26,
+  chaseSpeed: 82,
+  gravity: 700,
+  /** Pausa nas pontas da patrulha (s, mín–máx). */
+  patrolPauseSec: [0.6, 1.8] as const,
+  /** Até onde enxerga na frente dele (px) e quanto acima/abaixo. */
+  sightRange: 130,
+  sightHeight: 70,
+  /** Perto assim ele percebe a aranha mesmo de costas (px). */
+  noticeRange: 36,
+  /** Sem ver a aranha por este tempo, volta a patrulhar (s). */
+  forgetSec: 2.5,
+  /** Quanto pode sair da área de patrulha perseguindo (px). */
+  leashPx: 64,
+  /** Distância (entre centros) em que consegue morder. */
+  biteReachX: 16,
+  biteReachY: 14,
+  /** Tempo do "bote" antes da mordida (dá para fugir) e intervalo entre mordidas (s). */
+  biteWindupSec: 0.28,
+  biteCooldownSec: 1.0,
+  /** Pulinho quando a aranha está um pouco acima (px/s). */
+  jumpSpeed: 220,
+  jumpCooldownSec: 1.2,
+  /** Atordoado depois de levar dano (s) e o empurrão (px/s). */
+  hurtSec: 0.35,
+  knockbackX: 120,
+  knockbackY: 110,
+  /** Animação de morte (s). */
+  deathSec: 0.8,
 };
 
 /** Tempestade: raios, trovões e chuva. Spec: docs/features/atmosphere.md */
@@ -74,8 +136,9 @@ export const STORM = {
   gapSec: [24, 55] as const,
   /** Chance de um raio ser perto (clarão forte, raio visível, trovão logo depois e alto). */
   closeChance: 0.35,
-  thunderDelayCloseSec: [0.4, 1.3] as const,
-  thunderDelayFarSec: [2.5, 6] as const,
+  /** Atraso entre o clarão e o trovão (s). Curto para o jogador ligar um ao outro. */
+  thunderDelayCloseSec: [0.15, 0.6] as const,
+  thunderDelayFarSec: [1.0, 2.6] as const,
   /** Quanto tempo o risco do raio fica no céu (s). */
   boltVisibleSec: 0.24,
   rainDrops: 170,
@@ -119,6 +182,9 @@ export const SFX = {
   rainVolume: 0.17,
   thunderVolume: 0.8,
   stepVolume: 0.24,
+  /** Guinchos dos ratos e chiado da aranha ao levar dano. */
+  hurtVolume: 0.45,
+  shotVolume: 0.5,
 };
 
 /** Tela inicial. Spec: docs/features/title-screen.md */
@@ -129,11 +195,40 @@ export const TITLE = {
   /** Amplitude e velocidade do passeio lento da câmera. */
   driftPx: 70,
   driftSpeed: 0.06,
-  /** Ao apertar Play a câmera desce até a aranha mais devagar que o normal. */
-  introLerp: 0.045,
-  introSec: 1.6,
-  /** Depois do Play, ignora pulo/teia por este tempo (a mesma tecla não vira pulo). */
+  /** Ao apertar Play a tela escurece neste tempo antes da cutscene (s). */
+  toIntroFadeSec: 0.9,
+  /** Depois do Play/Resume, ignora pulo/teia por este tempo (a mesma tecla não vira pulo). */
   inputGraceSec: 0.3,
+};
+
+/** Cutscene de abertura. Spec: docs/features/intro.md (o texto fica em src/level/story.ts) */
+export const INTRO = {
+  /** Zoom da câmera na cutscene (o palco tem 160×90 px). */
+  zoom: 3,
+  /** Texto: letras por segundo, tempo parado depois de escrito, fade de saída e pausa até o próximo. */
+  typeCps: 30,
+  holdSec: 2.6,
+  textFadeSec: 0.9,
+  textGapSec: 0.5,
+  /** A luz clareando a escuridão. */
+  revealSec: 3,
+  /** Aranha parada, desacordada, antes de mexer as pernas. */
+  sleepSec: 1.6,
+  twitchSec: 0.9,
+  /** Desvira (pulinho + giro) e o tempo parada depois. */
+  flipSec: 0.45,
+  shakeSec: 0.7,
+  /** Olha para trás e depois para o buraco. */
+  lookSec: 1.6,
+  /** A luz do buraco de rato aparecendo. */
+  holeLightSec: 1.6,
+  walkSpeed: 34,
+  enterSec: 0.7,
+  outroSec: 0.9,
+  /** Intervalo entre as gotas do líquido verde. */
+  dripEverySec: 0.9,
+  /** No jogo: a aranha saindo do buraco (s). */
+  emergeSec: 0.9,
 };
 
 export const WEB = {

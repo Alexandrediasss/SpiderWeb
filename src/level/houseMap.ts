@@ -23,7 +23,8 @@ export type DecorKind =
   | 'plant'
   | 'mirror'
   | 'cobweb'
-  | 'cloud';
+  | 'cloud'
+  | 'mouseHole';
 
 export interface Decor {
   kind: DecorKind;
@@ -83,6 +84,22 @@ export const HOUSE_MAP: string[] = [
 /** Onde a aranha nasce (tile). */
 export const SPAWN = { tx: 8, ty: 40 };
 
+/** Um rato: nasce em (tx, ty) — a linha vazia logo acima do chão — e patrulha de minTx a maxTx. */
+export interface RatSpawn {
+  name: string;
+  tx: number;
+  ty: number;
+  minTx: number;
+  maxTx: number;
+}
+
+export const RATS: RatSpawn[] = [
+  { name: 'Embaixo da mesa da sala', tx: 28, ty: 40, minTx: 24, maxTx: 33 },
+  { name: 'Embaixo da mesa da cozinha', tx: 72, ty: 40, minTx: 70, maxTx: 75 },
+  { name: 'Em cima da cama', tx: 11, ty: 22, minTx: 6, maxTx: 16 },
+  { name: 'Sótão', tx: 45, ty: 11, minTx: 34, maxTx: 56 },
+];
+
 /** Papel de parede de cada cômodo. Células '.' fora de cômodos viram "vão" escuro. */
 export const ROOMS: Room[] = [
   { name: 'Sótão', style: 'attic', x0: 0, y0: 0, x1: 79, y1: 11 },
@@ -120,6 +137,8 @@ export const DECORATIONS: Decor[] = [
   { kind: 'clock', tx: 34, ty: 31 },
   { kind: 'plant', tx: 37, ty: 40 },
   { kind: 'cobweb', tx: 2, ty: 29 },
+  // De onde a aranha sai depois da cutscene: centro em x = 7*16 + 24 = 136, igual ao SPAWN.
+  { kind: 'mouseHole', tx: 7, ty: 40 },
   // Cozinha
   { kind: 'window', tx: 64, ty: 31 },
   { kind: 'clock', tx: 53, ty: 33 },

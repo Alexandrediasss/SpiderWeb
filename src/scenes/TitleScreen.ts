@@ -4,18 +4,22 @@
 export class TitleScreen {
   private readonly root = document.getElementById('title');
   private readonly play = document.getElementById('play');
-  private open = true;
-  private readonly onKey = (e: KeyboardEvent) => {
-    if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') {
-      e.preventDefault();
-      this.confirm();
-    }
-  };
+  /** Some com todos os ouvintes quando a cena reinicia (os elementos HTML são os mesmos). */
+  private readonly abort = new AbortController();
+  private open: boolean;
 
-  constructor(private readonly onPlay: () => void) {
-    this.play?.addEventListener('click', () => this.confirm());
-    document.addEventListener('keydown', this.onKey);
-    this.play?.focus();
+  /** `open = false`: começa já escondida (reinício direto no jogo). */
+  constructor(
+    private readonly onPlay: () => void,
+    open = true,
+  ) {
+    this.open = open;
+    const signal = this.abort.signal;
+    this.play?.addEventListener('click', () => this.confirm(), { signal });
+    document.addEventListener('keydown', (e) => this.onKey(e), { signal });
+    this.root?.classList.remove('leaving');
+    this.root?.classList.toggle('hidden', !open);
+    if (open) this.play?.focus();
   }
 
   get isOpen(): boolean {
@@ -26,15 +30,29 @@ export class TitleScreen {
   confirm(): void {
     if (!this.open) return;
     this.open = false;
-    document.removeEventListener('keydown', this.onKey);
     this.play?.blur();
     this.root?.classList.add('leaving');
-    window.setTimeout(() => this.root?.classList.add('hidden'), 1000);
+    window.setTimeout(() => {
+      // Se a cena reiniciou nesse meio-tempo, o título é de outra instância: não mexe.
+      if (!this.abort.signal.aborted) this.root?.classList.add('hidden');
+    }, 1000);
     this.onPlay();
   }
 
   /** O clarão do relâmpago também ilumina o título (0..1). */
   setFlash(f: number): void {
     this.root?.style.setProperty('--flash', f.toFixed(3));
+  }
+
+  destroy(): void {
+    this.abort.abort();
+  }
+
+  private onKey(e: KeyboardEvent): void {
+    if (!this.open) return;
+    if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') {
+      e.preventDefault();
+      this.confirm();
+    }
   }
 }

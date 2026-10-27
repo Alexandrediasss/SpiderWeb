@@ -30,6 +30,7 @@ export class Atmosphere {
   private rngState = 1;
   private boltSeed = -1;
   private boltX: number | null = null;
+  private readonly dust: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -83,7 +84,7 @@ export class Atmosphere {
     const h = LIGHT.beamRadius * 0.75;
     const w = Math.tan((LIGHT.coneHalfDeg * Math.PI) / 180) * h;
     const zone = new Phaser.Geom.Triangle(x, y + 6, x - w, y + h, x + w, y + h);
-    this.scene.add
+    const emitter = this.scene.add
       .particles(0, 0, TEX.mote, {
         emitZone: { type: 'random', source: zone, quantity: 1 } as Phaser.Types.GameObjects.Particles.EmitZoneData,
         lifespan: { min: 2600, max: 5200 },
@@ -96,6 +97,15 @@ export class Atmosphere {
         blendMode: Phaser.BlendModes.ADD,
       })
       .setDepth(DEPTH.dust);
+    this.dust.push(emitter);
+  }
+
+  /** Na pausa a poeira para no ar (chuva e raios já param porque `update` não é chamado). */
+  setPaused(paused: boolean): void {
+    for (const e of this.dust) {
+      if (paused) e.pause();
+      else e.resume();
+    }
   }
 
   // ---------- chuva: só aparece nos pixels "lado de fora" ----------

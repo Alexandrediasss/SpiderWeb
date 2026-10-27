@@ -29,6 +29,24 @@ export class Spider {
     });
   }
 
+  /**
+   * Efeito de dano (chamar depois de `setLight`): vermelho logo após a mordida e piscando enquanto
+   * está invencível. `dead` deixa a aranha vermelha e de barriga para cima.
+   */
+  setDamageFx(invulnLeft: number, invulnSec: number, dead: boolean): void {
+    if (dead) {
+      this.sprite.setTint(0xff4040).setFlipY(true).setAlpha(1);
+      return;
+    }
+    this.sprite.setFlipY(false);
+    if (invulnLeft <= 0) {
+      this.sprite.setAlpha(1);
+      return;
+    }
+    if (invulnSec - invulnLeft < 0.2) this.sprite.setTint(0xff5050);
+    this.sprite.setAlpha(Math.floor(invulnLeft / 0.08) % 2 ? 0.35 : 1);
+  }
+
   /** Luz do lugar onde a aranha está (0..1 por canal); `min` evita que ela suma no escuro. */
   setLight([r, g, b]: [number, number, number], min: number): void {
     const ch = (v: number) => Math.round(Math.max(min, Math.min(1, v)) * 255);

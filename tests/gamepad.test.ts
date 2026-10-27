@@ -74,19 +74,26 @@ describe('GamepadReader', () => {
     expect(r.read(pad({ pressed: [BUTTON.A] }), 48)?.jumpPressed).toBe(true);
   });
 
-  it('X atira a teia e segura enquanto apertado', () => {
+  it('RB atira a teia de balanço e segura enquanto apertado', () => {
     const r = new GamepadReader();
-    const f = r.read(pad({ pressed: [BUTTON.X] }), 0);
+    const f = r.read(pad({ pressed: [BUTTON.RB] }), 0);
     expect(f?.webPressed).toBe(true);
     expect(f?.webHeld).toBe(true);
-    const g = r.read(pad({ pressed: [BUTTON.X] }), 16);
+    const g = r.read(pad({ pressed: [BUTTON.RB] }), 16);
     expect(g?.webPressed).toBe(false);
     expect(g?.webHeld).toBe(true);
     expect(r.read(pad(), 32)?.webHeld).toBe(false);
   });
 
-  it('RB não atira mais a teia', () => {
-    expect(new GamepadReader().read(pad({ pressed: [5] }), 0)?.webHeld).toBe(false);
+  it('X atira teia de ataque e B teia que prende, uma vez por aperto', () => {
+    const r = new GamepadReader();
+    const f = r.read(pad({ pressed: [BUTTON.X, BUTTON.B] }), 0);
+    expect(f?.attackPressed).toBe(true);
+    expect(f?.trapPressed).toBe(true);
+    expect(f?.webHeld).toBe(false);
+    const g = r.read(pad({ pressed: [BUTTON.X, BUTTON.B] }), 16);
+    expect(g?.attackPressed).toBe(false);
+    expect(g?.trapPressed).toBe(false);
   });
 
   it('RT conta pelo valor analógico do gatilho', () => {
@@ -98,10 +105,10 @@ describe('GamepadReader', () => {
     expect(r.read(pad({ values: { [BUTTON.RT]: 0.9 } }), 32)?.webPressed).toBe(false);
   });
 
-  it('apertar X com RT já seguro não dispara outra teia', () => {
+  it('apertar RB com RT já seguro não dispara outra teia', () => {
     const r = new GamepadReader();
     r.read(pad({ pressed: [BUTTON.RT] }), 0);
-    const f = r.read(pad({ pressed: [BUTTON.RT, BUTTON.X] }), 16);
+    const f = r.read(pad({ pressed: [BUTTON.RT, BUTTON.RB] }), 16);
     expect(f?.webPressed).toBe(false);
     expect(f?.webHeld).toBe(true);
   });
@@ -144,14 +151,23 @@ describe('GamepadReader', () => {
     expect(f?.aimDir.y).toBeCloseTo(-1);
   });
 
-  it('A ou Start confirmam; Select e Start disparam música e ajuda uma vez', () => {
+  it('A confirma, Start pausa e Select muda o som, uma vez por aperto', () => {
     const r = new GamepadReader();
-    const f = r.read(pad({ pressed: [BUTTON.SELECT, BUTTON.START] }), 0);
+    const f = r.read(pad({ pressed: [BUTTON.SELECT, BUTTON.START, BUTTON.A] }), 0);
     expect(f?.confirmPressed).toBe(true);
+    expect(f?.pausePressed).toBe(true);
     expect(f?.musicPressed).toBe(true);
-    expect(f?.helpPressed).toBe(true);
-    expect(r.read(pad({ pressed: [BUTTON.SELECT] }), 16)?.musicPressed).toBe(false);
-    expect(new GamepadReader().read(pad({ pressed: [BUTTON.A] }), 0)?.confirmPressed).toBe(true);
+    const g = r.read(pad({ pressed: [BUTTON.SELECT, BUTTON.START, BUTTON.A] }), 16);
+    expect(g?.pausePressed).toBe(false);
+    expect(g?.musicPressed).toBe(false);
+  });
+
+  it('navegação de menu: um passo por empurrão do D-pad ou analógico', () => {
+    const r = new GamepadReader();
+    expect(r.read(pad({ pressed: [BUTTON.DOWN] }), 0)?.navY).toBe(1);
+    expect(r.read(pad({ pressed: [BUTTON.DOWN] }), 16)?.navY).toBe(0);
+    expect(r.read(pad(), 32)?.navY).toBe(0);
+    expect(r.read(pad({ axes: [0, -1, 0, 0] }), 48)?.navY).toBe(-1);
   });
 });
 
@@ -201,9 +217,9 @@ describe('mergeInput', () => {
     expect(mergeInput(kb, f, 'mouse', pos, { x: -1, y: 0 }, 240).aim).toEqual({ x: 5, y: 5 });
   });
 
-  it('teia segura no mouse não redispara ao apertar X', () => {
+  it('teia segura no mouse não redispara ao apertar RB', () => {
     const kb = { ...emptyInput(), webHeld: true };
-    const f = new GamepadReader().read(pad({ pressed: [BUTTON.X] }), 0);
+    const f = new GamepadReader().read(pad({ pressed: [BUTTON.RB] }), 0);
     const m = mergeInput(kb, f, 'gamepad', pos, { x: 0, y: -1 }, 240);
     expect(m.webPressed).toBe(false);
     expect(m.webHeld).toBe(true);

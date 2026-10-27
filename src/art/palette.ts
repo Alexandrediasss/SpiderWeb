@@ -17,6 +17,40 @@ export const PAL = {
   },
 
   // Noite de tempestade: o céu já é pintado escuro (lá fora a luz da casa não chega).
+  rat: {
+    outline: 0x2a1f26,
+    fur: 0xf2efe9,
+    furShade: 0xc9c3bd,
+    furDark: 0x9c958f,
+    pink: 0xeaa2ad,
+    pinkDark: 0xb86d7a,
+    eye: 0xff2a36,
+    eyeGlow: 0xff8c8c,
+    mouth: 0x5a1f2a,
+    tooth: 0xffffff,
+  },
+
+  /** Cutscene de abertura: dentro da parede, o líquido mutante e o buraco de rato. */
+  intro: {
+    plank: [0x231a15, 0x271d17, 0x201713],
+    plankGap: 0x110c0a,
+    beam: 0x3b2b20,
+    beamTop: 0x5a4231,
+    beamDark: 0x2a1e17,
+    pipe: 0x7a4b2e,
+    pipeLight: 0x9c6a43,
+    pipeDark: 0x4a2c1b,
+    goo: 0x5fe35a,
+    gooDark: 0x2f9a3a,
+    gooLight: 0xc8ffb0,
+    gooGlow: 0x3cff6a,
+    holeEdge: 0x15100d,
+    holeLight: 0xffd9a0,
+    holeLightDeep: 0xb07a40,
+  },
+
+  ui: { reticle: 0xffffff, heart: 0xd8323c, heartLight: 0xff8a8a, heartEmpty: 0x3a2a33, heartOutline: 0x140c12 },
+
   sky: { top: 0x080a14, bottom: 0x1a2036, cloud: 0x2a3046, cloudShade: 0x1d2133 },
 
   /** Luz (multiplica as cores do cenário). Spec: docs/features/atmosphere.md */
@@ -85,6 +119,4 @@ export const PAL = {
     mirror: 0xc8dde6,
     web: 0xe6e6ea,
   },
-
-  ui: { reticle: 0xffffff },
 };

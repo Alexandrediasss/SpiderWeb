@@ -5,7 +5,9 @@ import { MusicPlayer } from './audio/MusicPlayer';
 import { PixelCanvas } from './art/PixelCanvas';
 import { DECOR_PAINTERS, paintDecor } from './art/decorArt';
 import { getLevelArt } from './art/levelArt';
+import { STAGE, buildGooBlob, buildGooPuddle, buildIntroDarkness, buildIntroStage } from './art/introArt';
 import { composeLit } from './art/lighting';
+import { RAT_FRAME, RAT_POSES, buildHearts, buildRatSheets, buildRatWeb } from './art/ratArt';
 import { SPIDER_FRAMES, buildReticle, buildSpiderSheet } from './art/spiderArt';
 import type { DecorKind } from './level/houseMap';
 
@@ -48,9 +50,26 @@ show('Quadros + linha do chão (verde)', framesWithBox, 6);
 
 show('Mira', buildReticle(), 8);
 
-const decor = new PixelCanvas(360, 80);
-(Object.keys(DECOR_PAINTERS) as DecorKind[]).forEach((k, i) => paintDecor(k, decor, 4 + (i % 9) * 40, 12));
+const rat = buildRatSheets();
+show(`Rato: ${RAT_POSES.map((p) => p.name).join(', ')}`, rat.body, 8);
+show('Olhos do rato (brilham no escuro)', rat.eyes, 4);
+const trapped = new PixelCanvas(RAT_FRAME.w, RAT_FRAME.h);
+trapped.blit(rat.body, 0, 0);
+trapped.blit(buildRatWeb(), 0, 0);
+show('Rato preso na teia', trapped, 8);
+show('Vida: cheio e vazio', buildHearts(), 8);
+
+const kinds = Object.keys(DECOR_PAINTERS) as DecorKind[];
+const decor = new PixelCanvas(8 + kinds.length * 44, 80);
+kinds.forEach((k, i) => paintDecor(k, decor, 4 + i * 44, 12));
 show('Decorações', decor, 3);
+
+// Cutscene: o palco já com a escuridão (só a luz do cano e a do buraco), a bolha e a poça verdes.
+const stage = buildIntroStage();
+stage.blit(buildGooPuddle(), STAGE.spiderX - 15, STAGE.floorY - 2);
+stage.blit(buildGooBlob(), STAGE.spiderX - 10, STAGE.floorY - 8);
+stage.blit(buildIntroDarkness(true), 0, 0);
+show('Cutscene: dentro da parede (com a luz do buraco)', stage, 4);
 
 const art = getLevelArt();
 show('Cenário à noite (com a luz das luminárias)', composeLit(art.canvas, art, art.lamps), 1);

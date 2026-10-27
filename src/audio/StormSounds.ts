@@ -9,6 +9,7 @@ export class StormSounds {
   private readonly rumble: AudioBuffer;
   private readonly crackle: AudioBuffer;
   private readonly rainGain: GainNode;
+  private readonly softClip: Float32Array<ArrayBuffer>;
   private rainStarted = false;
 
   constructor(
@@ -20,6 +21,12 @@ export class StormSounds {
     this.rainGain = ctx.createGain();
     this.rainGain.gain.value = 0;
     this.rainGain.connect(destination);
+    // Saturação suave (tanh): engrossa o ronco sem estourar.
+    this.softClip = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) {
+      const x = (i / 1023) * 2 - 1;
+      this.softClip[i] = Math.tanh(2.2 * x) / Math.tanh(2.2);
+    }
   }
 
   /** Chuva contínua, entrando aos poucos. */
@@ -44,39 +51,64 @@ export class StormSounds {
     src.start(now);
   }
 
-  /** Trovão: estalo (se perto) e um ronco grave que rola por alguns segundos. */
+  /**
+   * Trovão: estalo (se perto) e um ronco que rola por alguns segundos.
+   * O ronco tem duas camadas: o grave (ruído marrom) e uma camada média (250–900 Hz) que é o que
+   * caixinhas de notebook conseguem tocar; sem ela o trovão some atrás da chuva. Um saturador suave
+   * gera harmônicos do grave, que também ajudam a ouvir.
+   */
   thunder(e: ThunderEvent): void {
     const ctx = this.ctx;
     const rng = makeRng(e.seed);
     const t0 = ctx.currentTime + 0.02;
-    const dur = 3.5 + 4 * e.strength;
-    const vol = SFX.thunderVolume * (0.3 + 0.7 * e.strength);
+    const dur = 4 + 4 * e.strength;
+    const vol = SFX.thunderVolume * (0.55 + 0.45 * e.strength);
 
     const pan = ctx.createStereoPanner();
-    pan.pan.value = rng() - 0.5;
+    pan.pan.value = (rng() - 0.5) * 0.8;
     pan.connect(this.destination);
+    const shaper = ctx.createWaveShaper();
+    shaper.curve = this.softClip;
+    shaper.connect(pan);
 
-    const src = ctx.createBufferSource();
-    src.buffer = this.rumble;
-    src.playbackRate.value = 0.85 + rng() * 0.3;
-    const low = ctx.createBiquadFilter();
-    low.type = 'lowpass';
-    low.frequency.setValueAtTime(e.close ? 900 : 380, t0);
-    low.frequency.setTargetAtTime(e.close ? 170 : 110, t0 + 0.05, dur * 0.3);
+    // Envelope comum às duas camadas: o ronco "rola", subindo e descendo em ondas cada vez mais fracas.
     const amp = ctx.createGain();
+    amp.connect(shaper);
     amp.gain.setValueAtTime(0, t0);
-    const attack = e.close ? 0.015 : 0.6;
-    amp.gain.linearRampToValueAtTime(e.close ? vol : vol * 0.7, t0 + attack);
-    // O ronco "rola": sobe e desce em ondas cada vez mais fracas.
+    const attack = e.close ? 0.015 : 0.35;
+    amp.gain.linearRampToValueAtTime(e.close ? vol : vol * 0.8, t0 + attack);
     for (let t = attack + 0.2; t < dur; t += 0.18 + rng() * 0.45) {
-      const env = Math.exp(-t / (dur * 0.38));
+      const env = Math.exp(-t / (dur * 0.4));
       amp.gain.linearRampToValueAtTime(vol * env * (0.45 + 0.55 * rng()), t0 + t);
     }
     amp.gain.linearRampToValueAtTime(0, t0 + dur + 0.6);
-    src.connect(low).connect(amp).connect(pan);
-    const offset = rng() * Math.max(0, this.rumble.duration - (dur + 1) * 1.2);
-    src.start(t0, offset);
-    src.stop(t0 + dur + 0.8);
+
+    const offset = () => rng() * Math.max(0, this.rumble.duration - (dur + 1) * 1.2);
+
+    const deep = ctx.createBufferSource();
+    deep.buffer = this.rumble;
+    deep.playbackRate.value = 0.85 + rng() * 0.3;
+    const low = ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.setValueAtTime(e.close ? 1400 : 800, t0);
+    low.frequency.setTargetAtTime(e.close ? 260 : 190, t0 + 0.05, dur * 0.3);
+    deep.connect(low).connect(amp);
+    deep.start(t0, offset());
+    deep.stop(t0 + dur + 0.8);
+
+    const mid = ctx.createBufferSource();
+    mid.buffer = this.rumble;
+    mid.playbackRate.value = 2.5 + rng();
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.setValueAtTime(e.close ? 700 : 480, t0);
+    band.frequency.setTargetAtTime(e.close ? 380 : 300, t0 + 0.05, dur * 0.35);
+    band.Q.value = 0.8;
+    const midGain = ctx.createGain();
+    midGain.gain.value = 2.2;
+    mid.connect(band).connect(midGain).connect(amp);
+    mid.start(t0, offset() / 3);
+    mid.stop(t0 + dur + 0.8);
 
     if (e.close) {
       const crack = ctx.createBufferSource();

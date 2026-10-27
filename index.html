@@ -68,6 +68,10 @@
         opacity: 0;
         pointer-events: none;
       }
+      /* Precisa do id: o "display: flex" de #title ganharia de um .hidden sozinho. */
+      #title.hidden {
+        display: none;
+      }
       #title h1 {
         position: relative;
         margin: 0;
@@ -120,6 +124,81 @@
           visibility: hidden;
         }
       }
+
+      /* ---------- cutscene de abertura ---------- */
+      #intro {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      #intro.hidden,
+      #intro-skip.hidden {
+        display: none;
+      }
+      #intro-text {
+        margin: 0;
+        max-width: 88vw;
+        font-size: clamp(10px, 1.7vw, 18px);
+        line-height: 2.3;
+        text-align: center;
+        white-space: pre-line;
+        color: #e8e4f0;
+        text-shadow: 0 3px 0 #000;
+      }
+      #intro-skip {
+        position: fixed;
+        right: 20px;
+        bottom: 16px;
+        font-size: 9px;
+        color: #e8e4f0;
+        opacity: 0.45;
+      }
+
+      /* ---------- menu de pausa ---------- */
+      #pause {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: rgba(5, 6, 12, 0.72);
+      }
+      #pause.hidden {
+        display: none;
+      }
+      #pause h2 {
+        margin: 0 0 18px;
+        font-size: clamp(22px, 5vw, 48px);
+        font-weight: normal;
+        letter-spacing: 0.1em;
+        color: #e8e4f0;
+        text-shadow: 0 5px 0 #14121c;
+      }
+      #pause button {
+        font: inherit;
+        font-size: clamp(11px, 1.8vw, 18px);
+        letter-spacing: 0.12em;
+        min-width: 15em;
+        color: #e8e4f0;
+        background: rgba(10, 10, 18, 0.55);
+        border: 3px solid #5d5a78;
+        padding: 0.8em 1.2em 0.7em;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #14121c;
+      }
+      #pause button.selected {
+        color: #14121c;
+        background: #e8e4f0;
+        border-color: #e8e4f0;
+      }
+      #pause button.selected::before {
+        content: '▶ ';
+      }
     </style>
   </head>
   <body>
@@ -128,19 +207,31 @@
 A/D  walk on floors and ceilings
 W/S  climb walls
 SHIFT  run       SPACE  jump / let go
-MOUSE (hold)  web
-  W/S on the web: reel in / out
-  A/D on the web: swing
-M  mute   H  help   G  debug
+LEFT MOUSE (hold)  swing web
+  W/S reel in / out   A/D swing
+RIGHT MOUSE  attack web   E  trap web
+ESC  pause   M  mute   H  help   G  debug
 
 <b>CONTROLLER</b>
 L-STICK / D-PAD  walk   LT or LB  run
-A  jump   R-STICK  aim   X or RT  web
-SELECT  mute   START  help</div>
+A  jump   R-STICK  aim
+RB or RT (hold)  swing web
+X  attack web   B  trap web
+START  pause   SELECT  mute</div>
     <div id="debug" class="panel hidden"></div>
     <div id="title">
       <h1>SPIDER WEB</h1>
       <button id="play" type="button">PLAY</button>
+    </div>
+    <div id="intro" class="hidden">
+      <p id="intro-text"></p>
+      <div id="intro-skip" class="hidden">ENTER / START  skip</div>
+    </div>
+    <div id="pause" class="hidden">
+      <h2>PAUSED</h2>
+      <button type="button" data-action="resume">RESUME</button>
+      <button type="button" data-action="restart">RESTART</button>
+      <button type="button" data-action="menu">MAIN MENU</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

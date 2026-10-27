@@ -200,6 +200,47 @@ const cobweb: DecorPainter = (pc, x, y, flipX) => {
   }
 };
 
+/** Formato de arco (buraco de rato): retângulo embaixo + meio círculo em cima. `dy` conta de baixo para cima. */
+export function inArch(dx: number, dyFromBottom: number, w: number, h: number): boolean {
+  const r = w / 2;
+  if (dyFromBottom < 0 || Math.abs(dx) > r) return false;
+  if (dyFromBottom <= h - r) return true;
+  const cy = h - r;
+  return dx * dx + (dyFromBottom - cy) ** 2 <= r * r;
+}
+
+/**
+ * Buraco de rato no rodapé: de onde a aranha sai depois da cutscene. Centro em x + 24, base no chão
+ * (y + 16). Escuro, com um brilho verde lá dentro e pingos do líquido mutante saindo.
+ */
+const mouseHole: DecorPainter = (pc, x, y) => {
+  const I = PAL.intro;
+  const cx = x + 24;
+  const bottom = y + 16;
+  const hw = 14;
+  const hh = 14;
+  for (let dy = -1; dy <= hh + 1; dy++) {
+    for (let dx = -hw / 2 - 2; dx <= hw / 2 + 2; dx++) {
+      const px = cx + dx;
+      const py = bottom - 1 - dy;
+      if (inArch(dx, dy, hw, hh)) {
+        const glow = dy < 4 && Math.abs(dx) < 4 && hash(px, py, 4) < 0.35;
+        pc.set(px, py, glow ? I.gooDark : mixColor(0x050404, 0x120d0b, dy / hh));
+      } else if (inArch(dx, dy, hw + 3, hh + 2) && hash(px, py, 7) < 0.8) {
+        pc.set(px, py, shadeColor(PAL.wall.baseboardDark, 0.55));
+      }
+    }
+  }
+  for (const [dx, a] of [
+    [2, 0.9],
+    [7, 0.7],
+    [13, 0.5],
+    [20, 0.3],
+  ] as const) {
+    pc.set(cx + dx, bottom, I.goo, a);
+  }
+};
+
 const cloud: DecorPainter = (pc, x, y) => {
   const blobs = [
     [10, 10, 7],
@@ -221,6 +262,7 @@ export const DECOR_PAINTERS: Record<DecorKind, DecorPainter> = {
   mirror,
   cobweb,
   cloud,
+  mouseHole,
 };
 
 /** Desenha uma decoração. `mark` (opcional) recebe os pixels de vidro que mostram o lado de fora. */

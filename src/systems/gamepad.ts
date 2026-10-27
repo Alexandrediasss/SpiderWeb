@@ -9,8 +9,10 @@ import { raycastWeb } from './webRope';
 /** Índices do mapa "standard gamepad" do W3C (layout Xbox). */
 export const BUTTON = {
   A: 0,
+  B: 1,
   X: 2,
   LB: 4,
+  RB: 5,
   LT: 6,
   RT: 7,
   SELECT: 8,
@@ -37,10 +39,17 @@ export interface GamepadFrame {
   aimDir: Vec2;
   /** O jogador está mirando com o analógico direito neste frame. */
   aimMoved: boolean;
-  /** `Start` ou `A` apertados neste frame (para confirmar em menus). */
+  /** `X`: teia de ataque (tira vida). */
+  attackPressed: boolean;
+  /** `B`: teia que prende. Nos menus, `B` também é "voltar". */
+  trapPressed: boolean;
+  /** `A` neste frame (confirmar em menus). */
   confirmPressed: boolean;
+  /** `Start`: pausa. */
+  pausePressed: boolean;
   musicPressed: boolean;
-  helpPressed: boolean;
+  /** Navegação vertical de menu: -1 (subiu) / 1 (desceu) só no frame em que o analógico/D-pad foi empurrado. */
+  navY: number;
 }
 
 /** Zona morta radial: abaixo de `dz` vira zero; acima, a magnitude é reescalada para 0..1. */
@@ -62,6 +71,7 @@ export function snapTo8(v: Vec2): Vec2 {
 /** Lê o controle frame a frame, guardando o necessário para detectar "apertou agora" e a mira. */
 export class GamepadReader {
   private prev = new Set<number>();
+  private prevMoveY = 0;
   private aimDir: Vec2 = { x: 0, y: -1 };
   /** Inclinações recentes do analógico direito, para ignorar o "solavanco" ao soltar. */
   private aimHistory: { t: number; mag: number }[] = [];
@@ -88,8 +98,9 @@ export class GamepadReader {
     const move = { x: clampUnit(stick.x + dpadX), y: clampUnit(stick.y + dpadY) };
 
     const aimMoved = this.updateAim(pad.axes[2] ?? 0, pad.axes[3] ?? 0, nowMs);
-    const webBefore = this.prev.has(BUTTON.RT) || this.prev.has(BUTTON.X);
-    const webNow = now.has(BUTTON.RT) || now.has(BUTTON.X);
+    const webBefore = this.prev.has(BUTTON.RT) || this.prev.has(BUTTON.RB);
+    const webNow = now.has(BUTTON.RT) || now.has(BUTTON.RB);
+    const navY = move.y !== 0 && move.y !== this.prevMoveY ? move.y : 0;
 
     const frame: GamepadFrame = {
       move,
@@ -99,11 +110,15 @@ export class GamepadReader {
       webHeld: webNow,
       aimDir: { ...this.aimDir },
       aimMoved,
-      confirmPressed: justDown(BUTTON.A) || justDown(BUTTON.START),
+      attackPressed: justDown(BUTTON.X),
+      trapPressed: justDown(BUTTON.B),
+      confirmPressed: justDown(BUTTON.A),
+      pausePressed: justDown(BUTTON.START),
       musicPressed: justDown(BUTTON.SELECT),
-      helpPressed: justDown(BUTTON.START),
+      navY,
     };
     this.prev = now;
+    this.prevMoveY = move.y;
     return frame;
   }
 
@@ -167,6 +182,8 @@ export function mergeInput(
     // Se um dos dois já segurava a teia, apertar o outro não dispara de novo.
     webPressed: (kb.webPressed && !pad.webHeld) || (pad.webPressed && !kb.webHeld),
     webHeld: kb.webHeld || pad.webHeld,
+    attackPressed: kb.attackPressed || pad.attackPressed,
+    trapPressed: kb.trapPressed || pad.trapPressed,
     aim,
   };
 }

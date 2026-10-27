@@ -9,6 +9,10 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Cores | `src/art/palette.ts` (mude aqui para recolorir tudo) |
 | Primitivas (pixel, linha, disco, sprite ASCII) | `src/art/PixelCanvas.ts` |
 | Aranha e mira | `src/art/spiderArt.ts` |
+| Rato (+ folha só dos olhos), casulo de teia, corações | `src/art/ratArt.ts` (formas + contorno automático) |
+| Onde os ratos patrulham | `RATS` em `src/level/houseMap.ts` |
+| Cutscene: palco dentro da parede, escuridão, líquido verde | `src/art/introArt.ts` |
+| Buraco de rato da sala (onde a aranha aparece) | decoração `mouseHole` (`decorArt.ts`), alinhada com `SPAWN` |
 | Tiles e papéis de parede | `src/art/tilePainters.ts` |
 | Janelas, quadros, luminárias, teias... | `src/art/decorArt.ts` |
 | Montagem do cenário numa textura só (+ máscara do lado de fora) | `src/art/levelBaker.ts` |

@@ -104,6 +104,14 @@ export class SpiderMotor {
     this.stickCooldown = SPIDER.stickCooldown;
   }
 
+  /** Empurrão (mordida de rato): solta da superfície e sai voando com essa velocidade. A corda continua. */
+  knockback(vx: number, vy: number): void {
+    if (this.surface !== 'air') this.detach();
+    this.body.vx = vx;
+    this.body.vy = vy;
+    this.stickCooldown = SPIDER.stickCooldown;
+  }
+
   private detach(): void {
     this.surface = 'air';
     this.dir = 0;

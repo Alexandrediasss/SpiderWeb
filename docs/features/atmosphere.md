@@ -29,8 +29,9 @@ Testes: `tests/storm.test.ts` e `tests/lighting.test.ts`.
 1. **Chuva:** `STORM.rainDrops` gotas (riscos de 1 px inclinados pelo vento) caem dentro da área da câmera. Só aparecem nos pixels do lado de fora, ou seja, no céu e através das janelas.
 2. **Raios:** o primeiro cai entre `STORM.firstStrikeSec` segundos; depois, um a cada `STORM.gapSec` segundos (24 a 55 s). Trovão é **evento**, não barulho de fundo.
 3. **Perto ou longe** (`STORM.closeChance`):
-   - perto: clarão forte que pisca 3 vezes, raio visível no céu por `STORM.boltVisibleSec` e trovão alto com estalo depois de 0,4 a 1,3 s;
-   - longe: clarão fraco, sem raio visível e só um ronco grave depois de 2,5 a 6 s.
+   - perto: clarão forte que pisca 3 vezes, raio visível no céu por `STORM.boltVisibleSec` e trovão alto com estalo depois de 0,15 a 0,6 s;
+   - longe: clarão fraco, sem raio visível e um ronco depois de 1 a 2,6 s.
+   - Os atrasos são curtos de propósito: com 2,5 a 6 s o jogador não ligava o trovão ao clarão e achava que o raio "não fazia barulho".
 4. **Clarão:** a camada de escuro perde `LIGHT.flashBrighten` da força, e a luz do relâmpago (`PAL.light.flash`) entra pelas janelas com sombra dos sólidos. O título da tela inicial também brilha.
 5. O raio só é desenhado numa coluna da tela onde dá para ver céu. Num cômodo sem janela à vista, ele não aparece.
 
@@ -39,7 +40,11 @@ Testes: `tests/storm.test.ts` e `tests/lighting.test.ts`.
 - **Sem música no jogo.** A música só toca na tela inicial (veja `title-screen.md`).
 - **Passos:** a cada pata que toca o chão (quadros `walk0` e `walk2` da animação), um "tic" curtinho com leve variação. Correndo, os passos ficam mais rápidos e um pouco mais fortes.
 - **Chuva:** ruído contínuo e abafado por um passa-baixa (a chuva bate lá fora), com volume baixo (`SFX.rainVolume`).
-- **Trovão:** ronco de ruído marrom filtrado que "rola" por alguns segundos. Os trovões perto começam com um estalo.
+- **Trovão:** ronco que "rola" por alguns segundos, com duas camadas no mesmo envelope:
+  - grave: ruído marrom num passa-baixa;
+  - médio: 250 a 900 Hz, que é o que caixinhas de notebook tocam. Sem ela o trovão ficava abaixo de 200 Hz e sumia atrás da chuva.
+  - Um saturador suave (tanh) gera harmônicos do grave. Os trovões perto começam com um estalo.
+  - Medido acima de 250 Hz, o trovão perto fica cerca de 2,8× mais forte que a chuva, e o longe cerca de 1,9×.
 - Tudo passa por um `AudioHub` com um só `AudioContext`, volume geral e limitador. `M` / `Select` deixa tudo mudo.
 
 ## Como mexer
