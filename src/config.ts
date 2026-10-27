@@ -41,6 +41,19 @@ export const MUSIC = {
   lookahead: 1.2,
 };
 
+export const GAMEPAD = {
+  /** Abaixo disso (0..1) o analógico esquerdo conta como solto. */
+  moveDeadzone: 0.3,
+  /** Abaixo disso o analógico direito mantém a última direção de mira. */
+  aimDeadzone: 0.4,
+  /** Valor mínimo (0..1) para LT/RT contarem como apertados. */
+  triggerThreshold: 0.3,
+  /** Distância da retícula cinza (teia não alcança nada), em px. */
+  reticleDistance: 56,
+  /** Tranco quando a teia gruda (intensidades 0..1). */
+  rumbleWeb: { durationMs: 70, strong: 0.25, weak: 0.6 },
+};
+
 export const WEB = {
   range: 240,
   minLength: 6,

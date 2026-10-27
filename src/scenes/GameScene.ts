@@ -1,6 +1,6 @@
 // Cena principal: cenário, aranha, câmera, mira e debug.
 import Phaser from 'phaser';
-import { TILE, VIEW, WEB } from '../config';
+import { GAMEPAD, TILE, VIEW, WEB } from '../config';
 import { TEX } from '../art/textures';
 import { MusicPlayer } from '../audio/MusicPlayer';
 import { Spider } from '../entities/Spider';
@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
   private reticle!: Phaser.GameObjects.Image;
   private debugGfx!: Phaser.GameObjects.Graphics;
   private hud!: Hud;
+  private music!: MusicPlayer;
   private debug = false;
 
   constructor() {
@@ -47,6 +48,7 @@ export class GameScene extends Phaser.Scene {
 
     // Navegadores só liberam áudio depois de um gesto do jogador.
     const music = new MusicPlayer();
+    this.music = music;
     const startMusic = () => music.start();
     this.input.keyboard?.once('keydown', startMusic);
     this.input.once('pointerdown', startMusic);
@@ -58,16 +60,37 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, 1 / 30);
-    const input = this.playerInput.read();
+    const m = this.spider.motor;
+    const pi = this.playerInput;
+    const input = pi.read(m.body);
+    this.handlePadButtons();
+
+    const hadRope = m.rope !== null;
     this.spider.update(dt, input);
+    if (!hadRope && m.rope && pi.padFrame?.webHeld) pi.rumble();
 
     // Mira: branca se a teia alcança algo, cinza se não.
-    const m = this.spider.motor;
     const hit = raycastWeb(this.grid, m.body, input.aim, WEB.range);
-    this.reticle.setPosition(Math.round(input.aim.x), Math.round(input.aim.y));
+    let reticle = input.aim;
+    if (pi.aimDevice === 'gamepad' && pi.padFrame) {
+      // No controle a mira é uma direção: mostra onde a teia pega, ou um ponto perto da aranha.
+      const d = pi.padFrame.aimDir;
+      reticle = hit ? hit.point : { x: m.body.x + d.x * GAMEPAD.reticleDistance, y: m.body.y + d.y * GAMEPAD.reticleDistance };
+    }
+    this.reticle.setPosition(Math.round(reticle.x), Math.round(reticle.y));
     this.reticle.setTint(hit ? 0xffffff : 0x777777).setAlpha(hit ? 1 : 0.7);
 
     if (this.debug) this.drawDebug();
+  }
+
+  /** Botões do controle que não mexem na aranha: música e ajuda. */
+  private handlePadButtons(): void {
+    const f = this.playerInput.padFrame;
+    if (!f) return;
+    // O Chrome não conta o controle como gesto para liberar áudio; se falhar, tecla ou clique liberam.
+    if (f.jumpPressed || f.webPressed || f.musicPressed || f.helpPressed) this.music.start();
+    if (f.musicPressed) this.music.toggleMute();
+    if (f.helpPressed) this.hud.toggleHelp();
   }
 
   private drawDebug(): void {

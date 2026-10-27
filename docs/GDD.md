@@ -13,19 +13,21 @@ Você é uma pequena aranha numa casa enorme. O jogo é um *walkthrough* 2D de e
 
 ## Controles
 
-| Ação | Teclado / mouse |
-|---|---|
-| Andar | `A`/`D` ou `←`/`→` no chão e no teto; `W`/`S` ou `↑`/`↓` nas paredes |
-| Correr | Segurar `Shift` |
-| Pular / soltar da superfície | `Espaço` (pula na direção oposta à superfície) |
-| Atirar teia | Segurar o **botão esquerdo do mouse** mirando com o cursor |
-| Subir / descer na teia | `W` / `S` enquanto pendurada |
-| Balançar | `A` / `D` enquanto pendurada |
-| Soltar a teia | Soltar o botão do mouse (mantém o embalo) |
-| Ligar/desligar música | `M` |
-| Debug | `G` |
+| Ação | Teclado / mouse | Controle (layout Xbox) |
+|---|---|---|
+| Andar | `A`/`D` ou `←`/`→` no chão e no teto; `W`/`S` ou `↑`/`↓` nas paredes | Analógico esquerdo ou D-pad |
+| Correr | Segurar `Shift` | Segurar `LT` ou `LB` |
+| Pular / soltar da superfície | `Espaço` (pula na direção oposta à superfície) | `A` |
+| Mirar | Cursor do mouse | Analógico direito |
+| Atirar teia | Segurar o **botão esquerdo do mouse** | Segurar `RT` ou `RB` |
+| Subir / descer na teia | `W` / `S` enquanto pendurada | Analógico esquerdo ↑/↓ |
+| Balançar | `A` / `D` enquanto pendurada | Analógico esquerdo ←/→ |
+| Soltar a teia | Soltar o botão do mouse (mantém o embalo) | Soltar o gatilho |
+| Ligar/desligar música | `M` | `Select` |
+| Ajuda | `H` | `Start` |
+| Debug | `G` | — |
 
-Na parede, apertar *em direção* à parede sobe e apertar *para fora* desce. Ao virar um canto segurando a mesma tecla, a aranha continua andando (veja a spec de movimento).
+Na parede, apertar *em direção* à parede sobe e apertar *para fora* desce. Ao virar um canto segurando a mesma tecla, a aranha continua andando (veja a spec de movimento). Teclado/mouse e controle funcionam juntos. Spec do controle: [features/gamepad.md](features/gamepad.md)
 
 ## Mecânicas (MVP)
 
@@ -68,6 +70,7 @@ Segue a aranha com suavização, presa aos limites do mapa.
 - [ ] Descer de rapel a partir do teto (fio vertical)
 - [ ] Teias permanentes: pontes e redes que ficam no cenário
 - [x] Música de fundo (piano gótico em loop)
+- [x] Suporte a controle (gamepad), com vibração quando a teia gruda
 - [ ] Efeitos sonoros: passos, disparo de teia, ambiente da casa
 - [ ] Uma música diferente por andar (sótão mais sombrio?)
 - [ ] Perigos: chinelo, aspirador, gato
