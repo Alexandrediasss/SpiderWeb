@@ -7,56 +7,57 @@ import { type Song, buildSong } from './score';
 const TICK_MS = 100;
 
 export class MusicPlayer {
-  private ctx: AudioContext | null = null;
-  private master: GainNode | null = null;
-  private synth: PianoSynth | null = null;
+  private readonly out: GainNode;
+  private readonly synth: PianoSynth;
   private readonly song: Song = buildSong(MUSIC.bpm);
   private loopStart = 0;
   private next = 0;
   private timer: number | undefined;
-  private muted = false;
+  private playing = false;
 
-  get isMuted(): boolean {
-    return this.muted;
+  constructor(
+    private readonly ctx: BaseAudioContext,
+    destination: AudioNode,
+  ) {
+    this.out = ctx.createGain();
+    this.out.gain.value = 0;
+    this.out.connect(destination);
+    this.synth = new PianoSynth(ctx, this.out, MUSIC.reverbMix);
   }
 
-  /** Precisa ser chamado a partir de um gesto do jogador (tecla/clique). */
-  start(): void {
-    if (this.ctx) {
-      void this.ctx.resume();
-      return;
-    }
-    const ctx = new AudioContext();
-    this.ctx = ctx;
-    this.master = ctx.createGain();
-    this.master.connect(ctx.destination);
-    this.synth = new PianoSynth(ctx, this.master, MUSIC.reverbMix);
+  get isPlaying(): boolean {
+    return this.playing;
+  }
 
-    const now = ctx.currentTime;
-    this.master.gain.setValueAtTime(0, now);
-    this.master.gain.linearRampToValueAtTime(this.muted ? 0 : MUSIC.volume, now + MUSIC.fadeInSec);
+  /** Começa do início com fade-in. Se o contexto ainda estiver suspenso, toca quando ele for liberado. */
+  start(): void {
+    if (this.playing) return;
+    this.playing = true;
+    const now = this.ctx.currentTime;
+    this.ramp(MUSIC.volume, MUSIC.fadeInSec, 0);
     this.loopStart = now + 0.3;
+    this.next = 0;
     this.timer = window.setInterval(() => this.schedule(), TICK_MS);
     this.schedule();
   }
 
-  toggleMute(): void {
-    this.muted = !this.muted;
-    if (!this.ctx || !this.master) return;
-    const now = this.ctx.currentTime;
-    this.master.gain.cancelScheduledValues(now);
-    this.master.gain.setValueAtTime(this.master.gain.value, now);
-    this.master.gain.linearRampToValueAtTime(this.muted ? 0 : MUSIC.volume, now + 0.4);
+  /** Some aos poucos e para de agendar notas. */
+  stop(fadeSec = MUSIC.fadeOutSec): void {
+    if (!this.playing) return;
+    this.playing = false;
+    window.clearInterval(this.timer);
+    this.ramp(0, fadeSec);
   }
 
-  stop(): void {
-    window.clearInterval(this.timer);
-    void this.ctx?.close();
-    this.ctx = null;
+  private ramp(to: number, sec: number, from?: number): void {
+    const g = this.out.gain;
+    const now = this.ctx.currentTime;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(from ?? g.value, now);
+    g.linearRampToValueAtTime(to, now + sec);
   }
 
   private schedule(): void {
-    if (!this.ctx || !this.synth) return;
     const horizon = this.ctx.currentTime + MUSIC.lookahead;
     const { events, length } = this.song;
     while (this.loopStart + events[this.next].time < horizon) {

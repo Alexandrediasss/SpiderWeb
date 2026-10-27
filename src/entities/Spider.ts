@@ -7,17 +7,37 @@ import { SURFACES } from '../physics/surfaces';
 import { SpiderMotor } from '../systems/SpiderMotor';
 import type { SpiderInput } from '../systems/input';
 
+/** Quadros da caminhada em que um par de patas toca o chão (toca um passinho). */
+const STEP_FRAMES = new Set(['walk0', 'walk2']);
+
 export class Spider {
   readonly motor: SpiderMotor;
   readonly sprite: Phaser.GameObjects.Sprite;
   private readonly web: Phaser.GameObjects.Graphics;
   private angleDeg = 0;
+  private webColor: number = WEB.color;
 
-  constructor(scene: Phaser.Scene, grid: LevelGrid, x: number, y: number) {
+  /** `onStep`: chamado a cada passo da animação de andar (para o som). */
+  constructor(scene: Phaser.Scene, grid: LevelGrid, x: number, y: number, onStep?: () => void) {
     this.motor = new SpiderMotor(grid, x, y);
-    this.web = scene.add.graphics().setDepth(4);
-    this.sprite = scene.add.sprite(x, y, TEX.spider, 'idle0').setDepth(5);
+    // Acima da camada de escuro: a cor é ajustada à mão por `setLight` (assim ela nunca some no escuro).
+    this.web = scene.add.graphics().setDepth(8);
+    this.sprite = scene.add.sprite(x, y, TEX.spider, 'idle0').setDepth(9);
     this.sprite.play('spider-idle');
+    this.sprite.on(Phaser.Animations.Events.ANIMATION_UPDATE, (_a: unknown, frame: Phaser.Animations.AnimationFrame) => {
+      if (onStep && STEP_FRAMES.has(String(frame.textureFrame))) onStep();
+    });
+  }
+
+  /** Luz do lugar onde a aranha está (0..1 por canal); `min` evita que ela suma no escuro. */
+  setLight([r, g, b]: [number, number, number], min: number): void {
+    const ch = (v: number) => Math.round(Math.max(min, Math.min(1, v)) * 255);
+    const tint = (ch(r) << 16) | (ch(g) << 8) | ch(b);
+    this.sprite.setTint(tint);
+    const wr = (((WEB.color >> 16) & 255) * ch(r)) / 255;
+    const wg = (((WEB.color >> 8) & 255) * ch(g)) / 255;
+    const wb = ((WEB.color & 255) * ch(b)) / 255;
+    this.webColor = (Math.round(wr) << 16) | (Math.round(wg) << 8) | Math.round(wb);
   }
 
   update(dt: number, input: SpiderInput): void {
@@ -60,11 +80,11 @@ export class Spider {
     const m = this.motor;
     this.web.clear();
     if (m.rope) {
-      this.web.fillStyle(WEB.color, 1);
+      this.web.fillStyle(this.webColor, 1);
       pixelLine(this.web, m.body.x, m.body.y, m.rope.anchor.x, m.rope.anchor.y);
     }
     if (m.shotFlash) {
-      this.web.fillStyle(WEB.color, Math.max(0, m.shotFlash.timeLeft / WEB.missFlashSec) * 0.6);
+      this.web.fillStyle(this.webColor, Math.max(0, m.shotFlash.timeLeft / WEB.missFlashSec) * 0.6);
       pixelLine(this.web, m.shotFlash.from.x, m.shotFlash.from.y, m.shotFlash.to.x, m.shotFlash.to.y);
     }
   }

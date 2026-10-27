@@ -1,13 +1,16 @@
 // Ponte entre a arte gerada (PixelCanvas) e o gerenciador de texturas do Phaser.
 import Phaser from 'phaser';
 import { SPIDER } from '../config';
-import { DECORATIONS, HOUSE_MAP, ROOMS } from '../level/houseMap';
-import type { PixelCanvas } from './PixelCanvas';
-import { bakeLevel } from './levelBaker';
+import { PixelCanvas } from './PixelCanvas';
+import { getLevelArt } from './levelArt';
 import { SPIDER_FRAMES, buildReticle, buildSpiderSheet } from './spiderArt';
 
 export const TEX = {
   level: 'level',
+  light: 'light',
+  flash: 'flash',
+  beam: (i: number) => `beam${i}`,
+  mote: 'mote',
   spider: 'spider',
   reticle: 'reticle',
 } as const;
@@ -19,7 +22,14 @@ function addCanvas(scene: Phaser.Scene, key: string, pc: PixelCanvas): Phaser.Te
 }
 
 export function registerTextures(scene: Phaser.Scene): void {
-  addCanvas(scene, TEX.level, bakeLevel(HOUSE_MAP, ROOMS, DECORATIONS));
+  const art = getLevelArt();
+  addCanvas(scene, TEX.level, art.canvas);
+  addCanvas(scene, TEX.light, art.light);
+  addCanvas(scene, TEX.flash, art.flash);
+  art.beams.forEach((b, i) => addCanvas(scene, TEX.beam(i), b));
+  const mote = new PixelCanvas(1, 1);
+  mote.set(0, 0, 0xffffff);
+  addCanvas(scene, TEX.mote, mote);
   addCanvas(scene, TEX.reticle, buildReticle());
 
   const sheet = addCanvas(scene, TEX.spider, buildSpiderSheet());

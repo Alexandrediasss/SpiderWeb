@@ -1,13 +1,31 @@
 // Decorações de fundo desenhadas em código (janelas, quadros, luminárias...).
 // Cada função recebe a posição em pixels do canto superior esquerdo.
-import type { DecorKind } from '../level/houseMap';
+import type { Vec2 } from '../physics/surfaces';
+import type { Decor, DecorKind } from '../level/houseMap';
 import { type PixelCanvas, hash } from './PixelCanvas';
 import { PAL } from './palette';
 import { mixColor, shadeColor } from './tilePainters';
 
 const D = PAL.decor;
 
-type DecorPainter = (pc: PixelCanvas, x: number, y: number, flipX: boolean) => void;
+/** Marca pixels que mostram o lado de fora (vidro das janelas): lá a chuva e o relâmpago aparecem. */
+export type OutsideMarker = (x: number, y: number, outside: boolean) => void;
+
+type DecorPainter = (pc: PixelCanvas, x: number, y: number, flipX: boolean, mark: OutsideMarker) => void;
+
+const noMark: OutsideMarker = () => {};
+
+/** Onde fica a lâmpada (a fonte de luz) de uma luminária. */
+export function lampBulb(d: Decor): Vec2 {
+  return { x: d.tx * 16 + 8, y: d.ty * 16 + 22 };
+}
+
+/** Centro do vidro de uma janela (de onde entra a luz do relâmpago), ou null se não for janela. */
+export function windowCenter(d: Decor): Vec2 | null {
+  if (d.kind === 'window') return { x: d.tx * 16 + 24, y: d.ty * 16 + 20 };
+  if (d.kind === 'roundWindow') return { x: d.tx * 16 + 16, y: d.ty * 16 + 16 };
+  return null;
+}
 
 function frameRect(pc: PixelCanvas, x: number, y: number, w: number, h: number, light: number, dark: number, t = 2): void {
   pc.rect(x, y, w, h, dark);
@@ -15,21 +33,30 @@ function frameRect(pc: PixelCanvas, x: number, y: number, w: number, h: number, 
   pc.rect(x + t, y + t, w - t * 2, h - t * 2, dark);
 }
 
-const windowDecor: DecorPainter = (pc, x, y) => {
+/** Pinta um retângulo de moldura/cortina por cima do vidro: esses pixels deixam de ser "lado de fora". */
+function inside(pc: PixelCanvas, mark: OutsideMarker, x: number, y: number, w: number, h: number, c: number): void {
+  pc.rect(x, y, w, h, c);
+  for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) mark(xx, yy, false);
+}
+
+const windowDecor: DecorPainter = (pc, x, y, _flipX, mark) => {
   const w = 44;
   const h = 40;
   const gx = x + 2;
-  // Vidro com degradê de céu
+  // Vidro com o céu da noite
   frameRect(pc, gx, y, w, h, D.frameLight, D.frame, 3);
-  for (let yy = 3; yy < h - 3; yy++) pc.rect(gx + 3, y + yy, w - 6, 1, mixColor(D.glassTop, D.glassBottom, yy / h));
-  // Reflexos diagonais
+  for (let yy = 3; yy < h - 3; yy++) {
+    pc.rect(gx + 3, y + yy, w - 6, 1, mixColor(D.glassTop, D.glassBottom, yy / h));
+    for (let xx = 3; xx < w - 3; xx++) mark(gx + xx, y + yy, true);
+  }
+  // Reflexos diagonais (fracos: é noite)
   for (let i = 0; i < 10; i++) {
-    pc.set(gx + 8 + i, y + 18 - i, 0xffffff, 0.55);
-    pc.set(gx + 12 + i, y + 18 - i, 0xffffff, 0.35);
+    pc.set(gx + 8 + i, y + 18 - i, D.glassShine, 0.35);
+    pc.set(gx + 12 + i, y + 18 - i, D.glassShine, 0.2);
   }
   // Caixilhos
-  pc.rect(gx + w / 2 - 1, y + 3, 2, h - 6, D.frame);
-  pc.rect(gx + 3, y + h / 2 - 1, w - 6, 2, D.frame);
+  inside(pc, mark, gx + w / 2 - 1, y + 3, 2, h - 6, D.frame);
+  inside(pc, mark, gx + 3, y + h / 2 - 1, w - 6, 2, D.frame);
   // Peitoril
   pc.rect(gx - 2, y + h, w + 4, 3, D.sill);
   pc.rect(gx - 2, y + h + 3, w + 4, 1, shadeColor(D.sill, 0.7));
@@ -41,13 +68,14 @@ const windowDecor: DecorPainter = (pc, x, y) => {
       for (let xx = 0; xx < 8; xx++) {
         const fold = (xx + sway) % 3 === 0;
         pc.set(cx + xx, y + yy, fold ? D.curtainDark : D.curtain);
+        mark(cx + xx, y + yy, false);
       }
     }
   }
   pc.rect(x - 2, y - 3, w + 8, 2, D.goldDark);
 };
 
-const roundWindow: DecorPainter = (pc, x, y) => {
+const roundWindow: DecorPainter = (pc, x, y, _flipX, mark) => {
   const cx = x + 16;
   const cy = y + 16;
   pc.disc(cx, cy, 14, D.frame);
@@ -55,12 +83,14 @@ const roundWindow: DecorPainter = (pc, x, y) => {
   pc.disc(cx, cy, 11, D.frame);
   for (let yy = -10; yy <= 10; yy++) {
     for (let xx = -10; xx <= 10; xx++) {
-      if (xx * xx + yy * yy <= 100) pc.set(cx + xx, cy + yy, mixColor(D.glassTop, D.glassBottom, (yy + 10) / 20));
+      if (xx * xx + yy * yy > 100) continue;
+      pc.set(cx + xx, cy + yy, mixColor(D.glassTop, D.glassBottom, (yy + 10) / 20));
+      mark(cx + xx, cy + yy, true);
     }
   }
-  pc.rect(cx - 1, cy - 10, 2, 21, D.frame);
-  pc.rect(cx - 10, cy - 1, 21, 2, D.frame);
-  for (let i = 0; i < 5; i++) pc.set(cx - 6 + i, cy - 3 - i, 0xffffff, 0.6);
+  inside(pc, mark, cx - 1, cy - 10, 2, 21, D.frame);
+  inside(pc, mark, cx - 10, cy - 1, 21, 2, D.frame);
+  for (let i = 0; i < 5; i++) pc.set(cx - 6 + i, cy - 3 - i, D.glassShine, 0.4);
 };
 
 const painting: DecorPainter = (pc, x, y) => {
@@ -95,15 +125,7 @@ const lamp: DecorPainter = (pc, x, y) => {
     pc.set(cx + half, y + 14 + i, D.lampShadeDark);
   }
   pc.rect(cx - 1, y + 21, 3, 2, D.lampLight);
-  // Cone de luz suave
-  for (let yy = 0; yy < 70; yy++) {
-    const half = 8 + yy * 0.55;
-    const alpha = 0.16 * (1 - yy / 70);
-    for (let xx = -half; xx <= half; xx++) {
-      const edge = 1 - Math.abs(xx) / half;
-      pc.set(cx + xx, y + 23 + yy, D.lampLight, alpha * Math.min(1, edge * 2.5));
-    }
-  }
+  // O cone de luz não é pintado aqui: é a luz dinâmica de src/art/lighting.ts.
 };
 
 const clock: DecorPainter = (pc, x, y) => {
@@ -200,3 +222,8 @@ export const DECOR_PAINTERS: Record<DecorKind, DecorPainter> = {
   cobweb,
   cloud,
 };
+
+/** Desenha uma decoração. `mark` (opcional) recebe os pixels de vidro que mostram o lado de fora. */
+export function paintDecor(kind: DecorKind, pc: PixelCanvas, x: number, y: number, flipX = false, mark = noMark): void {
+  DECOR_PAINTERS[kind](pc, x, y, flipX, mark);
+}

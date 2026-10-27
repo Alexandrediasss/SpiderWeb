@@ -99,6 +99,8 @@ export const DECORATIONS: Decor[] = [
   { kind: 'cloud', tx: 64, ty: 3 },
   // Sótão
   { kind: 'roundWindow', tx: 38, ty: 4 },
+  { kind: 'lamp', tx: 23, ty: 6 },
+  { kind: 'lamp', tx: 56, ty: 6 },
   { kind: 'cobweb', tx: 34, ty: 3 },
   { kind: 'cobweb', tx: 44, ty: 3, flipX: true },
   { kind: 'cobweb', tx: 10, ty: 9 },

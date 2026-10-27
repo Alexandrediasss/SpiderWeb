@@ -8,6 +8,10 @@ export class Hud {
     this.help?.classList.toggle('hidden');
   }
 
+  showHelp(on: boolean): void {
+    this.help?.classList.toggle('hidden', !on);
+  }
+
   showDebug(on: boolean): void {
     this.debug?.classList.toggle('hidden', !on);
   }

@@ -1,15 +1,24 @@
-# GDD: Spider Simulator
+# GDD: Spider Web
 
 ## Conceito
 
-Você é uma pequena aranha numa casa enorme. O jogo é um *walkthrough* 2D de exploração: não há pressa nem morte (por enquanto). A diversão está em **se mover como uma aranha**: grudar em qualquer superfície, correr pelas paredes e atravessar cômodos se balançando nas próprias teias.
+Você é uma pequena aranha numa casa enorme, numa **noite de tempestade**. O jogo é um *walkthrough* 2D de exploração: não há pressa nem morte (por enquanto). A diversão está em **se mover como uma aranha**: grudar em qualquer superfície, correr pelas paredes e atravessar cômodos se balançando nas próprias teias.
+
+A casa está escura, iluminada só pelas luminárias. Lá fora chove, e de vez em quando um relâmpago clareia tudo pelas janelas e o trovão vem depois, como em *Gone Home*.
+
+O jogo é em **inglês** (textos da interface). Código também em inglês; comentários e docs em português.
 
 ## Pilares
 
 1. **Grudar em tudo.** Chão, paredes, teto e móveis são caminho. A aranha contorna cantos sem parar.
 2. **Movimento fluido.** Andar, correr, pular e balançar devem se encadear sem travar.
 3. **Uma casa para explorar.** Cada cômodo tem móveis que viram terreno: embaixo da cama, dentro da banheira, em cima do armário.
-4. **Pixel art aconchegante.** Cores quentes, luz de casa, detalhes pequenos.
+4. **Pixel art de noite chuvosa.** Escuro azulado, poças de luz quente das lâmpadas, chuva e relâmpagos. Nunca escuro a ponto de não enxergar.
+
+## Fluxo
+
+1. **Tela inicial:** só "SPIDER WEB" e o botão PLAY, por cima do sótão com chuva. A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
+2. **Jogo:** a música some, a câmera desce até a aranha e o controle é liberado. No jogo, só os sons da casa: passos, chuva e trovões.
 
 ## Controles
 
@@ -19,11 +28,12 @@ Você é uma pequena aranha numa casa enorme. O jogo é um *walkthrough* 2D de e
 | Correr | Segurar `Shift` | Segurar `LT` ou `LB` |
 | Pular / soltar da superfície | `Espaço` (pula na direção oposta à superfície) | `A` |
 | Mirar | Cursor do mouse | Analógico direito |
-| Atirar teia | Segurar o **botão esquerdo do mouse** | Segurar `RT` ou `RB` |
+| Atirar teia | Segurar o **botão esquerdo do mouse** | Segurar `X` ou `RT` |
 | Subir / descer na teia | `W` / `S` enquanto pendurada | Analógico esquerdo ↑/↓ |
 | Balançar | `A` / `D` enquanto pendurada | Analógico esquerdo ←/→ |
-| Soltar a teia | Soltar o botão do mouse (mantém o embalo) | Soltar o gatilho |
-| Ligar/desligar música | `M` | `Select` |
+| Soltar a teia | Soltar o botão do mouse (mantém o embalo) | Soltar `X` / o gatilho |
+| Começar (tela inicial) | Clique em PLAY, `Enter` ou `Espaço` | `A` ou `Start` |
+| Som liga/desliga | `M` | `Select` |
 | Ajuda | `H` | `Start` |
 | Debug | `G` | — |
 
@@ -42,7 +52,7 @@ Um corte lateral da casa (estilo casa de bonecas), com 80×44 tiles de 16 px:
 
 | Andar | Cômodos | Destaques |
 |---|---|---|
-| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas; alçapão para o quarto |
+| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto |
 | Andar de cima | Quarto, Banheiro | Cama (dá para passar embaixo), armário, prateleira; banheira, vaso, pia |
 | Térreo | Sala, Cozinha | Estante, sofá, mesa com cadeiras; balcão, armários suspensos, geladeira |
 
@@ -55,25 +65,29 @@ Os andares se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (q
 - O cenário é "assado" numa única textura no boot; os móveis de fundo (maiúsculas no mapa) ficam escurecidos para dar profundidade.
 - Sombra suave embaixo e ao lado de superfícies sólidas.
 - A teia é desenhada pixel a pixel (linha de Bresenham), sem anti-aliasing.
+- **Noite:** o cenário é multiplicado por um mapa de luz: escuro azulado em todo lugar, cones de luz quente embaixo das luminárias (com sombra dos móveis), feixe visível com poeira, chuva no céu e nas janelas, relâmpagos. Degradês em faixas com pontilhado. Spec: [features/atmosphere.md](features/atmosphere.md)
 
-## Música
+## Som
 
-Piano solo, calmo e misterioso: uma valsa lenta em Ré menor, como um tema clássico de filme de Drácula. É gerada por código e fica em loop de cerca de 1min30. Spec: [features/music.md](features/music.md)
+- **Música:** piano solo, calmo e misterioso: uma valsa lenta em Ré menor, como um tema clássico de filme de Drácula. Gerada por código, em loop de cerca de 1min30. **Toca só na tela inicial.** Spec: [features/music.md](features/music.md)
+- **No jogo:** passinhos da aranha, chuva abafada e trovões de vez em quando (24 a 55 s entre raios). Tudo sintetizado. Spec: [features/atmosphere.md](features/atmosphere.md)
 
 ## Câmera
 
-Segue a aranha com suavização, presa aos limites do mapa.
+Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mostra o sótão e passeia devagar; ao começar, desce até a aranha.
 
 ## Backlog (pós-MVP)
 
 - [ ] Moscas e mosquitos para caçar (coletáveis) e um contador
 - [ ] Descer de rapel a partir do teto (fio vertical)
 - [ ] Teias permanentes: pontes e redes que ficam no cenário
-- [x] Música de fundo (piano gótico em loop)
+- [x] Música (piano gótico em loop), hoje só na tela inicial
 - [x] Suporte a controle (gamepad), com vibração quando a teia gruda
-- [ ] Efeitos sonoros: passos, disparo de teia, ambiente da casa
-- [ ] Uma música diferente por andar (sótão mais sombrio?)
+- [x] Noite chuvosa: luz das luminárias, chuva, relâmpagos e trovões
+- [x] Efeitos sonoros: passos, chuva, trovões
+- [ ] Efeitos sonoros: disparo de teia, pouso, rangidos da casa
+- [ ] Luminárias piscando quando cai um raio perto
+- [x] Tela inicial (HTML/CSS por cima do canvas)
+- [ ] Tela de pausa
 - [ ] Perigos: chinelo, aspirador, gato
-- [ ] Ciclo dia/noite pela janela
-- [ ] Menu inicial e tela de pausa (HTML/CSS por cima do canvas)
 - [ ] Mapa editável no Tiled, se o ASCII ficar pequeno demais

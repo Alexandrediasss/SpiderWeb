@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spider Simulator</title>
+    <title>Spider Web</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
     <style>
@@ -11,7 +11,7 @@
       body {
         margin: 0;
         height: 100%;
-        background: #1a1418;
+        background: #0b0c14;
         overflow: hidden;
         font-family: 'Press Start 2P', monospace;
       }
@@ -25,9 +25,9 @@
       }
       .panel {
         position: fixed;
-        background: rgba(20, 14, 18, 0.82);
-        color: #f2e9dc;
-        border: 2px solid #6b4a2e;
+        background: rgba(12, 12, 20, 0.82);
+        color: #e9e4f2;
+        border: 2px solid #3d3a58;
         padding: 10px 12px;
         font-size: 9px;
         line-height: 1.8;
@@ -50,26 +50,98 @@
       .hidden {
         display: none;
       }
+
+      /* ---------- tela inicial ---------- */
+      #title {
+        --flash: 0;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 9vh;
+        background: radial-gradient(ellipse at center, rgba(8, 9, 18, 0.1) 30%, rgba(5, 6, 12, 0.78) 100%);
+        transition: opacity 0.9s ease;
+      }
+      #title.leaving {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #title h1 {
+        position: relative;
+        margin: 0;
+        font-size: clamp(30px, 8vw, 84px);
+        font-weight: normal;
+        letter-spacing: 0.08em;
+        color: #e8e4f0;
+        text-shadow:
+          0 6px 0 #14121c,
+          0 0 calc(18px + var(--flash) * 40px) rgba(170, 185, 255, calc(0.25 + var(--flash) * 0.6));
+        filter: brightness(calc(0.9 + var(--flash) * 0.9));
+      }
+      /* O fio de teia que segura o título. */
+      #title h1::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 100%;
+        width: 2px;
+        height: 60vh;
+        background: linear-gradient(rgba(232, 228, 240, 0), rgba(232, 228, 240, 0.7));
+      }
+      #play {
+        font: inherit;
+        font-size: clamp(14px, 2.4vw, 24px);
+        letter-spacing: 0.15em;
+        color: #e8e4f0;
+        background: rgba(10, 10, 18, 0.55);
+        border: 3px solid #e8e4f0;
+        padding: 0.9em 1.6em 0.8em 1.9em;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #14121c;
+      }
+      #play:hover,
+      #play:focus-visible {
+        color: #14121c;
+        background: #e8e4f0;
+        outline: none;
+      }
+      #play:active {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #14121c;
+      }
+      #play::before {
+        content: '▶ ';
+        animation: blink 1.1s steps(2, start) infinite;
+      }
+      @keyframes blink {
+        to {
+          visibility: hidden;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="game"></div>
-    <div id="help" class="panel"><b>SPIDER SIMULATOR</b>
-A/D  andar no chão e no teto
-W/S  subir e descer paredes
-SHIFT  correr
-ESPAÇO  pular / soltar
-MOUSE (segurar)  teia
-  W/S na teia: subir/descer
-  A/D na teia: balançar
-M  música   H  ajuda   G  debug
+    <div id="help" class="panel hidden"><b>KEYBOARD + MOUSE</b>
+A/D  walk on floors and ceilings
+W/S  climb walls
+SHIFT  run       SPACE  jump / let go
+MOUSE (hold)  web
+  W/S on the web: reel in / out
+  A/D on the web: swing
+M  mute   H  help   G  debug
 
-<b>CONTROLE</b>
-ANALÓG. ESQ / D-PAD  andar
-LT ou LB  correr    A  pular
-ANALÓG. DIR  mirar  RT ou RB  teia
-SELECT  música   START  ajuda</div>
+<b>CONTROLLER</b>
+L-STICK / D-PAD  walk   LT or LB  run
+A  jump   R-STICK  aim   X or RT  web
+SELECT  mute   START  help</div>
     <div id="debug" class="panel hidden"></div>
+    <div id="title">
+      <h1>SPIDER WEB</h1>
+      <button id="play" type="button">PLAY</button>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

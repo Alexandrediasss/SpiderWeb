@@ -16,7 +16,19 @@ export const PAL = {
     legFar: 0x24181a,
   },
 
-  sky: { top: 0x7fb6e0, bottom: 0xcbe5f2, cloud: 0xf6fbff, cloudShade: 0xd9e9f4 },
+  // Noite de tempestade: o céu já é pintado escuro (lá fora a luz da casa não chega).
+  sky: { top: 0x080a14, bottom: 0x1a2036, cloud: 0x2a3046, cloudShade: 0x1d2133 },
+
+  /** Luz (multiplica as cores do cenário). Spec: docs/features/atmosphere.md */
+  light: {
+    /** Escuro da casa onde nenhuma lâmpada alcança: azulado, mas nunca preto. */
+    ambient: 0x575b7c,
+    lamp: 0xffd9a0,
+    flash: 0xc9d4ff,
+    rain: 0x8798bd,
+    bolt: 0xf2f0ff,
+    dust: 0xffe2b0,
+  },
 
   brick: { base: [0x8a4b3c, 0x96533f, 0x7c4133], light: 0xa8664f, dark: 0x6b372b, mortar: 0x4a332e },
   floor: { board: [0xa86f42, 0xb07746, 0x9d673d], boardLight: 0xc98a55, seam: 0x6e4528, beam: 0x5a4030, beamDark: 0x47321f, plaster: 0xcfc2ad },
@@ -50,8 +62,9 @@ export const PAL = {
   decor: {
     frame: 0x6b4a2e,
     frameLight: 0x8c6640,
-    glassTop: 0x9ccbe8,
-    glassBottom: 0xd2ecf7,
+    glassTop: 0x0b0e1c,
+    glassBottom: 0x222a45,
+    glassShine: 0x8a97c4,
     sill: 0xe8dcc8,
     curtain: 0xc0574a,
     curtainDark: 0x963f36,

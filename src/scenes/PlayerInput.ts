@@ -1,8 +1,9 @@
 // Lê teclado, mouse e controle e converte para o SpiderInput abstrato.
 import Phaser from 'phaser';
 import { GAMEPAD, WEB } from '../config';
+import type { LevelGrid } from '../physics/LevelGrid';
 import type { Vec2 } from '../physics/surfaces';
-import { type AimDevice, type GamepadFrame, GamepadReader, mergeInput } from '../systems/gamepad';
+import { type AimDevice, type GamepadFrame, GamepadReader, assistAim, mergeInput } from '../systems/gamepad';
 import type { SpiderInput } from '../systems/input';
 
 type KeyName = 'W' | 'A' | 'S' | 'D' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'SPACE' | 'SHIFT';
@@ -16,8 +17,13 @@ export class PlayerInput {
   padFrame: GamepadFrame | null = null;
   /** Quem manda na mira: o último dispositivo usado para mirar. */
   aimDevice: AimDevice = 'mouse';
+  /** Direção da mira do controle já com a mira assistida. */
+  padAimDir: Vec2 = { x: 0, y: -1 };
 
-  constructor(private readonly scene: Phaser.Scene) {
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly grid: LevelGrid,
+  ) {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('Teclado indisponível');
     this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,SHIFT') as Record<KeyName, Phaser.Input.Keyboard.Key>;
@@ -48,10 +54,13 @@ export class PlayerInput {
     };
 
     this.pad = findGamepad();
-    this.padFrame = this.padReader.read(this.pad);
+    this.padFrame = this.padReader.read(this.pad, performance.now());
     if (this.padFrame && (this.padFrame.aimMoved || this.padFrame.webPressed)) this.aimDevice = 'gamepad';
+    if (this.padFrame) {
+      this.padAimDir = assistAim(this.grid, spiderPos, this.padFrame.aimDir, WEB.range, GAMEPAD.aimAssistDeg, GAMEPAD.aimAssistStepDeg);
+    }
 
-    return mergeInput(kbInput, this.padFrame, this.aimDevice, spiderPos, WEB.range);
+    return mergeInput(kbInput, this.padFrame, this.aimDevice, spiderPos, this.padAimDir, WEB.range);
   }
 
   /** Tranco curto no controle; ignora se o navegador ou o controle não suportarem. */
