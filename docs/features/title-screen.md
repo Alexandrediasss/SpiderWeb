@@ -1,6 +1,7 @@
 # Spec: tela inicial
 
 Código: `src/scenes/TitleScreen.ts` (controlador do HTML), o elemento `#title` em `index.html` e o modo `title` da `GameScene`.
+Depois do PLAY vem a seleção de atos: [acts.md](acts.md).
 
 ## O que aparece
 
@@ -11,14 +12,14 @@ Código: `src/scenes/TitleScreen.ts` (controlador do HTML), o elemento `#title` 
 
 ## Regras
 
-1. **Começar:** clicar em PLAY, ou `Enter`/`Espaço`, ou `A`/`Start` no controle. Vale só uma vez.
-2. **Ao começar:**
-   - o título some com fade;
+1. **Começar:** clicar em PLAY, ou `Enter`/`Espaço`, ou `A`/`Start` no controle. O título some com fade e abre a **seleção de atos** ([acts.md](acts.md)), com a música ainda tocando. `Esc`/`B` lá volta para cá.
+   - O `Enter` do PLAY não chega na seleção de atos (`stopImmediatePropagation`), senão ele já escolheria o ato 1.
+2. **Ao escolher o ato 1:**
    - a música some em `MUSIC.fadeOutSec`;
    - a tela escurece em `TITLE.toIntroFadeSec` e começa a **cutscene de abertura** ([intro.md](intro.md));
    - quando ela termina (ou é pulada), a aranha sai do buraco de rato na sala e aparecem os corações e o painel de ajuda (se o jogador não o escondeu com `H`).
-3. **Voltar:** "Main Menu" no menu de pausa reinicia a cena com a tela inicial, e a música recomeça (veja `pause-menu.md`). Depois de morrer ou de "Restart", a tela inicial e a cutscene são puladas.
-4. **Sem pulo acidental:** por `TITLE.inputGraceSec` depois do Play, pulo e teias são ignorados. Assim o `Espaço` ou `A` usado para começar não vira pulo.
+3. **Voltar:** "Main Menu" no menu de pausa reinicia a cena com a tela inicial, e a música recomeça (veja `pause-menu.md`). Depois de morrer ou de "Restart", a tela inicial e a cutscene são puladas. Depois do fim do ato, o jogo volta direto para a seleção de atos.
+4. **Sem pulo acidental:** por `TITLE.inputGraceSec` depois do Play (e ao fechar uma carta), pulo, teias e leitura são ignorados. Assim o `Espaço` ou `A` usado para começar não vira pulo.
 5. Na tela inicial a aranha não recebe input, e a mira e os corações ficam escondidos. Os ratos já patrulham atrás do título.
 6. `M` / `Select` deixa tudo mudo, também na tela inicial.
 

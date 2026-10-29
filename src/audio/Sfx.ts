@@ -91,6 +91,29 @@ export class Sfx {
     src.connect(low).connect(amp).connect(this.destination);
   }
 
+  /** Papel amassando (abrir e fechar uma carta): estalinhos de ruído agudo em sequência, com um sopro por baixo. */
+  paper(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.shotVolume * 0.7;
+    const swish = this.noiseSource(t, 0.3);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 0.8;
+    band.frequency.setValueAtTime(1800, t);
+    band.frequency.linearRampToValueAtTime(3200, t + 0.25);
+    swish.connect(band).connect(this.envelope(t, vol * 0.35, 0.05, 0.28)).connect(this.destination);
+    for (let i = 0; i < 7; i++) {
+      const at = t + 0.02 + i * 0.035 * this.vary();
+      const crack = this.noiseSource(at, 0.03);
+      const high = ctx.createBiquadFilter();
+      high.type = 'bandpass';
+      high.Q.value = 2.5;
+      high.frequency.value = 2600 + 2400 * (this.vary() - 0.94) * 8;
+      crack.connect(high).connect(this.envelope(at, vol * (0.5 + (i % 3) * 0.25), 0.002, 0.025)).connect(this.destination);
+    }
+  }
+
   // ---------- peças ----------
 
   /** Variação determinística de ±6% no tom, para os sons não serem idênticos. */

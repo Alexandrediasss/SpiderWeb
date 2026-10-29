@@ -1,6 +1,6 @@
 # Spider Web
 
-Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Fluxo: tela inicial → cutscene de abertura → jogo. No sótão, um buraco no telhado leva à cutscene da rua (a horda de zumbis) e depois de volta ao jogo.
+Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Pela casa há cartas do pai da família contando a invasão dos zumbis. Fluxo: tela inicial → seleção de atos (estilo Telltale) → cutscene de abertura → jogo. O ato 1 termina no buraco do telhado do sótão: cutscene da rua (a horda de zumbis) → "END OF ACT 1" → seleção de atos.
 Visão de design completa: [docs/GDD.md](docs/GDD.md).
 
 ## Stack e comandos
@@ -18,12 +18,12 @@ src/
   config.ts          todas as constantes ajustáveis (velocidades, gravidade, luz, tempestade, volumes)
   main.ts            cria o Phaser.Game
   physics/           LÓGICA PURA, sem Phaser: grade de tiles (com linha de visão), colisão AABB, superfícies
-  systems/           LÓGICA PURA, sem Phaser: SpiderMotor, teia, input, controle, tempestade, ratos, combate, cutscene, horda, buraco do telhado
-  level/             mapa ASCII da casa + legenda + cômodos + decorações + ratos + texto da história (story.ts)
-  art/               pixel art gerada por código (sem PNG): paleta, sprites (aranha, rato, corações, zumbis), tiles, cenário, rua, luz
-  audio/             som gerado por código (sem MP3): música, chuva, trovão, passos, guinchos/chiados, gemidos; `sound.ts` cria tudo uma vez
-  entities/          objetos Phaser que desenham a lógica (Spider; Atmosphere = luz/chuva/raios; CombatView = ratos/teias)
-  scenes/            BootScene (texturas), GameScene (título, jogo, pausa, morte), IntroScene e StreetScene (cutscenes), HUD e menus em HTML
+  systems/           LÓGICA PURA, sem Phaser: SpiderMotor, teia, input, controle, tempestade, ratos, combate, cutscene, horda, buraco do telhado, cartas, progresso salvo
+  level/             mapa ASCII da casa + legenda + cômodos + decorações + ratos + texto da história (story.ts) + cartas (letters.ts) + atos (acts.ts)
+  art/               pixel art gerada por código (sem PNG): paleta, sprites (aranha, rato, corações, zumbis), tiles, cenário, rua, luz, cartas, arte dos atos
+  audio/             som gerado por código (sem MP3): música, chuva, trovão, passos, guinchos/chiados, gemidos, papel; `sound.ts` cria tudo uma vez
+  entities/          objetos Phaser que desenham a lógica (Spider; Atmosphere = luz/chuva/raios; CombatView = ratos/teias; LetterSprites = cartas)
+  scenes/            BootScene (texturas), GameScene (título, atos, jogo, cartas, pausa, morte, fim do ato), IntroScene e StreetScene (cutscenes), HUD e menus em HTML
 tests/               testes Vitest da lógica pura
 docs/                GDD + uma spec por feature
 ```
@@ -53,7 +53,9 @@ docs/                GDD + uma spec por feature
 - Noite chuvosa (luz das luminárias, chuva, relâmpagos, trovões, passos): [docs/features/atmosphere.md](docs/features/atmosphere.md)
 - Tela inicial (título, Play, transição para a cutscene): [docs/features/title-screen.md](docs/features/title-screen.md)
 - Cutscene de abertura (texto, despertar no líquido mutante, buraco de rato, como editar): [docs/features/intro.md](docs/features/intro.md)
-- Buraco no telhado e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
+- Buraco no telhado e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos; é o fim do ato 1): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
+- Cartas do pai (onde ficam, aviso READ, página com as patas, texto): [docs/features/letters.md](docs/features/letters.md)
+- Atos (seleção estilo Telltale, fim do ato, progresso salvo no navegador): [docs/features/acts.md](docs/features/acts.md)
 - Ratos, vida, mordida, teias de ataque e de prender, sons de dano: [docs/features/combat.md](docs/features/combat.md)
 - Menu de pausa (Resume, Restart, Main Menu; reinício da cena): [docs/features/pause-menu.md](docs/features/pause-menu.md)
 - Música (partitura, piano sintetizado, loop; só na tela inicial): [docs/features/music.md](docs/features/music.md)
@@ -67,11 +69,15 @@ docs/                GDD + uma spec por feature
   - `window.__combat` (vida e ratos: `__combat.health.hp = 99` para testar à vontade);
   - `window.__storm` (o `Storm`: `__storm.strike(true)` faz cair um raio perto agora);
   - `window.__music` (o `MusicPlayer`) e `window.__audio` (o `AudioHub`);
-  - `__scene.goToStreet()` começa a cutscene da rua na hora; durante ela, `window.__street` é a `StreetScene`.
-- Galeria em http://localhost:5173/art.html: mostra a aranha, o rato (e o rato preso), os corações, os zumbis, as decorações, os cenários da rua, o cenário com e sem a luz da noite, o mapa de luz e o do relâmpago, e tem botões para ouvir a música e a horda.
+  - `__scene.goToStreet()` começa a cutscene da rua na hora; durante ela, `window.__street` é a `StreetScene`;
+  - `__scene.openLetter('table')` (ou `'bed'`, `'attic'`) abre uma carta; `__scene.endAct()` mostra o fim do ato;
+  - `__spider.placeAt(x, y)` teleporta a aranha (px do mundo; ela cai e gruda no que estiver embaixo);
+  - `localStorage.removeItem('spiderweb.progress')` zera o progresso salvo.
+- Galeria em http://localhost:5173/art.html: mostra a aranha, o rato (e o rato preso), os corações, as cartas (folhinha e páginas), a arte dos atos, os zumbis, as decorações, os cenários da rua, o cenário com e sem a luz da noite, o mapa de luz e o do relâmpago, e tem botões para ouvir a música e a horda.
 - Para testar o controle sem ter um: no console, troque `navigator.getGamepads` por uma função que devolve um objeto falso com `mapping: 'standard'`, `axes` e `buttons` (veja `tests/gamepad.test.ts`).
 - Para checar o áudio sem ouvir: renderize com `OfflineAudioContext` (+ `PianoSynth`, `StormSounds`, `Footsteps` ou `Sfx`) e meça o pico e o RMS (sem clipping, pico abaixo de 1). Dá para importar os módulos no console do dev server com `await import('/src/audio/StormSounds.ts')`.
   - Compare também acima de 250 Hz (passa-alta antes de medir): é o que caixinhas de notebook tocam. Um som só de grave "não existe" para quem joga no notebook.
 - O painel do navegador do app pode deixar a página em segundo plano: o Phaser só termina o boot quando ela fica visível (um clique resolve).
 - Cutscene sem esperar: `const intro = __scene.game.scene.getScene('intro')` e mude `intro.elapsed` (veja os nomes em `intro.tl.steps`); `intro.done = true` congela o quadro para olhar. Na da rua, o mesmo com `__street.elapsed` (o plano troca sozinho).
+- Teclas no painel do navegador do app: a ferramenta de tecla pode não mandar `keyCode`, e o Phaser usa `keyCode`. Para testar `F`, `Esc` etc. no jogo, dispare `new KeyboardEvent('keydown', { code: 'KeyF', keyCode: 70 })` no `window`.
 - Testes de HTML: confira o estilo calculado (`getComputedStyle(el).display`), não só a classe. Foi assim que o título "escondido" continuou aparecendo.

@@ -28,12 +28,6 @@ export function inRoofHole(p: Vec2, hole: TileRect, tile: number): boolean {
   return p.x >= r.x0 && p.x < r.x1 && p.y >= r.y0 && p.y < r.y1;
 }
 
-/** Onde a aranha reaparece ao voltar da cutscene: logo abaixo do buraco, no ar (ela cai no sótão). */
-export function roofReturnPoint(hole: TileRect, tile: number, half: number): Vec2 {
-  const r = tileRectToPx(hole, tile);
-  return { x: (r.x0 + r.x1) / 2, y: r.y1 + half + 2 };
-}
-
 /**
  * Faixa embaixo do buraco por onde a chuva entra: da borda de baixo do buraco até o primeiro
  * tile sólido (o chão do sótão). Um pouco mais estreita que o buraco.

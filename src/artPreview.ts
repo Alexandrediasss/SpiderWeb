@@ -16,6 +16,10 @@ import {
   buildWideStreet,
 } from './art/streetArt';
 import { buildZombieSheets } from './art/zombieArt';
+import { buildActArt } from './art/actArt';
+import { buildGlint, buildNote, buildParchment } from './art/letterArt';
+import { ACTS } from './level/acts';
+import { LETTERS } from './level/letters';
 import { PixelCanvas } from './art/PixelCanvas';
 import { DECOR_PAINTERS, paintDecor } from './art/decorArt';
 import { getLevelArt } from './art/levelArt';
@@ -95,6 +99,14 @@ const kinds = Object.keys(DECOR_PAINTERS) as DecorKind[];
 const decor = new PixelCanvas(8 + kinds.length * 44, 80);
 kinds.forEach((k, i) => paintDecor(k, decor, 4 + i * 44, 12));
 show('Decorações', decor, 3);
+
+// Cartas: a folhinha no cenário, o brilho e cada página aberta (com as patas segurando).
+show('Carta no cenário e o brilho', buildNote(), 8);
+show('Brilho (carta não lida)', buildGlint(), 8);
+for (const l of LETTERS) show(`Página: ${l.id}`, buildParchment(l.paper), 3);
+
+// Seleção de atos: a arte de cada ato.
+for (const a of ACTS) show(`Arte do ato ${a.number}: ${a.name}`, buildActArt(a.id), 3);
 
 // Cutscene: o palco já com a escuridão (só a luz do cano e a do buraco), a bolha e a poça verdes.
 const stage = buildIntroStage();

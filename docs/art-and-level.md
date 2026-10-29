@@ -16,6 +16,8 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Buraco no telhado do sótão e a poça embaixo | `~` no mapa + `ROOF_HOLE` + decorações `roofHole` e `puddle` (`houseMap.ts`, `decorArt.ts`) |
 | Zumbis (6 visuais, caminhada, vários tamanhos; folha só dos olhos) | `src/art/zombieArt.ts` (cores em `PAL.zombie`) |
 | Cutscene da rua: telhado de fora, casas, calçadas, asfalto, beira do telhado | `src/art/streetArt.ts` (cores em `PAL.street`; posições em `ROOF_SHOT`, `STREET_SHOT`, `WIDE_SHOT`) |
+| Cartas: folhinha no cenário, brilho, página aberta com as patas segurando | `src/art/letterArt.ts` (cores em `PAL.letter`; onde ficam: `LETTERS` em `src/level/letters.ts`) |
+| Arte de cada ato (seleção de atos), com moldura gasta | `src/art/actArt.ts` (cores em `PAL.acts`) |
 | Tiles e papéis de parede | `src/art/tilePainters.ts` |
 | Janelas, quadros, luminárias, teias... | `src/art/decorArt.ts` |
 | Montagem do cenário numa textura só (+ máscara do lado de fora) | `src/art/levelBaker.ts` |
@@ -56,6 +58,8 @@ O mapa é ASCII em `HOUSE_MAP`: cada caractere é um tile de 16×16, e todas as 
 - **Decoração nova:** crie a função em `decorArt.ts`, registre em `DECOR_PAINTERS` e adicione o tipo em `DecorKind`. Se ela mostrar o lado de fora (vidro), chame `mark(x, y, true)` nesses pixels e `mark(x, y, false)` no que for pintado por cima (moldura, cortina): é lá que a chuva e o relâmpago aparecem.
 - **Luz nova:** cada decoração `lamp` vira uma fonte de luz automaticamente (cone, sombra, feixe e poeira). Janelas viram fonte de luz no relâmpago.
 - **Quadro novo da aranha:** adicione em `SPIDER_FRAMES` e use em `registerAnimations` (textures.ts). O corpo é o ASCII `BODY` (22×14); as pernas são linhas calculadas por fase.
+- **Página de carta:** `buildParchment` desenha o papel (manchas pelo `seed`, canto rasgado ou dobrado, coraçãozinho) e as patas; `PAGE.text` é a área onde o HTML põe o texto. O teste confere que nenhuma pata ou rasgo cobre essa área.
+- **Arte de ato nova:** um caso em `buildActArt` (240×135); a moldura é automática.
 - **Zumbi novo:** adicione um visual em `ZOMBIE_LOOKS` (zombieArt.ts) e as cores em `PAL.zombie.looks`. O desenho é em blocos de `u` px, então sai em todos os tamanhos de uma vez (`ZOMBIE_SIZES`).
 
 ## Regras de estilo

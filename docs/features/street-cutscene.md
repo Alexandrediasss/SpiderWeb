@@ -1,6 +1,6 @@
 # Spec: cutscene da rua (a horda de zumbis)
 
-No sótão há um buraco no telhado. Quando a aranha passa por ele, a tela escurece e começa uma cutscene: lá fora, debaixo da chuva, uma horda de zumbis está passando na rua em frente à casa. A câmera mostra primeiro só as pernas e vai subindo até as cabeças, enquanto eles andam e gemem. A referência de clima é a cena da primeira temporada de *The Walking Dead* (Telltale) em que o grupo sai e percebe que está cercado.
+No sótão há um buraco no telhado. Quando a aranha passa por ele, a tela escurece e começa a cutscene que **encerra o ato 1**: lá fora, debaixo da chuva, uma horda de zumbis está passando na rua em frente à casa. A câmera mostra primeiro só as pernas e vai subindo até as cabeças, enquanto eles andam e gemem. A referência de clima é a cena da primeira temporada de *The Walking Dead* (Telltale) em que o grupo sai e percebe que está cercado.
 
 Código:
 - `src/systems/roofHole.ts`: lógica pura. A aranha está dentro do buraco?
@@ -18,8 +18,8 @@ Testes: `tests/horde.test.ts`, `tests/roofHole.test.ts` e `tests/zombieArt.test.
 1. Fica no lado esquerdo do telhado do sótão: 2×2 tiles (`ROOF_HOLE`), com `~` no mapa, ou seja, céu.
 2. **Dá para ver de dentro:** a chuva aparece no buraco e uma parte dela cai para dentro, até a poça no chão do sótão. No relâmpago, a luz também entra pelo buraco, como numa janela.
 3. **Gatilho:** quando o centro da aranha entra no retângulo do buraco, a tela escurece em `STREET.exitFadeSec`. Nesse meio-tempo a aranha sobe sozinha (input "para cima"), sem pulo nem teias, e não dá para pausar.
-4. **Volta:** no fim da cutscene, a aranha cai pelo buraco de volta para o sótão e o controle volta. A vida, os ratos e o resto ficam como estavam: a cena do jogo **dorme** durante a cutscene (`scene.sleep`/`wake`) e não reinicia.
-5. Passar pelo buraco de novo mostra a cutscene de novo. Dá para pular.
+4. **Fim do ato:** a cena do jogo **dorme** durante a cutscene (`scene.sleep`/`wake`). Quando a cutscene acaba (ou é pulada), ela acorda a cena do jogo, que continua com a tela preta e mostra o "END OF ACT 1" ([acts.md](acts.md)). A aranha não volta mais para o sótão.
+5. Dá para pular.
 
 ## Roteiro (cerca de 27 s)
 
@@ -35,7 +35,7 @@ Faixas pretas de cinema em cima e embaixo o tempo todo.
 | `tilt` | 2 | A câmera sobe devagar (com parallax: o que está perto se move mais) e mostra os troncos e as cabeças, as casas do outro lado e o céu. |
 | `heads` | 2 | Um relâmpago forte ilumina os rostos, e o trovão vem logo depois. A câmera para nas cabeças. |
 | `wide` | 3. beira do telhado (zoom 2) | **Corte.** A aranha pequena na calha, de costas, olhando a horda que enche a rua. Outro relâmpago mostra o tamanho dela. |
-| `outro` | 3 | A tela escurece e o jogo volta. |
+| `outro` | 3 | A tela escurece e vem o fim do ato. |
 
 ## A rua
 
@@ -69,7 +69,7 @@ Uma mistura do zumbi do Minecraft (corpo em blocos, braços esticados para a fre
 
 ## Controles
 
-- Pular: `Enter`, `Esc` ou `Espaço`, ou `A`/`Start` no controle. A tela escurece rápido e o jogo volta. O aviso "ENTER / START skip" aparece depois de 1,2 s.
+- Pular: `Enter`, `Esc` ou `Espaço`, ou `A`/`Start` no controle. A tela escurece rápido e vem o fim do ato. O aviso "ENTER / START skip" aparece depois de 1,2 s.
 - `M` / `Select`: mudo, como no jogo.
 
 ## Como mexer
@@ -82,6 +82,6 @@ Uma mistura do zumbi do Minecraft (corpo em blocos, braços esticados para a fre
 
 ## Casos de borda
 
-- **Com a teia presa:** o gatilho vale do mesmo jeito; ao voltar, a corda já foi solta.
+- **Com a teia presa:** o gatilho vale do mesmo jeito.
 - **Morrer durante o escurecimento:** não acontece, porque os ratos não sobem no telhado e a vida não cai nessa hora.
-- **Teclas presas:** o Phaser solta todas as teclas quando a cena dorme, e o jogo ignora pulo e teias por `TITLE.inputGraceSec` ao voltar.
+- **Teclas presas:** o Phaser solta todas as teclas quando a cena dorme; a tecla que pulou a cutscene não pula o fim do ato, porque o "continue" só aparece depois de `ACT_END.continueAfterSec`.

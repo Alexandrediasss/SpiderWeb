@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spider Web</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Press+Start+2P&display=swap" rel="stylesheet" />
     <style>
       html,
       body {
@@ -199,6 +199,307 @@
       #pause button.selected::before {
         content: '▶ ';
       }
+      /* ---------- teclas certas para o dispositivo (body.pad = controle) ---------- */
+      body.pad .kb,
+      body:not(.pad) .pad {
+        display: none;
+      }
+      .key {
+        display: inline-block;
+        min-width: 1.6em;
+        padding: 0.35em 0.4em 0.25em;
+        border: 2px solid currentColor;
+        text-align: center;
+        line-height: 1;
+      }
+      .btn {
+        display: inline-block;
+        width: 1.9em;
+        height: 1.9em;
+        line-height: 2em;
+        border-radius: 50%;
+        text-align: center;
+        color: #14121c;
+        font-size: 0.8em;
+      }
+      .btn.a {
+        background: #7cc04a;
+      }
+      .btn.b {
+        background: #d9534a;
+      }
+      .btn.y {
+        background: #e8c33a;
+      }
+
+      /* ---------- cartas ---------- */
+      #read-prompt {
+        position: fixed;
+        transform: translate(-50%, -100%);
+        padding: 6px 8px 5px;
+        background: rgba(12, 12, 20, 0.85);
+        border: 2px solid #e8e4f0;
+        color: #e8e4f0;
+        font-size: 9px;
+        white-space: nowrap;
+        pointer-events: none;
+        animation: bob 1.2s steps(2, start) infinite;
+      }
+      #read-prompt.hidden {
+        display: none;
+      }
+      #read-prompt .key,
+      #read-prompt .btn {
+        margin-left: 6px;
+        font-size: 8px;
+      }
+      @keyframes bob {
+        to {
+          margin-top: -2px;
+        }
+      }
+      #letter {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 4, 9, 0.82);
+        cursor: pointer;
+      }
+      #letter.hidden {
+        display: none;
+      }
+      #letter .letter-page {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        height: min(94vh, calc((100vw - 32px) * 170 / 132));
+        aspect-ratio: 132 / 170;
+        container-type: size;
+        transform: translate(-50%, 30%);
+        opacity: 0;
+        transition:
+          transform 0.35s ease-out,
+          opacity 0.25s;
+      }
+      #letter.open .letter-page {
+        transform: translate(-50%, 0);
+        opacity: 1;
+        animation: breathe 2.6s steps(1) 0.4s infinite;
+      }
+      /* Ela respira: a página sobe e desce 1 pixel da arte. */
+      @keyframes breathe {
+        50% {
+          transform: translate(-50%, 0.6%);
+        }
+      }
+      #letter .letter-art {
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+      #letter .letter-text {
+        position: absolute;
+        overflow: hidden;
+        font-family: 'Caveat', cursive;
+        font-size: 3.15cqh;
+        line-height: 1.12;
+        color: #2f1e12;
+        text-shadow: 0 0 1px rgba(47, 30, 18, 0.35);
+      }
+      #letter .letter-heading {
+        margin: 0 0 0.35em;
+        font-size: 1.25em;
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.15em;
+      }
+      #letter .letter-heading.hidden {
+        display: none;
+      }
+      #letter .letter-body p {
+        margin: 0 0 0.55em;
+      }
+      #letter .letter-hint {
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        font-size: 9px;
+        color: #e8e4f0;
+        opacity: 0.55;
+      }
+
+      /* ---------- seleção de atos (estilo Telltale) ---------- */
+      #acts {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2.2vh;
+        background: radial-gradient(ellipse at center, rgba(8, 9, 18, 0.55) 30%, rgba(4, 4, 9, 0.94) 100%);
+        color: #e8e4f0;
+      }
+      #acts.hidden {
+        display: none;
+      }
+      #acts .acts-top {
+        display: flex;
+        align-items: center;
+        gap: 3vw;
+      }
+      #acts-title {
+        margin: 0;
+        min-width: 16em;
+        text-align: center;
+        font-size: clamp(12px, 2.3vw, 26px);
+        font-weight: normal;
+        letter-spacing: 0.06em;
+        text-shadow: 0 4px 0 #000;
+      }
+      /* Setas cor de pergaminho com LB/RB dentro, como na Telltale. */
+      .acts-arrow {
+        font: inherit;
+        font-size: clamp(8px, 1.1vw, 13px);
+        color: #2a1c14;
+        background: #e3d3b0;
+        border: none;
+        padding: 0.9em 1.1em 0.8em;
+        cursor: pointer;
+      }
+      #acts-prev {
+        clip-path: polygon(0 50%, 38% 0, 38% 22%, 100% 22%, 100% 78%, 38% 78%, 38% 100%);
+        padding-left: 2.2em;
+      }
+      #acts-next {
+        clip-path: polygon(100% 50%, 62% 0, 62% 22%, 0 22%, 0 78%, 62% 78%, 62% 100%);
+        padding-right: 2.2em;
+      }
+      .acts-arrow:hover {
+        background: #fff3d6;
+      }
+      #acts-frame {
+        position: relative;
+        width: min(80vw, 118vh);
+        aspect-ratio: 240 / 135;
+        cursor: pointer;
+        box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
+      }
+      #acts-frame .acts-art {
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        display: block;
+      }
+      #acts-frame.locked {
+        cursor: default;
+      }
+      #acts-dots {
+        display: flex;
+        gap: 10px;
+      }
+      #acts-dots span {
+        width: 8px;
+        height: 8px;
+        background: #5d5a78;
+      }
+      #acts-dots span.on {
+        background: #e8e4f0;
+      }
+      #acts-status {
+        min-height: 1em;
+        margin: 0;
+        font-size: clamp(8px, 1vw, 12px);
+        color: #f6d36b;
+        letter-spacing: 0.08em;
+      }
+      #acts .acts-buttons {
+        display: flex;
+        gap: 5vw;
+        font-size: clamp(9px, 1.2vw, 14px);
+      }
+      #acts .acts-buttons button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.7em;
+      }
+      #acts .acts-buttons button.disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+
+      /* ---------- fim do ato ---------- */
+      #act-end {
+        --continue-delay: 3s;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2.4vh;
+        background: #000;
+        color: #e8e4f0;
+        text-align: center;
+        cursor: pointer;
+      }
+      #act-end.hidden {
+        display: none;
+      }
+      #act-end > * {
+        margin: 0;
+        opacity: 0;
+        animation: rise 1.2s ease-out forwards;
+      }
+      #act-end .end-of {
+        font-size: clamp(10px, 1.5vw, 16px);
+        letter-spacing: 0.3em;
+        color: #9c98b0;
+      }
+      #act-end .end-act {
+        font-size: clamp(30px, 7vw, 76px);
+        font-weight: normal;
+        letter-spacing: 0.1em;
+        text-shadow: 0 6px 0 #2a2433;
+        animation-delay: 0.4s;
+      }
+      #act-end .end-name {
+        font-size: clamp(12px, 2vw, 22px);
+        letter-spacing: 0.2em;
+        animation-delay: 0.9s;
+      }
+      #act-end .end-letters {
+        margin-top: 3vh;
+        font-size: clamp(9px, 1.2vw, 13px);
+        color: #f6d36b;
+        animation-delay: 1.6s;
+      }
+      #act-end .end-next {
+        font-size: clamp(8px, 1vw, 11px);
+        color: #9c98b0;
+        animation-delay: 2.2s;
+      }
+      #act-end .end-hint {
+        position: fixed;
+        right: 24px;
+        bottom: 20px;
+        font-size: 9px;
+        animation-delay: var(--continue-delay);
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -210,13 +511,14 @@ SHIFT  run       SPACE  jump / let go
 LEFT MOUSE (hold)  swing web
   W/S reel in / out   A/D swing
 RIGHT MOUSE  attack web   E  trap web
-ESC  pause   M  mute   H  help   G  debug
+F  read      ESC  pause   M  mute
+H  help      G  debug
 
 <b>CONTROLLER</b>
 L-STICK / D-PAD  walk   LT or LB  run
 A  jump   R-STICK  aim
 RB or RT (hold)  swing web
-X  attack web   B  trap web
+X  attack web   B  trap web   Y  read
 START  pause   SELECT  mute</div>
     <div id="debug" class="panel hidden"></div>
     <div id="title">
@@ -232,6 +534,38 @@ START  pause   SELECT  mute</div>
       <button type="button" data-action="resume">RESUME</button>
       <button type="button" data-action="restart">RESTART</button>
       <button type="button" data-action="menu">MAIN MENU</button>
+    </div>
+    <div id="read-prompt" class="hidden">READ<span class="key kb">F</span><span class="btn y pad">Y</span></div>
+    <div id="letter" class="hidden">
+      <div class="letter-page">
+        <div class="letter-text">
+          <h3 class="letter-heading"></h3>
+          <div class="letter-body"></div>
+        </div>
+      </div>
+      <div class="letter-hint"><span class="kb">F / ESC</span><span class="pad">B</span>  close</div>
+    </div>
+    <div id="acts" class="hidden">
+      <div class="acts-top">
+        <button id="acts-prev" class="acts-arrow" type="button"><span class="pad">LB</span><span class="kb">&nbsp;</span></button>
+        <h2 id="acts-title"></h2>
+        <button id="acts-next" class="acts-arrow" type="button"><span class="pad">RB</span><span class="kb">&nbsp;</span></button>
+      </div>
+      <div id="acts-frame"></div>
+      <div id="acts-dots"></div>
+      <p id="acts-status"></p>
+      <div class="acts-buttons">
+        <button id="acts-select" type="button"><span class="btn a pad">A</span><span class="key kb">ENTER</span>SELECT</button>
+        <button id="acts-back" type="button"><span class="btn b pad">B</span><span class="key kb">ESC</span>BACK</button>
+      </div>
+    </div>
+    <div id="act-end" class="hidden">
+      <p class="end-of">END OF</p>
+      <h2 class="end-act"></h2>
+      <p class="end-name"></p>
+      <p class="end-letters"></p>
+      <p class="end-next"></p>
+      <div class="end-hint"><span class="btn a pad">A</span><span class="key kb">ENTER</span>  continue</div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

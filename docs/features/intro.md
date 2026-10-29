@@ -33,7 +33,7 @@ Depois, a cena do jogo começa com a aranha **saindo do buraco de rato** da sala
 ## Regras
 
 1. **Pular:** `Enter`, `Esc` ou `Espaço` no teclado, `A` ou `Start` no controle. A tela escurece rápido e o jogo começa (com a saída do buraco). O aviso "ENTER / START skip" aparece no canto depois de 1,2 s.
-2. **Quando passa:** a cutscene toca toda vez que se aperta PLAY na tela inicial, inclusive ao voltar pelo "Main Menu". Morrer e "Restart" **não** passam por ela: a tela escurece e a aranha volta ao início da fase (na frente do buraco).
+2. **Quando passa:** a cutscene toca toda vez que se escolhe o ato 1 na seleção de atos, inclusive ao voltar pelo "Main Menu". Morrer e "Restart" **não** passam por ela: a tela escurece e a aranha volta ao início da fase (na frente do buraco).
 3. **Som:**
    - a música da tela inicial vai sumindo durante o texto e a chuva continua (abafada, estamos dentro da parede);
    - toca um trovão distante no segundo trecho de texto;

@@ -33,10 +33,17 @@ export class TitleScreen {
     this.play?.blur();
     this.root?.classList.add('leaving');
     window.setTimeout(() => {
-      // Se a cena reiniciou nesse meio-tempo, o título é de outra instância: não mexe.
-      if (!this.abort.signal.aborted) this.root?.classList.add('hidden');
+      // Se a cena reiniciou (ou o título voltou) nesse meio-tempo, não mexe.
+      if (!this.abort.signal.aborted && !this.open) this.root?.classList.add('hidden');
     }, 1000);
     this.onPlay();
+  }
+
+  /** Mostra a tela inicial de novo (voltando da seleção de atos). */
+  reopen(): void {
+    this.open = true;
+    this.root?.classList.remove('leaving', 'hidden');
+    this.play?.focus();
   }
 
   /** O clarão do relâmpago também ilumina o título (0..1). */
@@ -52,6 +59,8 @@ export class TitleScreen {
     if (!this.open) return;
     if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') {
       e.preventDefault();
+      // A seleção de atos abre agora: a mesma tecla não pode chegar nela e já escolher o ato.
+      e.stopImmediatePropagation();
       this.confirm();
     }
   }

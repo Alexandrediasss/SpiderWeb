@@ -297,3 +297,20 @@ export const WEB = {
   missFlashSec: 0.12,
   color: 0xe8e4f0,
 };
+
+/** Cartas no cenário. Spec: docs/features/letters.md (cores em PAL.letter) */
+export const LETTER = {
+  /** Distância (px) do centro da aranha até a folha para aparecer o "READ". */
+  readRadius: 22,
+  /** A folha nunca fica mais escura que isso (para dar para ver no escuro). */
+  minLight: 0.6,
+  /** Brilho de "tem algo aqui" enquanto a carta não foi lida: a cada quantos segundos e quanto dura. */
+  glintEverySec: 2.4,
+  glintSec: 0.4,
+};
+
+/** Tela de fim do ato. Spec: docs/features/acts.md */
+export const ACT_END = {
+  /** Espera (s) antes de aparecer o "continue". */
+  continueAfterSec: 3.2,
+};
