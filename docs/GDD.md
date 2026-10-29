@@ -80,7 +80,7 @@ Os andares se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (q
 ## Direção de arte
 
 - Resolução interna de 480×270, escalada em número inteiro, sem filtro.
-- Tiles de 16 px; a aranha tem cerca de 20×12 px (pequena num mundo grande).
+- Tiles de 16 px; o sprite da aranha tem 22×14 px (pequena num mundo grande).
 - O cenário é "assado" numa única textura no boot; os móveis de fundo (maiúsculas no mapa) ficam escurecidos para dar profundidade.
 - Sombra suave embaixo e ao lado de superfícies sólidas.
 - A teia é desenhada pixel a pixel (linha de Bresenham), sem anti-aliasing.

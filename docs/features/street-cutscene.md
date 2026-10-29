@@ -42,7 +42,7 @@ Faixas pretas de cinema em cima e embaixo o tempo todo.
 - Um bairro americano de classe média: casas de madeira com telhado de duas águas, varanda, garagem, cerca branca, caixa de correio, árvores, poste com fios e um poste de luz laranja.
 - Um carro abandonado no meio da rua, com a porta aberta e o pisca-alerta piscando.
 - Chuva por cima de tudo (riscos de 1 px) e respingos no chão.
-- Três fileiras de zumbis, todos andando no mesmo sentido (`HORDE.rows`):
+- Três fileiras de zumbis, todos andando no mesmo sentido (`HORDE.street`; as duas do plano aberto ficam em `HORDE.wide`):
   - perto: os maiores, na calçada da frente, com reflexo no chão molhado;
   - meio: no asfalto;
   - longe: na calçada do outro lado, mais escuros (chuva e distância).

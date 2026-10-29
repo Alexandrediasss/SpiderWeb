@@ -53,7 +53,7 @@ O deslocamento `speed * dt` é aplicado em passos de no máximo `SPIDER.stepPx` 
 ## Visual
 
 - Ângulo alvo pela tabela; o ângulo exibido interpola pelo caminho mais curto (`SPIDER.rotateLerp`).
-- O sprite é deslocado `spriteFeetOffset` px na direção dos pés para os pés encostarem na superfície.
+- O sprite é deslocado `SPIDER.half - SPIDER.frameH / 2` px na direção dos pés para os pés encostarem na superfície (em `Spider.ts`).
 - Animações: `idle` (parada), `walk` (andando, mais rápida correndo), `air` (no ar e na teia).
 
 ## Casos de borda conhecidos
