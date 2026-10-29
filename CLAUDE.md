@@ -1,6 +1,6 @@
 # Spider Web
 
-Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Pela casa há cartas do pai da família contando a invasão dos zumbis. Fluxo: tela inicial → seleção de atos (estilo Telltale) → cutscene de abertura → jogo. O ato 1 termina no buraco do telhado do sótão: cutscene da rua (a horda de zumbis) → "END OF ACT 1" → seleção de atos. O ato 2 (liberado depois do 1) é a travessia da rua por cima dos postes, na ventania (como no Celeste), até a chaminé da casa vizinha; cair na rua é ser pisada por um zumbi. Cada ato tem a sua transição (gosma verde, teia e vento).
+Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Pela casa há cartas do pai da família contando a invasão dos zumbis. Fluxo: menu principal (NEW GAME, LOAD GAME, SCENES e ACHIEVEMENTS, as duas últimas ainda trancadas) → seleção de atos (estilo Telltale) → cutscene de abertura → jogo. O ato 1 termina no buraco do telhado do sótão: cutscene da rua (a horda de zumbis) → "END OF ACT 1" → seleção de atos. O ato 2 (liberado depois do 1) é a travessia da rua por cima dos postes, na ventania (como no Celeste), até a chaminé da casa vizinha; cair na rua é ser pisada por um zumbi. Cada ato tem a sua transição (gosma verde, teia e vento).
 Visão de design completa: [docs/GDD.md](docs/GDD.md).
 
 ## Stack e comandos
@@ -23,7 +23,7 @@ src/
   art/               pixel art gerada por código (sem PNG): paleta, sprites (aranha, rato, corações, zumbis), tiles, cenário, rua, luz, cartas, arte dos atos, rua do ato 2, transições
   audio/             som gerado por código (sem MP3): música, chuva, trovão, passos, guinchos/chiados, gemidos, papel, vento, choque, pisada; `sound.ts` cria tudo uma vez
   entities/          objetos Phaser que desenham a lógica (Spider; Atmosphere = luz/chuva/raios; CombatView = ratos/teias; LetterSprites = cartas; Weather = chuva/vento do ato 2; Hazards = fios e detritos)
-  scenes/            BootScene (texturas), GameScene (título, atos, ato 1), IntroScene e StreetScene (cutscenes), RooftopScene (ato 2), Transitions (escurecer e transição de ato), HUD e menus em HTML
+  scenes/            BootScene (texturas), GameScene (menu, atos, ato 1), IntroScene e StreetScene (cutscenes), RooftopScene (ato 2), Transitions (escurecer e transição de ato), HUD e menus em HTML
 tests/               testes Vitest da lógica pura
 docs/                GDD + uma spec por feature
 ```
@@ -51,12 +51,12 @@ docs/                GDD + uma spec por feature
 - Teia e balanço: [docs/features/web-swing.md](docs/features/web-swing.md)
 - Pixel art, paleta, tiles e como editar o mapa: [docs/art-and-level.md](docs/art-and-level.md)
 - Noite chuvosa (luz das luminárias, chuva, relâmpagos, trovões, passos): [docs/features/atmosphere.md](docs/features/atmosphere.md)
-- Tela inicial (título, Play, transição para a cutscene): [docs/features/title-screen.md](docs/features/title-screen.md)
+- Menu principal (NEW GAME, LOAD GAME, SCENES e ACHIEVEMENTS trancadas, confirmação do jogo novo): [docs/features/title-screen.md](docs/features/title-screen.md)
 - Cutscene de abertura (texto, despertar no líquido mutante, buraco de rato, como editar): [docs/features/intro.md](docs/features/intro.md)
 - Buraco no telhado e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos; é o fim do ato 1): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
 - Cartas do pai (onde ficam, aviso READ, página com as patas, texto): [docs/features/letters.md](docs/features/letters.md)
 - Atos (seleção estilo Telltale, fim do ato, liberar ato, progresso salvo no navegador): [docs/features/acts.md](docs/features/acts.md)
-- Transições (escurecer no PLAY, gosma verde do ato 1, teia e vento do ato 2): [docs/features/transitions.md](docs/features/transitions.md)
+- Transições (escurecer entre as telas do menu, gosma verde do ato 1, teia e vento do ato 2): [docs/features/transitions.md](docs/features/transitions.md)
 - Ato 2, ROOFTOPS (mapa da rua, cutscenes de abertura e da chaminé, checkpoints, pisada do zumbi): [docs/features/act2-rooftops.md](docs/features/act2-rooftops.md)
 - Ventania do ato 2 (rajadas como no Celeste, detritos, fios soltos com faísca): [docs/features/wind.md](docs/features/wind.md)
 - Ratos, vida, mordida, teias de ataque e de prender, sons de dano: [docs/features/combat.md](docs/features/combat.md)

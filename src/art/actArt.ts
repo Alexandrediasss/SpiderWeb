@@ -8,6 +8,7 @@ import { PAL } from './palette';
 import { SPIDER_FRAMES, buildSpiderSheet } from './spiderArt';
 import { HOUSES_BASE, WIDE_SHOT, buildHouses, buildRoofEdge, buildStreetSky, buildWideStreet } from './streetArt';
 import { mixColor, shadeColor } from './tilePainters';
+import { drawLock } from './uiArt';
 
 const WEB_COLOR = 0xe8e4f0;
 import { ZOMBIE_FRAMES, ZOMBIE_LOOKS, buildZombieSheets } from './zombieArt';
@@ -216,25 +217,6 @@ function drawBolt(pc: PixelCanvas, x: number, length: number, seed: number): voi
     }
   }
   for (const line of lines) for (let i = 1; i < line.length; i++) pc.line(x + line[i - 1].x, line[i - 1].y, x + line[i].x, line[i].y, S.bolt);
-}
-
-/** Cadeado de metal (centro em cx, alça em cima de `top`). */
-function drawLock(pc: PixelCanvas, cx: number, top: number): void {
-  const x0 = Math.round(cx - 11);
-  // Alça: meio anel grosso.
-  for (let y = top - 12; y <= top; y++) {
-    for (let x = x0; x < x0 + 22; x++) {
-      const d = Math.hypot(x + 0.5 - cx, y - top);
-      if (d >= 6 && d <= 9.5) pc.set(x, y, d < 7 ? A.lockDark : d > 8.6 ? A.lockDark : A.lock);
-    }
-  }
-  pc.rect(x0 - 1, top - 1, 24, 19, PAL.outline);
-  pc.rect(x0, top, 22, 17, A.lock);
-  pc.rect(x0, top, 22, 2, A.lockLight);
-  pc.rect(x0, top + 14, 22, 3, A.lockDark);
-  // Buraco da fechadura.
-  pc.disc(Math.round(cx), top + 6, 2, PAL.outline);
-  pc.rect(Math.round(cx) - 1, top + 7, 2, 5, PAL.outline);
 }
 
 /** Moldura gasta: borda escura serrilhada, um fio mais claro e vinheta pontilhada para dentro. */

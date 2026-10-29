@@ -60,4 +60,4 @@ O ato 2 (lá fora) usa o mesmo `Storm`, mas desenha a chuva, os raios e o clarã
 ## Casos de borda
 
 - **Custo no boot:** os mapas são calculados uma vez (cerca de 0,5 a 1 s), e o teste em `lighting.test.ts` falha se passar de 3 s.
-- **Câmera pulando longe** (o Play desce do sótão até a aranha): as gotas que saem da área são espalhadas de novo dentro da tela.
+- **Câmera pulando longe** (ao começar o jogo, ela sai do sótão e vai até a aranha): as gotas que saem da área são espalhadas de novo dentro da tela.

@@ -1,6 +1,6 @@
 # Spec: cutscene de abertura
 
-Depois do PLAY, uma cutscene conta o começo da história. A aranha protagonista acorda dentro da parede, coberta de um líquido verde mutante, e sai pelo buraco de rato para a sala, onde o jogo começa.
+Ao começar o ato 1 (NEW GAME, ou o ato 1 na seleção de atos), uma cutscene conta o começo da história. A aranha protagonista acorda dentro da parede, coberta de um líquido verde mutante, e sai pelo buraco de rato para a sala, onde o jogo começa.
 
 Código:
 - `src/scenes/IntroScene.ts`: a cena da cutscene.

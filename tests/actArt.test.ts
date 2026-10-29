@@ -4,6 +4,7 @@ import { NOTE, PAGE, buildNote, buildParchment } from '../src/art/letterArt';
 import { PAL } from '../src/art/palette';
 import type { PixelCanvas } from '../src/art/PixelCanvas';
 import { ACTS } from '../src/level/acts';
+import { LOCK_ICON, buildLockIcon } from '../src/art/uiArt';
 import { LETTERS } from '../src/level/letters';
 
 const color = (pc: PixelCanvas, x: number, y: number) => {
@@ -42,4 +43,18 @@ describe('arte das cartas', () => {
     expect(alpha(pc, 4, PAGE.h - 1)).toBe(255);
     expect(alpha(pc, PAGE.w - 5, PAGE.h - 1)).toBe(255);
   });
+});
+
+it('o ícone de cadeado cabe inteiro no canvas', () => {
+  const pc = buildLockIcon();
+  expect([pc.width, pc.height]).toEqual([LOCK_ICON.w, LOCK_ICON.h]);
+  for (let x = 0; x < pc.width; x++) {
+    expect(alpha(pc, x, 0)).toBe(0);
+    expect(alpha(pc, x, pc.height - 1)).toBe(0);
+  }
+  for (let y = 0; y < pc.height; y++) {
+    expect(alpha(pc, 0, y)).toBe(0);
+    expect(alpha(pc, pc.width - 1, y)).toBe(0);
+  }
+  expect(alpha(pc, LOCK_ICON.w / 2, 20)).toBe(255);
 });

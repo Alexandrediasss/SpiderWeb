@@ -17,7 +17,7 @@ import type { Vec2 } from '../physics/surfaces';
 import { Combat, type CombatEvent, aimAtTarget } from '../systems/combat';
 import { type SpiderInput, emptyInput } from '../systems/input';
 import { LetterLog, letterCenter, nearbyLetter } from '../systems/letters';
-import { recordActEnd } from '../systems/progress';
+import { currentActIndex, hasProgress, recordActEnd } from '../systems/progress';
 import { inRoofHole } from '../systems/roofHole';
 import { raycastWeb } from '../systems/webRope';
 import { ActEnd } from './ActEnd';
@@ -25,20 +25,22 @@ import { ActsMenu } from './ActsMenu';
 import { HeartsHud } from './HeartsHud';
 import { Hud } from './Hud';
 import { LetterReader } from './LetterReader';
+import { type LockedKind, LockedScreen } from './LockedScreen';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
-import { TitleScreen } from './TitleScreen';
+import { type TitleAction, TitleScreen } from './TitleScreen';
 import { fadeSwap, fadeTo, playActTransition } from './Transitions';
-import { loadProgress, saveProgress } from './progressStore';
+import { hasSave, loadProgress, saveProgress, startNewSave } from './progressStore';
 
 /**
- * title: tela inicial | acts: seleção de atos | leaving: escurecendo para a cutscene |
+ * title: tela inicial (menu) | acts: seleção de atos | extras: tela trancada (SCENES, ACHIEVEMENTS) |
+ * leaving: escurecendo para a cutscene |
  * emerge: aranha saindo do buraco | play: jogando | paused: menu de pausa | reading: lendo uma carta |
  * dying: tela escurecendo depois de morrer |
  * exiting: entrou no buraco do telhado, escurecendo para a cutscene da rua (depois a cena dorme) |
  * actEnd: tela de fim do ato (depois da cutscene da rua).
  */
-type Mode = 'title' | 'acts' | 'leaving' | 'emerge' | 'play' | 'paused' | 'reading' | 'dying' | 'exiting' | 'actEnd';
+type Mode = 'title' | 'acts' | 'extras' | 'leaving' | 'emerge' | 'play' | 'paused' | 'reading' | 'dying' | 'exiting' | 'actEnd';
 
 /** Cartas lidas na jogada atual do ato: sobrevivem a morrer e a "Restart"; zeram ao escolher o ato. */
 const runLetters = new LetterLog();
@@ -74,6 +76,7 @@ export class GameScene extends Phaser.Scene {
   private title!: TitleScreen;
   private pauseMenu!: PauseMenu;
   private actsMenu!: ActsMenu;
+  private locked!: LockedScreen;
   private actEnd!: ActEnd;
   private letters!: LetterSprites;
   private reader!: LetterReader;
@@ -124,7 +127,10 @@ export class GameScene extends Phaser.Scene {
     this.hearts.setVisible(false);
     this.letters = new LetterSprites(this, LETTERS);
     this.reader = new LetterReader(() => this.closeLetter());
-    this.title = new TitleScreen(() => this.openActs(), !data.skipTitle && !data.openActs);
+    this.title = new TitleScreen((a) => this.onTitleAction(a), !data.skipTitle && !data.openActs);
+    this.title.setEnabled('load', hasSave());
+    this.title.focus(hasSave() ? 'load' : 'new');
+    this.locked = new LockedScreen(() => this.closeExtras());
     this.pauseMenu = new PauseMenu((a) => this.onPauseAction(a));
     this.actsMenu = new ActsMenu(
       (act) => void this.startAct(act),
@@ -142,6 +148,7 @@ export class GameScene extends Phaser.Scene {
       this.title.destroy();
       this.pauseMenu.destroy();
       this.actsMenu.destroy();
+      this.locked.destroy();
       this.actEnd.destroy();
       this.reader.destroy();
       this.anims.resumeAll();
@@ -190,18 +197,65 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- modos ----------
 
+  /** Uma opção do menu principal. */
+  private onTitleAction(action: TitleAction): void {
+    if (this.fading) return;
+    switch (action) {
+      case 'new':
+        // Só pergunta se tem algo para perder (ato terminado ou carta achada).
+        if (hasProgress(loadProgress())) this.title.askConfirm(() => this.newGame());
+        else this.newGame();
+        break;
+      case 'load':
+        this.openActs();
+        break;
+      case 'scenes':
+      case 'achievements':
+        this.openExtras(action);
+        break;
+    }
+  }
+
+  /** NEW GAME: troca o jogo salvo por um vazio e começa o ato 1 (gosma verde e cutscene). */
+  private newGame(): void {
+    startNewSave();
+    void this.startAct(ACTS[0]);
+  }
+
   /**
-   * PLAY na tela inicial: a tela escurece e clareia já na seleção de atos (a música continua).
+   * LOAD GAME: a tela escurece e clareia já na seleção de atos, no ato mais adiantado (a música continua).
    * `fromBlack`: a tela já está preta (voltando do fim do ato), só clareia.
    */
   private openActs(fromBlack = false): void {
     this.mode = 'acts';
+    const show = () => {
+      const progress = loadProgress();
+      this.title.hide();
+      this.actsMenu.show(progress, currentActIndex(progress, ACTS));
+    };
     if (fromBlack) {
-      this.actsMenu.show(loadProgress());
+      show();
       void fadeTo(0, TRANSITION.fadeInSec);
       return;
     }
-    void this.withFade(() => this.actsMenu.show(loadProgress()));
+    void this.withFade(show);
+  }
+
+  /** SCENES e ACHIEVEMENTS: por enquanto, telas trancadas. */
+  private openExtras(kind: LockedKind): void {
+    this.mode = 'extras';
+    void this.withFade(() => {
+      this.title.hide();
+      this.locked.show(kind);
+    });
+  }
+
+  private closeExtras(): void {
+    void this.withFade(() => {
+      this.locked.hide();
+      this.title.reopen();
+      this.mode = 'title';
+    });
   }
 
   private backToTitle(): void {
@@ -229,11 +283,14 @@ export class GameScene extends Phaser.Scene {
     if (act.id === 'act1') {
       runLetters.clear();
       await playActTransition('goo');
-      this.scene.start('intro');
     } else {
       await playActTransition('web');
-      this.scene.start('act2', { intro: true });
     }
+    // O menu (NEW GAME) ou a seleção de atos ficaram embaixo da transição: some com eles antes da cena nova.
+    this.title.hide();
+    this.actsMenu.hide();
+    if (act.id === 'act1') this.scene.start('intro');
+    else this.scene.start('act2', { intro: true });
   }
 
   /** Começa a jogatina com a câmera na aranha, a tela clareando (depois da cutscene, de morrer ou de Restart). */
@@ -382,7 +439,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const cam = this.cameras.main;
-    if (this.mode === 'title' || this.mode === 'acts') {
+    if (this.mode === 'title' || this.mode === 'acts' || this.mode === 'extras') {
       const drift = Math.sin((time / 1000) * TITLE.driftSpeed * Math.PI * 2) * TITLE.driftPx;
       cam.centerOn(TITLE.cameraX + drift, TITLE.cameraY);
     }
@@ -536,7 +593,15 @@ export class GameScene extends Phaser.Scene {
     if (!f) return false;
     if (f.musicPressed) this.sound_.hub.toggleMute();
     if (this.mode === 'title') {
+      if (f.navY !== 0) this.title.move(f.navY);
+      // YES e NO ficam lado a lado: ←/→ também troca.
+      if (f.navX !== 0 && this.title.isAsking) this.title.move(f.navX);
       if (f.confirmPressed || f.pausePressed) this.title.confirm();
+      else if (f.trapPressed) this.title.back();
+      return false;
+    }
+    if (this.mode === 'extras') {
+      if (f.trapPressed || f.confirmPressed || f.pausePressed) this.locked.back();
       return false;
     }
     if (this.mode === 'acts') {

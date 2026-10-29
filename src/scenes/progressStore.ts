@@ -12,6 +12,20 @@ export function loadProgress(): Progress {
   }
 }
 
+/** Existe um jogo salvo neste navegador? (o LOAD GAME só acende se existir) */
+export function hasSave(): boolean {
+  try {
+    return localStorage.getItem(KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** NEW GAME: troca o jogo salvo por um vazio. */
+export function startNewSave(): void {
+  saveProgress(emptyProgress());
+}
+
 export function saveProgress(p: Progress): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(p));

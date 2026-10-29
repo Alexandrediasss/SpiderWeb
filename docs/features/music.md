@@ -3,7 +3,7 @@
 Código: `src/audio/score.ts` (partitura, lógica pura), `src/audio/PianoSynth.ts` (piano sintetizado), `src/audio/MusicPlayer.ts` (agendador em loop).
 Testes: `tests/score.test.ts`.
 
-**Onde toca:** só na tela inicial (`title-screen.md`). Ao apertar Play ela some em `MUSIC.fadeOutSec`. Durante o jogo não há música, só chuva, trovões e passos (`atmosphere.md`).
+**Onde toca:** só na tela inicial (`title-screen.md`). Ela continua na seleção de atos e nas telas do menu, e some em `MUSIC.fadeOutSec` quando um ato começa. Durante o jogo não há música, só chuva, trovões e passos (`atmosphere.md`).
 
 ## Clima
 
