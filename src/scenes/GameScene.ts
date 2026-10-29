@@ -1,17 +1,18 @@
 // Cena principal: tela inicial, jogo, pausa e morte. Cenário, atmosfera, aranha, ratos, câmera, mira, som e debug.
 import Phaser from 'phaser';
-import { GAMEPAD, INTRO, LIGHT, PLAYER, SHOTS, TILE, TITLE, VIEW, WEB } from '../config';
+import { GAMEPAD, INTRO, LIGHT, PLAYER, SHOTS, SPIDER, STREET, TILE, TITLE, VIEW, WEB } from '../config';
 import { getLevelArt } from '../art/levelArt';
 import { TEX } from '../art/textures';
 import { type Sound, getSound } from '../audio/sound';
 import { Atmosphere } from '../entities/Atmosphere';
 import { CombatView } from '../entities/CombatView';
 import { Spider } from '../entities/Spider';
-import { RATS, SPAWN } from '../level/houseMap';
+import { RATS, ROOF_HOLE, SPAWN } from '../level/houseMap';
 import type { LevelGrid } from '../physics/LevelGrid';
 import type { Vec2 } from '../physics/surfaces';
 import { Combat, type CombatEvent, aimAtTarget } from '../systems/combat';
 import { type SpiderInput, emptyInput } from '../systems/input';
+import { inRoofHole, roofReturnPoint } from '../systems/roofHole';
 import { raycastWeb } from '../systems/webRope';
 import { HeartsHud } from './HeartsHud';
 import { Hud } from './Hud';
@@ -21,9 +22,13 @@ import { TitleScreen } from './TitleScreen';
 
 /**
  * title: tela inicial | leaving: escurecendo para a cutscene | emerge: aranha saindo do buraco |
- * play: jogando | paused: menu de pausa | dying: tela escurecendo depois de morrer.
+ * play: jogando | paused: menu de pausa | dying: tela escurecendo depois de morrer |
+ * exiting: entrou no buraco do telhado, escurecendo para a cutscene da rua (depois a cena dorme).
  */
-type Mode = 'title' | 'leaving' | 'emerge' | 'play' | 'paused' | 'dying';
+type Mode = 'title' | 'leaving' | 'emerge' | 'play' | 'paused' | 'dying' | 'exiting';
+
+/** Enquanto a tela escurece no buraco do telhado, a aranha continua subindo sozinha. */
+const CLIMB_OUT: SpiderInput = { ...emptyInput(), move: { x: 0, y: -1 } };
 
 /**
  * Dados para `scene.start`/`restart`: `skipTitle` vai direto ao jogo (morte, Restart);
@@ -87,10 +92,13 @@ export class GameScene extends Phaser.Scene {
     this.hearts.setVisible(false);
     this.title = new TitleScreen(() => this.goToIntro(), !data.skipTitle);
     this.pauseMenu = new PauseMenu((a) => this.onPauseAction(a));
+    // A cutscene da rua acorda esta cena quando acaba.
+    this.events.on('wake', this.returnFromStreet, this);
     this.events.once('shutdown', () => {
       this.title.destroy();
       this.pauseMenu.destroy();
       this.anims.resumeAll();
+      this.events.off('wake', this.returnFromStreet, this);
     });
 
     const cam = this.cameras.main;
@@ -192,6 +200,35 @@ export class GameScene extends Phaser.Scene {
     else this.scene.restart({ skipTitle: action === 'restart' } satisfies SceneData);
   }
 
+  /** Entrou no buraco do telhado: a tela escurece e a cutscene da rua começa. O jogo dorme até ela acabar. */
+  goToStreet(): void {
+    if (this.mode !== 'play') return;
+    this.mode = 'exiting';
+    this.reticle.setVisible(false);
+    this.hud.showHelp(false);
+    this.hud.showDebug(false);
+    const cam = this.cameras.main;
+    cam.fadeOut(STREET.exitFadeSec * 1000, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.launch('street');
+      this.scene.sleep();
+    });
+  }
+
+  /** Volta da cutscene da rua: a aranha cai pelo buraco de volta no sótão; vida e ratos como estavam. */
+  private returnFromStreet(): void {
+    const p = roofReturnPoint(ROOF_HOLE, TILE, SPIDER.half);
+    this.spider.motor.placeAt(p.x, p.y);
+    this.mode = 'play';
+    this.graceLeft = TITLE.inputGraceSec;
+    this.reticle.setVisible(true);
+    this.hud.applyHelpPreference();
+    this.hud.showDebug(this.debug);
+    const cam = this.cameras.main;
+    cam.centerOn(p.x, p.y);
+    cam.fadeIn(600, 0, 0, 0);
+  }
+
   /** Vida zerou: a aranha cai, a tela escurece e o jogo reinicia. */
   private die(): void {
     this.mode = 'dying';
@@ -229,7 +266,7 @@ export class GameScene extends Phaser.Scene {
     const light = (x: number, y: number) => this.atmosphere.lightAt(x, y);
     if (this.mode !== 'play') {
       // Tela inicial, saída do buraco, transição e morte: o mundo continua (ratos patrulhando), sem controle.
-      this.spider.update(dt, emptyInput());
+      this.spider.update(dt, this.mode === 'exiting' ? CLIMB_OUT : emptyInput());
       this.combat.update(dt, m);
       this.combatView.update(dt, time, light);
       this.spider.setLight(light(m.body.x, m.body.y), LIGHT.spiderMinLight);
@@ -262,6 +299,7 @@ export class GameScene extends Phaser.Scene {
     this.updateReticle(input);
 
     if (this.debug) this.drawDebug();
+    if (this.mode === 'play' && inRoofHole(m.body, ROOF_HOLE, TILE)) this.goToStreet();
   }
 
   private updateEmerge(dt: number): void {

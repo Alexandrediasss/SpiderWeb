@@ -13,6 +13,9 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Onde os ratos patrulham | `RATS` em `src/level/houseMap.ts` |
 | Cutscene: palco dentro da parede, escuridão, líquido verde | `src/art/introArt.ts` |
 | Buraco de rato da sala (onde a aranha aparece) | decoração `mouseHole` (`decorArt.ts`), alinhada com `SPAWN` |
+| Buraco no telhado do sótão e a poça embaixo | `~` no mapa + `ROOF_HOLE` + decorações `roofHole` e `puddle` (`houseMap.ts`, `decorArt.ts`) |
+| Zumbis (6 visuais, caminhada, vários tamanhos; folha só dos olhos) | `src/art/zombieArt.ts` (cores em `PAL.zombie`) |
+| Cutscene da rua: telhado de fora, casas, calçadas, asfalto, beira do telhado | `src/art/streetArt.ts` (cores em `PAL.street`; posições em `ROOF_SHOT`, `STREET_SHOT`, `WIDE_SHOT`) |
 | Tiles e papéis de parede | `src/art/tilePainters.ts` |
 | Janelas, quadros, luminárias, teias... | `src/art/decorArt.ts` |
 | Montagem do cenário numa textura só (+ máscara do lado de fora) | `src/art/levelBaker.ts` |
@@ -45,6 +48,7 @@ O mapa é ASCII em `HOUSE_MAP`: cada caractere é um tile de 16×16, e todas as 
 - Paredes e pisos (`#`, `=`, `R`) não ganham contorno entre si; móveis ganham contorno escuro onde encostam em outro material.
 - O papel de parede vem de `ROOMS` (retângulos em tiles). Um `.` fora de qualquer cômodo vira "vão" escuro (buracos no piso).
 - Decorações (`DECORATIONS`) não colidem; a posição é o canto superior esquerdo, em tiles.
+- O buraco no telhado são tiles `~` dentro do telhado do sótão. Se mudar de lugar, mude também `ROOF_HOLE` e as decorações `roofHole` e `puddle` (o `tests/roofHole.test.ts` confere).
 
 ## Adicionar arte
 
@@ -52,6 +56,7 @@ O mapa é ASCII em `HOUSE_MAP`: cada caractere é um tile de 16×16, e todas as 
 - **Decoração nova:** crie a função em `decorArt.ts`, registre em `DECOR_PAINTERS` e adicione o tipo em `DecorKind`. Se ela mostrar o lado de fora (vidro), chame `mark(x, y, true)` nesses pixels e `mark(x, y, false)` no que for pintado por cima (moldura, cortina): é lá que a chuva e o relâmpago aparecem.
 - **Luz nova:** cada decoração `lamp` vira uma fonte de luz automaticamente (cone, sombra, feixe e poeira). Janelas viram fonte de luz no relâmpago.
 - **Quadro novo da aranha:** adicione em `SPIDER_FRAMES` e use em `registerAnimations` (textures.ts). O corpo é o ASCII `BODY` (22×14); as pernas são linhas calculadas por fase.
+- **Zumbi novo:** adicione um visual em `ZOMBIE_LOOKS` (zombieArt.ts) e as cores em `PAL.zombie.looks`. O desenho é em blocos de `u` px, então sai em todos os tamanhos de uma vez (`ZOMBIE_SIZES`).
 
 ## Regras de estilo
 

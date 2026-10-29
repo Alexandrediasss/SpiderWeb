@@ -1,10 +1,10 @@
 // Decorações de fundo desenhadas em código (janelas, quadros, luminárias...).
 // Cada função recebe a posição em pixels do canto superior esquerdo.
 import type { Vec2 } from '../physics/surfaces';
-import type { Decor, DecorKind } from '../level/houseMap';
+import { type Decor, type DecorKind, ROOF_HOLE } from '../level/houseMap';
 import { type PixelCanvas, hash } from './PixelCanvas';
 import { PAL } from './palette';
-import { mixColor, shadeColor } from './tilePainters';
+import { mixColor, shadeColor, skyColorAt } from './tilePainters';
 
 const D = PAL.decor;
 
@@ -20,10 +20,11 @@ export function lampBulb(d: Decor): Vec2 {
   return { x: d.tx * 16 + 8, y: d.ty * 16 + 22 };
 }
 
-/** Centro do vidro de uma janela (de onde entra a luz do relâmpago), ou null se não for janela. */
+/** Centro do vidro de uma janela (de onde entra a luz do relâmpago), ou null se não for janela. O buraco no telhado conta. */
 export function windowCenter(d: Decor): Vec2 | null {
   if (d.kind === 'window') return { x: d.tx * 16 + 24, y: d.ty * 16 + 20 };
   if (d.kind === 'roundWindow') return { x: d.tx * 16 + 16, y: d.ty * 16 + 16 };
+  if (d.kind === 'roofHole') return { x: d.tx * 16 + ROOF_HOLE.w * 8, y: d.ty * 16 + ROOF_HOLE.h * 8 };
   return null;
 }
 
@@ -241,6 +242,79 @@ const mouseHole: DecorPainter = (pc, x, y) => {
   }
 };
 
+/**
+ * Buraco no telhado (x, y = canto do buraco, tamanho do ROOF_HOLE). As bordas ficam mordidas (telhas
+ * arrancadas, mostrando o céu), com a madeira do forro exposta e lascas apontando para dentro.
+ */
+const roofHole: DecorPainter = (pc, x, y, _flipX, mark) => {
+  const w = ROOF_HOLE.w * 16;
+  const h = ROOF_HOLE.h * 16;
+  const paint = (px: number, py: number, c: number, outside: boolean) => {
+    pc.set(px, py, c);
+    mark(px, py, outside);
+  };
+  for (let yy = y - 3; yy < y + h; yy += 3) {
+    for (const side of [-1, 1]) {
+      const depth = Math.floor(hash(yy, side + 2, 31) * 4);
+      for (let k = 0; k < 3; k++) {
+        const py = yy + k;
+        const edge = (d: number) => (side < 0 ? x - d : x + w - 1 + d);
+        for (let d = 1; d <= depth; d++) paint(edge(d), py, skyColorAt(py), true);
+        // Madeira do forro aparecendo na quebra.
+        if (py >= y) {
+          paint(edge(depth + 1), py, k === 0 ? D.splinter : D.splinterDark, false);
+          pc.shade(edge(depth + 2), py, 0.7);
+        }
+      }
+    }
+  }
+  // Lascas apontando para dentro do buraco.
+  const splinters: [number, number, number, number][] = [
+    [x, y + 6, 3, 1],
+    [x + w - 1, y + 19, -4, 1],
+    [x, y + h - 3, 2, -1],
+    [x + w - 1, y + 4, -2, 1],
+  ];
+  for (const [sx, sy, len, slope] of splinters) {
+    for (let i = 0; i < Math.abs(len); i++) paint(sx + Math.sign(len) * i, sy + Math.floor((i * slope) / 2), D.splinter, false);
+  }
+  // Uma telha solta pendurada no canto de cima à direita.
+  for (let i = 0; i < 4; i++) {
+    paint(x + w - 1 - i, y - 1 + i, D.brokenShingle, false);
+    paint(x + w - i, y - 1 + i, shadeColor(D.brokenShingle, 0.7), false);
+  }
+  // Pontas quebradas penduradas para dentro do sótão.
+  for (const [sx, len] of [
+    [x + 2, 4],
+    [x + 3, 2],
+    [x + w - 4, 3],
+  ]) {
+    for (let i = 0; i < len; i++) paint(sx, y + h + i, i === len - 1 ? D.splinterDark : D.splinter, false);
+  }
+};
+
+/** Poça de chuva no chão (x, y = canto do tile acima do chão; a poça fica centrada em x + 32). */
+const puddle: DecorPainter = (pc, x, y) => {
+  const cx = x + 32;
+  const floorY = y + 16;
+  const half = 17;
+  for (let dx = -half; dx <= half; dx++) {
+    const t = Math.abs(dx) / half;
+    // Uma lâmina de água em cima das tábuas, com brilhos; as tábuas embaixo ficam molhadas (mais escuras).
+    const shine = hash(cx + dx, floorY, 41) < 0.22;
+    pc.set(cx + dx, floorY - 1, shine ? D.waterLight : D.water, t > 0.85 ? 0.45 : 0.85);
+    const wet = Math.round((1 - t * t) * 4);
+    for (let k = 0; k < wet; k++) pc.shade(cx + dx, floorY + k, 0.62);
+  }
+  for (const [dx, dy] of [
+    [-12, -3],
+    [9, -2],
+    [14, -4],
+  ]) {
+    pc.set(cx + dx, floorY + dy, D.waterLight, 0.6);
+  }
+};
+
 const cloud: DecorPainter = (pc, x, y) => {
   const blobs = [
     [10, 10, 7],
@@ -263,6 +337,8 @@ export const DECOR_PAINTERS: Record<DecorKind, DecorPainter> = {
   cobweb,
   cloud,
   mouseHole,
+  roofHole,
+  puddle,
 };
 
 /** Desenha uma decoração. `mark` (opcional) recebe os pixels de vidro que mostram o lado de fora. */

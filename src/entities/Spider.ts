@@ -109,7 +109,7 @@ export class Spider {
 }
 
 /** Linha de Bresenham com retângulos de 1 px (sem anti-aliasing). */
-function pixelLine(g: Phaser.GameObjects.Graphics, x0: number, y0: number, x1: number, y1: number): void {
+export function pixelLine(g: Phaser.GameObjects.Graphics, x0: number, y0: number, x1: number, y1: number): void {
   x0 = Math.round(x0);
   y0 = Math.round(y0);
   x1 = Math.round(x1);

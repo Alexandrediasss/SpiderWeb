@@ -24,7 +24,9 @@ export type DecorKind =
   | 'mirror'
   | 'cobweb'
   | 'cloud'
-  | 'mouseHole';
+  | 'mouseHole'
+  | 'roofHole'
+  | 'puddle';
 
 export interface Decor {
   kind: DecorKind;
@@ -38,8 +40,8 @@ export const HOUSE_MAP: string[] = [
   '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
   '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RRRRRRRRRRRRRRRR~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
   '~~~~~~~~~~~~~~~~~~~~~~~~~~~~RRRRRRRRRRRRRRRRRRRRRRRR~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
-  '~~~~~~~~~~~~~~~~~~~~~~~~RRRRRRRRRR............RRRRRRRRRR~~~~~~~~~~~~~~~~~~~~~~~~',
-  '~~~~~~~~~~~~~~~~~~~~RRRRRRRRRR....................RRRRRRRRRR~~~~~~~~~~~~~~~~~~~~',
+  '~~~~~~~~~~~~~~~~~~~~~~~~RR~~RRRRRR............RRRRRRRRRR~~~~~~~~~~~~~~~~~~~~~~~~',
+  '~~~~~~~~~~~~~~~~~~~~RRRRRR~~RR....................RRRRRRRRRR~~~~~~~~~~~~~~~~~~~~',
   '~~~~~~~~~~~~~~~~RRRRRRRRRR............................RRRRRRRRRR~~~~~~~~~~~~~~~~',
   '~~~~~~~~~~~~RRRRRRRRRR....................................RRRRRRRRRR~~~~~~~~~~~~',
   '~~~~~~~~RRRRRRRRRR............................................RRRRRRRRRR~~~~~~~~',
@@ -84,6 +86,12 @@ export const HOUSE_MAP: string[] = [
 /** Onde a aranha nasce (tile). */
 export const SPAWN = { tx: 8, ty: 40 };
 
+/**
+ * Buraco no telhado do sótão (tiles; no mapa são `~`). Passar por ele leva à cutscene da rua.
+ * As decorações `roofHole` e `puddle` (em DECORATIONS) acompanham. Spec: docs/features/street-cutscene.md
+ */
+export const ROOF_HOLE = { tx: 26, ty: 3, w: 2, h: 2 };
+
 /** Um rato: nasce em (tx, ty) — a linha vazia logo acima do chão — e patrulha de minTx a maxTx. */
 export interface RatSpawn {
   name: string;
@@ -122,6 +130,9 @@ export const DECORATIONS: Decor[] = [
   { kind: 'cobweb', tx: 44, ty: 3, flipX: true },
   { kind: 'cobweb', tx: 10, ty: 9 },
   { kind: 'cobweb', tx: 68, ty: 9, flipX: true },
+  // Buraco no telhado (igual ao ROOF_HOLE) e a poça que a chuva faz embaixo dele.
+  { kind: 'roofHole', tx: 26, ty: 3 },
+  { kind: 'puddle', tx: 25, ty: 11 },
   // Quarto
   { kind: 'window', tx: 9, ty: 15 },
   { kind: 'painting', tx: 23, ty: 15 },

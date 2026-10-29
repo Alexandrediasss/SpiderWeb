@@ -112,6 +112,18 @@ export class SpiderMotor {
     this.stickCooldown = SPIDER.stickCooldown;
   }
 
+  /** Coloca a aranha parada no ar em (x, y), sem corda (volta da cutscene da rua). */
+  placeAt(x: number, y: number): void {
+    this.body.x = x;
+    this.body.y = y;
+    this.body.vx = 0;
+    this.body.vy = 0;
+    this.rope = null;
+    this.shotFlash = null;
+    this.stickCooldown = 0;
+    this.detach();
+  }
+
   private detach(): void {
     this.surface = 'air';
     this.dir = 0;

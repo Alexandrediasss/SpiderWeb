@@ -6,6 +6,17 @@ import { buildGooBlob, buildGooGlow, buildGooPuddle, buildIntroDarkness, buildIn
 import { getLevelArt } from './levelArt';
 import { RAT_FRAME, RAT_POSES, buildHearts, buildRatSheets, buildRatWeb } from './ratArt';
 import { SPIDER_FRAMES, buildReticle, buildSpiderSheet } from './spiderArt';
+import {
+  buildFarGround,
+  buildHouses,
+  buildMidGround,
+  buildNearGround,
+  buildRoofEdge,
+  buildRoofShot,
+  buildStreetSky,
+  buildWideStreet,
+} from './streetArt';
+import { ZOMBIE_FRAMES, ZOMBIE_LOOKS, ZOMBIE_SIZES, buildZombieSheets, zombieFrameName } from './zombieArt';
 
 export const TEX = {
   level: 'level',
@@ -25,6 +36,18 @@ export const TEX = {
   gooBlob: 'gooBlob',
   gooPuddle: 'gooPuddle',
   gooGlow: 'gooGlow',
+  zombie: (u: number) => `zombie${u}`,
+  zombieEyes: (u: number) => `zombieEyes${u}`,
+  streetSky: 'streetSky',
+  roofSky: 'roofSky',
+  roofShot: 'roofShot',
+  roofFront: 'roofFront',
+  houses: 'houses',
+  farGround: 'farGround',
+  midGround: 'midGround',
+  nearGround: 'nearGround',
+  wideStreet: 'wideStreet',
+  roofEdge: 'roofEdge',
 } as const;
 
 function addCanvas(scene: Phaser.Scene, key: string, pc: PixelCanvas): Phaser.Textures.CanvasTexture {
@@ -66,6 +89,33 @@ export function registerTextures(scene: Phaser.Scene): void {
   addCanvas(scene, TEX.gooBlob, buildGooBlob());
   addCanvas(scene, TEX.gooPuddle, buildGooPuddle());
   addCanvas(scene, TEX.gooGlow, buildGooGlow());
+
+  // Cutscene da rua.
+  for (const u of ZOMBIE_SIZES) {
+    const sheets = buildZombieSheets(u);
+    for (const [key, pc] of [
+      [TEX.zombie(u), sheets.body],
+      [TEX.zombieEyes(u), sheets.eyes],
+    ] as const) {
+      const tex = addCanvas(scene, key, pc);
+      ZOMBIE_LOOKS.forEach((_, li) => {
+        for (let f = 0; f < ZOMBIE_FRAMES; f++) {
+          tex.add(zombieFrameName(li, f), 0, f * sheets.frameW, li * sheets.frameH, sheets.frameW, sheets.frameH);
+        }
+      });
+    }
+  }
+  const roof = buildRoofShot();
+  addCanvas(scene, TEX.roofShot, roof.roof);
+  addCanvas(scene, TEX.roofFront, roof.front);
+  addCanvas(scene, TEX.roofSky, buildStreetSky(160, 90));
+  addCanvas(scene, TEX.streetSky, buildStreetSky(240, 160));
+  addCanvas(scene, TEX.houses, buildHouses());
+  addCanvas(scene, TEX.farGround, buildFarGround());
+  addCanvas(scene, TEX.midGround, buildMidGround());
+  addCanvas(scene, TEX.nearGround, buildNearGround());
+  addCanvas(scene, TEX.wideStreet, buildWideStreet());
+  addCanvas(scene, TEX.roofEdge, buildRoofEdge());
 }
 
 export function registerAnimations(scene: Phaser.Scene): void {
