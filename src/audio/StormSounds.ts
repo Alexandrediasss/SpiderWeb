@@ -5,10 +5,15 @@ import { makeRng } from '../systems/storm';
 import type { ThunderEvent } from '../systems/storm';
 import { brownNoise, rainNoise, whiteNoise } from './noise';
 
+const RAIN_INSIDE_HZ = 2300;
+const RAIN_OUTSIDE_HZ = 6500;
+
 export class StormSounds {
   private readonly rumble: AudioBuffer;
   private readonly crackle: AudioBuffer;
   private readonly rainGain: GainNode;
+  /** Passa-baixa da chuva: abafada dentro de casa, aberta do lado de fora (cutscene da rua). */
+  private readonly rainLow: BiquadFilterNode;
   private readonly softClip: Float32Array<ArrayBuffer>;
   private rainStarted = false;
 
@@ -21,6 +26,9 @@ export class StormSounds {
     this.rainGain = ctx.createGain();
     this.rainGain.gain.value = 0;
     this.rainGain.connect(destination);
+    this.rainLow = ctx.createBiquadFilter();
+    this.rainLow.type = 'lowpass';
+    this.rainLow.frequency.value = RAIN_INSIDE_HZ;
     // Saturação suave (tanh): engrossa o ronco sem estourar.
     this.softClip = new Float32Array(1024);
     for (let i = 0; i < 1024; i++) {
@@ -41,14 +49,24 @@ export class StormSounds {
     high.type = 'highpass';
     high.frequency.value = 280;
     // Passa-baixa: a chuva bate lá fora, então chega abafada.
-    const low = ctx.createBiquadFilter();
-    low.type = 'lowpass';
-    low.frequency.value = 2300;
-    src.connect(high).connect(low).connect(this.rainGain);
+    src.connect(high).connect(this.rainLow).connect(this.rainGain);
     const now = ctx.currentTime;
     this.rainGain.gain.setValueAtTime(0, now);
     this.rainGain.gain.linearRampToValueAtTime(SFX.rainVolume, now + 2.5);
     src.start(now);
+  }
+
+  /** Do lado de fora (cutscene da rua) a chuva fica mais alta e menos abafada. */
+  setOutside(outside: boolean, rampSec = 1): void {
+    const t = this.ctx.currentTime;
+    for (const [param, value] of [
+      [this.rainLow.frequency, outside ? RAIN_OUTSIDE_HZ : RAIN_INSIDE_HZ],
+      [this.rainGain.gain, outside ? SFX.rainOutsideVolume : SFX.rainVolume],
+    ] as const) {
+      param.cancelScheduledValues(t);
+      param.setValueAtTime(param.value, t);
+      param.linearRampToValueAtTime(value, t + rampSec);
+    }
   }
 
   /**

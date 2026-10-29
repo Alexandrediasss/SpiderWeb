@@ -8,6 +8,8 @@ O perigo são os **ratos** brancos de olhos vermelhos que vivem em partes da cas
 
 A casa está escura, iluminada só pelas luminárias. Lá fora chove, e de vez em quando um relâmpago clareia tudo pelas janelas e o trovão vem depois, como em *Gone Home*.
 
+E lá fora há algo pior: pelo buraco no telhado do sótão, a aranha vê a rua do bairro tomada por uma horda de **zumbis**.
+
 O jogo é em **inglês** (textos da interface). Código também em inglês; comentários e docs em português.
 
 ## Pilares
@@ -22,12 +24,15 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 1. **Tela inicial:** só "SPIDER WEB" e o botão PLAY, por cima do sótão com chuva. A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
 2. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
 3. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
-4. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
-5. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
+4. **Buraco no telhado:** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. No fim, a aranha cai de volta no sótão (vida e ratos como estavam). Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
+5. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
+6. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
 
 ## História (rascunho)
 
 Os insetos sempre estiveram aqui e sobreviveram a predadores gigantes. A protagonista acorda dentro da parede de uma casa, coberta por um líquido verde **mutante** que pingou de um cano. Ainda vai ser desenvolvida: o que é o líquido, o que ele fez com ela e o que ela busca na casa.
+
+Lá fora o mundo acabou: uma horda de zumbis anda pela rua do bairro (americano, de classe média) debaixo da tempestade. Os zumbis misturam o do Minecraft (corpo em blocos, braços esticados) com o de Plants vs. Zombies (roupa do dia a dia, olhos grandes e desiguais, boca aberta). Fica para depois decidir se o líquido mutante tem a ver com isso.
 
 ## Controles
 
@@ -66,7 +71,7 @@ Um corte lateral da casa (estilo casa de bonecas), com 80×44 tiles de 16 px:
 
 | Andar | Cômodos | Destaques |
 |---|---|---|
-| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto |
+| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto; buraco no telhado (chuva entrando, poça embaixo) que leva à cutscene da rua |
 | Andar de cima | Quarto, Banheiro | Cama (dá para passar embaixo), armário, prateleira; banheira, vaso, pia |
 | Térreo | Sala, Cozinha | Estante, sofá, mesa com cadeiras; balcão, armários suspensos, geladeira |
 
@@ -86,6 +91,7 @@ Os andares se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (q
 - **Música:** piano solo, calmo e misterioso: uma valsa lenta em Ré menor, como um tema clássico de filme de Drácula. Gerada por código, em loop de cerca de 1min30. **Toca só na tela inicial.** Spec: [features/music.md](features/music.md)
 - **No jogo:** passinhos da aranha, chuva abafada e trovões de vez em quando (24 a 55 s entre raios). Tudo sintetizado. Spec: [features/atmosphere.md](features/atmosphere.md)
 - **Combate:** cada dano tem som, como nos mobs do Minecraft: guinchos dos ratos, chiado da aranha, "fiuu" das teias. Spec: [features/combat.md](features/combat.md)
+- **Cutscene da rua:** coro de gemidos sintetizados (cada zumbi geme de tempos em tempos), passos molhados e a chuva de fora, mais alta. Spec: [features/street-cutscene.md](features/street-cutscene.md)
 
 ## Câmera
 
@@ -105,6 +111,8 @@ Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mos
 - [x] Tela inicial (HTML/CSS por cima do canvas)
 - [x] Cutscene de abertura (texto, despertar no líquido mutante, saída pelo buraco de rato)
 - [ ] Desenvolver a história do líquido mutante (mais cutscenes?)
+- [x] Buraco no telhado e cutscene da rua (horda de zumbis)
+- [ ] Sair de verdade para o telhado ou para a rua (uma fase do lado de fora?)
 - [x] Menu de pausa (Resume, Restart, Main Menu)
 - [x] Perigo: ratos (vida, mordida, teias de ataque e de prender)
 - [ ] Mais perigos: chinelo, aspirador, gato

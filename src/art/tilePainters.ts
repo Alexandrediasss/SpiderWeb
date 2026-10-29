@@ -217,8 +217,13 @@ export type BackgroundStyle = RoomStyle | 'sky' | 'cavity';
 
 const SKY_HEIGHT = 12 * TILE;
 
+/** Cor do céu numa altura do mundo (degradê do topo até o chão do sótão). */
+export function skyColorAt(wy: number): RGB {
+  return mixColor(PAL.sky.top, PAL.sky.bottom, Math.min(1, wy / SKY_HEIGHT));
+}
+
 export const BACKGROUND_PAINTERS: Record<BackgroundStyle, PixelFn> = {
-  sky: (_px, py, c) => mixColor(PAL.sky.top, PAL.sky.bottom, Math.min(1, wyOf(py, c) / SKY_HEIGHT)),
+  sky: (_px, py, c) => skyColorAt(wyOf(py, c)),
 
   cavity: (px, py, c) => (hash(wxOf(px, c), wyOf(py, c), 6) < 0.1 ? shadeColor(PAL.wall.cavity, 0.8) : PAL.wall.cavity),
 

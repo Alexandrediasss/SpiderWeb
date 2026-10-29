@@ -5,6 +5,7 @@ import { Footsteps } from './Footsteps';
 import { MusicPlayer } from './MusicPlayer';
 import { Sfx } from './Sfx';
 import { StormSounds } from './StormSounds';
+import { ZombieVoices } from './ZombieVoices';
 
 export interface Sound {
   hub: AudioHub;
@@ -12,6 +13,7 @@ export interface Sound {
   storm: StormSounds;
   footsteps: Footsteps;
   sfx: Sfx;
+  zombies: ZombieVoices;
 }
 
 let sound: Sound | null = null;
@@ -26,6 +28,7 @@ export function getSound(): Sound {
     storm: new StormSounds(hub.ctx, hub.input),
     footsteps: new Footsteps(hub.ctx, hub.input),
     sfx: new Sfx(hub.ctx, hub.input),
+    zombies: new ZombieVoices(hub.ctx, hub.input),
   };
   sound.storm.startRain();
   return sound;

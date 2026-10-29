@@ -185,6 +185,10 @@ export const SFX = {
   /** Guinchos dos ratos e chiado da aranha ao levar dano. */
   hurtVolume: 0.45,
   shotVolume: 0.5,
+  /** Cutscene da rua: gemidos e passos dos zumbis, e a chuva do lado de fora (mais alta e aberta). */
+  groanVolume: 0.85,
+  zombieStepVolume: 0.4,
+  rainOutsideVolume: 0.22,
 };
 
 /** Tela inicial. Spec: docs/features/title-screen.md */
@@ -230,6 +234,57 @@ export const INTRO = {
   /** No jogo: a aranha saindo do buraco (s). */
   emergeSec: 0.9,
 };
+
+/** Cutscene da rua (buraco no telhado). Spec: docs/features/street-cutscene.md (posições em src/art/streetArt.ts) */
+export const STREET = {
+  /** No jogo: a tela escurece ao entrar no buraco (s). */
+  exitFadeSec: 0.9,
+  /** Duração de cada etapa (s). */
+  fadeInSec: 1.3,
+  emergeSec: 1.5,
+  walkSec: 1.7,
+  listenSec: 2.4,
+  legsSec: 3.4,
+  tiltSec: 6.5,
+  headsSec: 3.4,
+  wideSec: 5.2,
+  outroSec: 1.4,
+  /** Zoom de cada plano: telhado (palco 160×90) e rua/beira do telhado (palco 240×135). */
+  roofZoom: 3,
+  streetZoom: 2,
+  /** Faixas pretas de cinema, em px da tela de 480×270. */
+  letterboxPx: 20,
+  /** Gotas de chuva por plano e velocidade (px/s do palco). */
+  rainDrops: 120,
+  rainSpeed: [170, 240] as const,
+  rainWind: -30,
+  /** Pisca-alerta do carro abandonado (s por estado). */
+  hazardBlinkSec: 0.45,
+  /** Em que ponto do `heads` e do `wide` cai o relâmpago do roteiro (0..1 da etapa). */
+  headsStrikeAt: 0.05,
+  wideStrikeAt: 0.35,
+};
+
+/**
+ * A horda da cutscene da rua. Cada fileira: `u` = tamanho do bloco do zumbi (px do palco), quantos,
+ * velocidade (px/s, mín–máx) e volume dos gemidos e passos (0 = mudo). Spec: docs/features/street-cutscene.md
+ */
+export const HORDE = {
+  street: [
+    { u: 2, count: 8, speed: [7, 10], voice: 0.35, steps: 0 },
+    { u: 4, count: 5, speed: [11, 15], voice: 0.65, steps: 0.4 },
+    { u: 6, count: 3, speed: [15, 19], voice: 1, steps: 1 },
+  ],
+  wide: [
+    { u: 1, count: 14, speed: [4, 6], voice: 0, steps: 0 },
+    { u: 1, count: 12, speed: [5, 7], voice: 0, steps: 0 },
+  ],
+  /** Distância andada (em blocos `u`) em um ciclo da caminhada (dois passos). */
+  strideU: 12,
+  /** Intervalo entre os gemidos de um mesmo zumbi (s) e quando cada um geme a primeira vez. */
+  groanGapSec: [2.8, 7.5] as const,
+  firstGroanSec: [0.3, 4] as const,
+} as const;
 
 export const WEB = {
   range: 240,

@@ -1,7 +1,21 @@
-// Galeria em http://localhost:5173/art.html: sprites ampliados, o cenário de dia e à noite, e um botão para ouvir a música.
+// Galeria em http://localhost:5173/art.html: sprites ampliados, o cenário de dia e à noite, e botões para ouvir a música e a horda.
 import { SPIDER } from './config';
 import { AudioHub } from './audio/AudioHub';
 import { MusicPlayer } from './audio/MusicPlayer';
+import { ZombieVoices } from './audio/ZombieVoices';
+import {
+  GROUND_ANCHOR,
+  HOUSES_BASE,
+  buildFarGround,
+  buildHouses,
+  buildMidGround,
+  buildNearGround,
+  buildRoofEdge,
+  buildRoofShot,
+  buildStreetSky,
+  buildWideStreet,
+} from './art/streetArt';
+import { buildZombieSheets } from './art/zombieArt';
 import { PixelCanvas } from './art/PixelCanvas';
 import { DECOR_PAINTERS, paintDecor } from './art/decorArt';
 import { getLevelArt } from './art/levelArt';
@@ -29,6 +43,24 @@ musicButton.onclick = () => {
   musicButton.textContent = hub.isMuted ? '▶ Tocar música' : '■ Silenciar música';
 };
 root.append(musicButton);
+
+// Horda: um coro de gemidos e passos por alguns segundos.
+const hordeButton = document.createElement('button');
+hordeButton.textContent = '▶ Ouvir a horda';
+hordeButton.style.cssText = musicButton.style.cssText + ' margin-left: 8px;';
+hordeButton.onclick = () => {
+  const zh = new AudioHub();
+  zh.unlockOnGesture();
+  const voices = new ZombieVoices(zh.ctx, zh.input);
+  for (let i = 0; i < 14; i++) {
+    setTimeout(() => {
+      voices.groan({ pan: ((i * 37) % 10) / 6 - 0.8, volume: i % 3 === 0 ? 1 : 0.6, seed: 500 + i * 131 });
+      voices.step((i % 4) / 2 - 0.75, 1);
+    }, i * 420);
+  }
+  setTimeout(() => zh.close(), 9000);
+};
+root.append(hordeButton);
 
 function show(title: string, pc: PixelCanvas, scale: number): void {
   const h = document.createElement('h2');
@@ -70,6 +102,28 @@ stage.blit(buildGooPuddle(), STAGE.spiderX - 15, STAGE.floorY - 2);
 stage.blit(buildGooBlob(), STAGE.spiderX - 10, STAGE.floorY - 8);
 stage.blit(buildIntroDarkness(true), 0, 0);
 show('Cutscene: dentro da parede (com a luz do buraco)', stage, 4);
+
+// Cutscene da rua.
+show('Zumbis (bloco de 4 px): visuais × quadros da caminhada', buildZombieSheets(4).body, 2);
+show('Olhos dos zumbis (escurecem menos no escuro)', buildZombieSheets(4).eyes, 1);
+show('Multidão (bloco de 1 px)', buildZombieSheets(1).body, 4);
+const roofShot = buildStreetSky(160, 90);
+const roofParts = buildRoofShot();
+roofShot.blit(roofParts.roof, 0, 0);
+show('Plano 1: telhado visto de fora, com o buraco', roofShot, 4);
+const street = buildStreetSky(240, 160);
+street.blit(buildHouses(), 0, 96 - HOUSES_BASE);
+street.blit(buildFarGround(), 0, 118 - GROUND_ANCHOR.far);
+show('Plano 2: casas do outro lado da rua (fim da subida)', street, 3);
+for (const [title, pc] of [
+  ['Chão: calçada de lá', buildFarGround()],
+  ['Chão: asfalto', buildMidGround()],
+  ['Chão: calçada de cá', buildNearGround()],
+  ['Plano 3: a rua vista do telhado', buildWideStreet()],
+  ['Plano 3: beira do telhado com a calha', buildRoofEdge()],
+] as const) {
+  show(title, pc, 3);
+}
 
 const art = getLevelArt();
 show('Cenário à noite (com a luz das luminárias)', composeLit(art.canvas, art, art.lamps), 1);

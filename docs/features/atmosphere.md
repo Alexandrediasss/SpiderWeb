@@ -34,12 +34,13 @@ Testes: `tests/storm.test.ts` e `tests/lighting.test.ts`.
    - Os atrasos são curtos de propósito: com 2,5 a 6 s o jogador não ligava o trovão ao clarão e achava que o raio "não fazia barulho".
 4. **Clarão:** a camada de escuro perde `LIGHT.flashBrighten` da força, e a luz do relâmpago (`PAL.light.flash`) entra pelas janelas com sombra dos sólidos. O título da tela inicial também brilha.
 5. O raio só é desenhado numa coluna da tela onde dá para ver céu. Num cômodo sem janela à vista, ele não aparece.
+6. **Buraco no telhado do sótão:** é céu no mapa, então a chuva e o raio aparecem nele. Metade das gotas também cai para dentro do sótão, numa faixa embaixo do buraco que vai até a poça no chão (`leaks` em `levelArt.ts`). No relâmpago, a luz entra pelo buraco como numa janela. Spec: [street-cutscene.md](street-cutscene.md)
 
 ## Som
 
 - **Sem música no jogo.** A música só toca na tela inicial (veja `title-screen.md`).
 - **Passos:** a cada pata que toca o chão (quadros `walk0` e `walk2` da animação), um "tic" curtinho com leve variação. Correndo, os passos ficam mais rápidos e um pouco mais fortes.
-- **Chuva:** ruído contínuo e abafado por um passa-baixa (a chuva bate lá fora), com volume baixo (`SFX.rainVolume`).
+- **Chuva:** ruído contínuo e abafado por um passa-baixa (a chuva bate lá fora), com volume baixo (`SFX.rainVolume`). Na cutscene da rua, `setOutside(true)` abre o filtro e sobe o volume (`SFX.rainOutsideVolume`).
 - **Trovão:** ronco que "rola" por alguns segundos, com duas camadas no mesmo envelope:
   - grave: ruído marrom num passa-baixa;
   - médio: 250 a 900 Hz, que é o que caixinhas de notebook tocam. Sem ela o trovão ficava abaixo de 200 Hz e sumia atrás da chuva.

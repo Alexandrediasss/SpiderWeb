@@ -80,6 +80,11 @@ export class Atmosphere {
     return this.art.outside[y * this.W + x] === 1;
   }
 
+  /** Pixel dentro de casa por onde a chuva entra (embaixo do buraco no telhado)? */
+  private inLeak(x: number, y: number): boolean {
+    return this.art.leaks.some((r) => x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1);
+  }
+
   private addDust(x: number, y: number): void {
     const h = LIGHT.beamRadius * 0.75;
     const w = Math.tan((LIGHT.coneHalfDeg * Math.PI) / 180) * h;
@@ -142,10 +147,12 @@ export class Atmosphere {
         this.drops[i] = this.spawnDrop(view, d.y < view.y - 120 || d.x < view.x - 80 || d.x > view.right + 80);
         continue;
       }
+      // Metade das gotas também cai pelo buraco no telhado, para dentro do sótão.
+      const leaks = i % 2 === 0;
       for (let k = 0; k < len; k++) {
         const px = Math.round(d.x - slope * k);
         const py = Math.round(d.y - k);
-        if (this.isOutside(px, py)) g.fillRect(px, py, 1, 1);
+        if (this.isOutside(px, py) || (leaks && this.inLeak(px, py))) g.fillRect(px, py, 1, 1);
       }
     }
   }
