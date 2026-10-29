@@ -393,6 +393,9 @@
       #acts-frame.locked {
         cursor: default;
       }
+      #acts-frame.needs .acts-art {
+        filter: brightness(0.35) grayscale(0.6);
+      }
       #acts-dots {
         display: flex;
         gap: 10px;
@@ -500,6 +503,94 @@
           transform: none;
         }
       }
+      /* ---------- transições (docs/features/transitions.md) ---------- */
+      #transition {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        pointer-events: none;
+      }
+      #transition.hidden {
+        display: none;
+      }
+      #fade {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ---------- ato 2: cartão do capítulo e aviso de checkpoint ---------- */
+      #chapter {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.6vh;
+        color: #e8e4f0;
+        text-shadow: 0 4px 0 #000;
+        pointer-events: none;
+        opacity: 0;
+      }
+      #chapter.show {
+        animation: chapter 4.2s ease-in-out forwards;
+      }
+      #chapter p {
+        margin: 0;
+        font-size: clamp(9px, 1.4vw, 15px);
+        letter-spacing: 0.35em;
+        color: #b9b5cc;
+      }
+      #chapter h2 {
+        margin: 0;
+        font-size: clamp(22px, 5vw, 56px);
+        font-weight: normal;
+        letter-spacing: 0.12em;
+      }
+      @keyframes chapter {
+        0% {
+          opacity: 0;
+        }
+        20%,
+        75% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      #toast {
+        position: fixed;
+        left: 20px;
+        bottom: 18px;
+        font-size: 10px;
+        color: #f6d36b;
+        text-shadow: 0 2px 0 #000;
+        pointer-events: none;
+        opacity: 0;
+      }
+      #toast.show {
+        animation: toast 2.2s ease-out forwards;
+      }
+      @keyframes toast {
+        0% {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        15%,
+        70% {
+          opacity: 1;
+          transform: none;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
     </style>
   </head>
   <body>
@@ -567,6 +658,10 @@ START  pause   SELECT  mute</div>
       <p class="end-next"></p>
       <div class="end-hint"><span class="btn a pad">A</span><span class="key kb">ENTER</span>  continue</div>
     </div>
+    <div id="chapter"><p class="chapter-act"></p><h2 class="chapter-name"></h2></div>
+    <div id="toast"></div>
+    <canvas id="transition" class="hidden"></canvas>
+    <div id="fade"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

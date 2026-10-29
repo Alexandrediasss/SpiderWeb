@@ -44,6 +44,11 @@ export function recordActEnd(p: Progress, actId: string, lettersRead: string[]):
   };
 }
 
+/** Dá para jogar o ato? Precisa existir e, se depender de outro, esse outro já terminado. */
+export function isUnlocked(p: Progress, act: Act): boolean {
+  return act.playable && (!act.requires || p.completed.includes(act.requires));
+}
+
 export interface ActStatus {
   completed: boolean;
   /** Cartas já achadas / total do ato. */

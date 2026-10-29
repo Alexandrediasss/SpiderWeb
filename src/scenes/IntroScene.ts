@@ -10,6 +10,7 @@ import { getSound } from '../audio/sound';
 import { INTRO_PAGES } from '../level/story';
 import { Timeline, textPageAt, textPageSec } from '../systems/cutscene';
 import { pollPad } from './PlayerInput';
+import { fadeTo } from './Transitions';
 
 interface Bit {
   img: Phaser.GameObjects.Image;
@@ -55,6 +56,8 @@ export class IntroScene extends Phaser.Scene {
     this.flipped = false;
     this.dripLeft = 0.4;
 
+    // A transição do ato deixou a tela preta; a cutscene também começa no preto.
+    void fadeTo(0, 0);
     const cam = this.cameras.main;
     cam.setZoom(INTRO.zoom);
     cam.centerOn(STAGE.w / 2, STAGE.h / 2);

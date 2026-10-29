@@ -1,6 +1,6 @@
 // Estado e regras de movimento da aranha. Lógica pura: o Phaser só lê este estado para desenhar.
 // Specs: docs/features/surface-movement.md e docs/features/web-swing.md
-import { AIR, SPIDER, WEB } from '../config';
+import { AIR, SPIDER, WEB, WIND } from '../config';
 import type { LevelGrid } from '../physics/LevelGrid';
 import { type Body, moveAndCollide, overlapsSolid } from '../physics/collide';
 import { type Surface, type Vec2, SURFACES, surfaceFacing } from '../physics/surfaces';
@@ -30,6 +30,8 @@ export class SpiderMotor {
   rope: Rope | null = null;
   /** Risco visual de uma teia que errou o alvo. */
   shotFlash: ShotFlash | null = null;
+  /** Vento agora: aceleração horizontal (px/s²). Só o ato 2 usa. Spec: docs/features/wind.md */
+  wind = 0;
 
   private stickCooldown = 0;
   private lock: InputLock | null = null;
@@ -73,7 +75,7 @@ export class SpiderMotor {
     }
     if (this.dir === 0) return;
 
-    const speed = this.running ? SPIDER.runSpeed : SPIDER.walkSpeed;
+    const speed = (this.running ? SPIDER.runSpeed : SPIDER.walkSpeed) * this.windWalkFactor();
     const result = walkAlongSurface(this.grid, this.body, this.surface, this.dir, speed * dt, SPIDER.stepPx);
     if (result.turnedCorner) this.lock = { dir: this.dir, key: inputKey(input.move) };
     this.surface = result.surface;
@@ -82,6 +84,14 @@ export class SpiderMotor {
       this.body.vx = 0;
       this.body.vy = 0;
     }
+  }
+
+  /** Grudada, o vento nunca solta: só deixa o passo mais lento contra ele e mais rápido a favor (chão e teto). */
+  private windWalkFactor(): number {
+    if (this.wind === 0 || this.surface === 'air') return 1;
+    const along = (this.wind / WIND.gustAccel) * SURFACES[this.surface].tangent.x * this.dir;
+    const f = along < 0 ? 1 + along * (1 - WIND.walkMin) : 1 + along * (WIND.walkMax - 1);
+    return clamp(f, WIND.walkMin, WIND.walkMax);
   }
 
   private resolveDir(move: Vec2): number {
@@ -146,6 +156,10 @@ export class SpiderMotor {
     } else {
       const ax = input.move.x * AIR.accel;
       if (Math.abs(b.vx) < AIR.maxSpeedX || Math.sign(ax) !== Math.sign(b.vx)) b.vx += ax * dt;
+    }
+    // Vento: no ar e na teia ele empurra, até levar a aranha na velocidade dele.
+    if (this.wind !== 0 && (Math.sign(b.vx) !== Math.sign(this.wind) || Math.abs(b.vx) < WIND.maxAirSpeed)) {
+      b.vx += this.wind * dt;
     }
     b.vy = Math.min(b.vy + AIR.gravity * dt, AIR.terminalSpeed);
 

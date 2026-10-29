@@ -8,6 +8,8 @@ import { PAL } from './palette';
 import { SPIDER_FRAMES, buildSpiderSheet } from './spiderArt';
 import { HOUSES_BASE, WIDE_SHOT, buildHouses, buildRoofEdge, buildStreetSky, buildWideStreet } from './streetArt';
 import { mixColor, shadeColor } from './tilePainters';
+
+const WEB_COLOR = 0xe8e4f0;
 import { ZOMBIE_FRAMES, ZOMBIE_LOOKS, buildZombieSheets } from './zombieArt';
 
 export const ACT_ART = { w: 240, h: 135 } as const;
@@ -16,7 +18,7 @@ const S = PAL.street;
 const A = PAL.acts;
 
 export function buildActArt(actId: string): PixelCanvas {
-  const pc = actId === 'act1' ? actOne() : lockedAct();
+  const pc = actId === 'act1' ? actOne() : actId === 'act2' ? actTwo() : lockedAct();
   grungeFrame(pc, actId.length * 17);
   return pc;
 }
@@ -61,6 +63,82 @@ function actOne(): PixelCanvas {
   blitRegion(big, buildSpiderSheet(), idle * SPIDER.frameW, 0, SPIDER.frameW, SPIDER.frameH, 0, 0, mixColor(0x50587a, 0xffffff, 0.15), scale);
   rimLight(big, S.flash);
   pc.blit(big, 30, gutterY + scale - big.height);
+  return pc;
+}
+
+/**
+ * Ato 2: a aranha no meio do balanço, presa por um fio de teia no braço de um poste de luz, com a ventania
+ * (riscos brancos e chuva deitada), um fio solto faiscando e a horda lá embaixo.
+ */
+function actTwo(): PixelCanvas {
+  const pc = new PixelCanvas(ACT_ART.w, ACT_ART.h);
+  const R = PAL.act2;
+  pc.blit(buildStreetSky(ACT_ART.w, ACT_ART.h), 0, 0);
+  drawBolt(pc, 196, 50, 9);
+
+  // Casas do outro lado, bem escuras, e a horda passando embaixo.
+  const houses = buildHouses();
+  for (let y = 0; y < houses.height; y++) {
+    for (let x = 0; x < houses.width; x++) {
+      const i = (y * houses.width + x) * 4;
+      if (houses.data[i + 3] === 0) continue;
+      const c = (houses.data[i] << 16) | (houses.data[i + 1] << 8) | houses.data[i + 2];
+      pc.set(x, y + ACT_ART.h - 6 - HOUSES_BASE, c === S.windowLit ? c : shadeColor(c, 0.45));
+    }
+  }
+  const sheets = buildZombieSheets(1);
+  for (let i = 0; i < 16; i++) {
+    const look = Math.floor(hash(i, 1, 6) * ZOMBIE_LOOKS.length);
+    const frame = Math.floor(hash(i, 2, 6) * ZOMBIE_FRAMES);
+    const x = Math.round(((i + 0.3 + hash(i, 3, 6) * 0.5) * ACT_ART.w) / 16) - sheets.frameW / 2;
+    blitRegion(pc, sheets.body, frame * sheets.frameW, look * sheets.frameH, sheets.frameW, sheets.frameH, x, ACT_ART.h - 2 - sheets.frameH, 0x4d5470);
+    blitRegion(pc, sheets.eyes, frame * sheets.frameW, look * sheets.frameH, sheets.frameW, sheets.frameH, x, ACT_ART.h - 2 - sheets.frameH, S.eyeLight);
+  }
+
+  // Poste de luz à esquerda (braço para a direita, luz acesa) e poste de madeira à direita, com fio solto.
+  pc.rect(30, 22, 4, ACT_ART.h, shadeColor(R.metal, 0.55));
+  pc.rect(30, 22, 34, 3, shadeColor(R.metal, 0.6));
+  pc.rect(58, 25, 8, 3, shadeColor(R.metalDark, 0.6));
+  pc.disc(62, 30, 6, R.lamp, 0.25);
+  pc.rect(59, 28, 6, 2, R.lampGlass);
+  pc.rect(196, 34, 4, ACT_ART.h, shadeColor(R.wood, 0.5));
+  pc.rect(184, 34, 28, 3, shadeColor(R.wood, 0.55));
+  pc.line(186, 37, 182, 60, R.wire);
+  pc.line(182, 60, 176, 70, R.wire);
+  for (const [dx, dy] of [
+    [0, 0],
+    [-2, -1],
+    [1, -2],
+    [-1, 2],
+    [2, 1],
+  ]) {
+    pc.set(176 + dx, 70 + dy, dx === 0 && dy === 0 ? R.sparkHot : R.spark);
+  }
+  pc.line(0, 30, 196, 36, R.wire);
+
+  // A teia do braço do poste até a aranha, no meio do balanço (2×, com a borda acesa).
+  const sx = 120;
+  const sy = 74;
+  pc.line(62, 26, sx, sy, WEB_COLOR);
+  const scale = 2;
+  const big = new PixelCanvas(SPIDER.frameW * scale, SPIDER.frameH * scale);
+  const air = SPIDER_FRAMES.findIndex((f) => f.name === 'air');
+  blitRegion(big, buildSpiderSheet(), air * SPIDER.frameW, 0, SPIDER.frameW, SPIDER.frameH, 0, 0, mixColor(0x6a7090, 0xffffff, 0.3), scale);
+  rimLight(big, S.flash);
+  pc.blit(big, sx - big.width / 2, sy - big.height / 2);
+
+  // Ventania: chuva deitada e riscos brancos.
+  for (let i = 0; i < 90; i++) {
+    const x = Math.floor(hash(i, 4, 6) * ACT_ART.w);
+    const y = Math.floor(hash(i, 5, 6) * ACT_ART.h);
+    pc.line(x, y, x + 3, y + 2, S.rain, 0.5);
+  }
+  for (let i = 0; i < 22; i++) {
+    const len = 8 + Math.floor(hash(i, 6, 6) * 26);
+    const x = Math.floor(hash(i, 7, 6) * ACT_ART.w);
+    const y = Math.floor(hash(i, 8, 6) * (ACT_ART.h - 30));
+    for (let k = 0; k < len; k++) pc.set(x + k, y, R.streak, 0.25 + (0.6 * k) / len);
+  }
   return pc;
 }
 

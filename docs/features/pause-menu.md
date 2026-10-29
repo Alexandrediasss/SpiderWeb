@@ -1,6 +1,6 @@
 # Spec: menu de pausa
 
-Código: `src/scenes/PauseMenu.ts` (controlador do HTML), o elemento `#pause` em `index.html` e o modo `paused` da `GameScene`.
+Código: `src/scenes/PauseMenu.ts` (controlador do HTML), o elemento `#pause` em `index.html` e o modo `paused` da `GameScene` e da `RooftopScene` (ato 2).
 
 ## Abrir e fechar
 
@@ -17,6 +17,7 @@ Só dá para pausar durante o jogo: não na tela inicial, na seleção de atos, 
 
 1. **RESUME:** volta ao jogo. Pulo e teias ficam ignorados por `TITLE.inputGraceSec`, para a tecla do menu não virar ação.
 2. **RESTART:** reinicia direto na jogatina (sem cutscene), com vida cheia, ratos de volta e a aranha no começo. As cartas já lidas continuam lidas.
+   - No ato 2, volta para o começo do ato 2 (checkpoint 0), sem a cutscene de abertura.
 3. **MAIN MENU:** volta para a tela inicial, e a música recomeça. O PLAY de lá leva à seleção de atos, e o ato 1 mostra a cutscene de novo (dá para pular).
 
 ## Durante a pausa

@@ -3,7 +3,7 @@
 O jogo é dividido em atos, como os episódios de *The Walking Dead* da Telltale. Depois do PLAY aparece a seleção de atos; no fim de cada ato aparece a tela "END OF ACT".
 
 Código:
-- `src/level/acts.ts`: a lista de atos (número, nome, se já dá para jogar, quais cartas tem).
+- `src/level/acts.ts`: a lista de atos (número, nome, se já existe, de qual ato depende, quais cartas tem).
 - `src/systems/progress.ts`: lógica pura. O progresso salvo (atos completos e cartas achadas), lido de JSON com validação.
 - `src/art/actArt.ts`: a arte de cada ato (240×135, com moldura gasta).
 - `src/scenes/ActsMenu.ts`: a seleção de atos (`#acts` em `index.html`).
@@ -17,11 +17,12 @@ Testes: `tests/progress.test.ts` e `tests/actArt.test.ts`.
 | Ato | Nome | Situação | Arte |
 |---|---|---|---|
 | 1 | AWAKENING | jogável | A aranha na calha do telhado, de costas, olhando a horda na rua, com um raio no céu. |
-| 2 | ??? | COMING SOON | Silhueta dos telhados do bairro na tempestade (a fuga de casa em casa da carta 2), escurecida e com um cadeado. |
+| 2 | ROOFTOPS | jogável depois de terminar o ato 1 ([act2-rooftops.md](act2-rooftops.md)) | A aranha no meio do balanço, presa na teia de um poste de luz, com a ventania, um fio faiscando e a horda embaixo. |
+| 3 | ??? | COMING SOON | Silhueta dos telhados do bairro na tempestade, escurecida e com um cadeado. |
 
 ## Seleção de atos
 
-Fluxo: tela inicial → PLAY → **seleção de atos** → ato 1 → cutscene de abertura → jogo.
+Fluxo: tela inicial → PLAY (a tela escurece e clareia já aqui) → **seleção de atos** → transição do ato → o ato. As transições: [transitions.md](transitions.md).
 
 1. **Layout (estilo Telltale):**
    - em cima, o nome do ato (`ACT 1: AWAKENING`) entre duas setas cor de pergaminho (`LB`/`RB`, ou `◀`/`▶` no teclado);
@@ -30,17 +31,24 @@ Fluxo: tela inicial → PLAY → **seleção de atos** → ato 1 → cutscene de
    - na base, os botões: `(A) SELECT` e `(B) BACK`, ou `ENTER SELECT` e `ESC BACK` no teclado.
    - Os botões mostrados seguem o último dispositivo usado (`body.pad` no CSS).
 2. **Controles:** `←`/`→`, `A`/`D`, D-pad, analógico, `LB`/`RB` trocam de ato. `Enter`/`Espaço`/clique na arte ou `A`/`Start` escolhem. `Esc`/`Backspace` ou `B` voltam para a tela inicial.
-3. **Ato bloqueado:** a arte fica escura com o cadeado e `COMING SOON`. Escolher não faz nada (o botão SELECT fica apagado).
-4. **Música:** continua tocando a valsa da tela inicial. Ela só some ao escolher o ato 1 (como era no PLAY).
-5. **Ao escolher o ato 1:** as cartas lidas são zeradas e começa a cutscene de abertura.
+3. **Ato bloqueado:** escolher não faz nada (o botão SELECT fica apagado).
+   - Ato que ainda não existe: a arte tem o cadeado e aparece `COMING SOON`.
+   - Ato que depende de outro (`requires`): a arte aparece apagada e `FINISH ACT 1 TO UNLOCK`.
+4. **Música:** continua tocando a valsa da tela inicial. Ela some ao escolher um ato.
+5. **Ao escolher o ato 1:** as cartas lidas são zeradas, toca a transição da gosma verde e começa a cutscene de abertura.
+6. **Ao escolher o ato 2:** toca a transição da teia e do vento e começa a cutscene de abertura do ato 2.
 
 ## Fim do ato
 
-1. **Gatilho do ato 1:** sair pelo buraco do telhado. A cutscene da rua ([street-cutscene.md](street-cutscene.md)) é o final do ato: quando ela acaba (ou é pulada), a tela continua preta e aparece o fim do ato. Antes, a aranha voltava para o sótão; agora não volta mais.
+1. **Gatilhos:**
+   - ato 1: sair pelo buraco do telhado;
+   - ato 2: entrar pela chaminé da casa vizinha ([act2-rooftops.md](act2-rooftops.md)).
+
+   No ato 1: A cutscene da rua ([street-cutscene.md](street-cutscene.md)) é o final do ato: quando ela acaba (ou é pulada), a tela continua preta e aparece o fim do ato. Antes, a aranha voltava para o sótão; agora não volta mais.
 2. **Tela de fim:** aparece em etapas, por cima do preto:
    - `END OF` / `ACT 1` / `AWAKENING`;
-   - `LETTERS FOUND 2 / 3`;
-   - `ACT 2 · COMING SOON`;
+   - `LETTERS FOUND 2 / 3` (só em ato com cartas);
+   - o próximo ato: `ACT 2 · ROOFTOPS` ou `ACT 3 · COMING SOON`;
    - depois de `ACT_END.continueAfterSec`, o aviso `(A) / ENTER continue`.
 3. **Continuar:** `Enter`, `Espaço`, `Esc`, clique ou `A`/`Start`. O jogo volta para a seleção de atos (com a música), já mostrando o ato 1 como completo.
 4. **Salvar:** ao chegar no fim do ato, o progresso é salvo: o ato fica completo e as cartas achadas são somadas às de antes (fica o conjunto de todas as que já foram lidas em alguma jogada).

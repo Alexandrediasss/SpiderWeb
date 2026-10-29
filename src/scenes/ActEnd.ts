@@ -40,7 +40,7 @@ export class ActEnd {
     };
     set('.end-act', `ACT ${act.number}`);
     set('.end-name', act.name);
-    set('.end-letters', `LETTERS FOUND  ${lettersFound} / ${act.letters.length}`);
+    set('.end-letters', act.letters.length > 0 ? `LETTERS FOUND  ${lettersFound} / ${act.letters.length}` : '');
     set('.end-next', next ? `ACT ${next.number}  ·  ${next.playable ? next.name : 'COMING SOON'}` : '');
     this.root.style.setProperty('--continue-delay', `${ACT_END.continueAfterSec}s`);
     this.root.classList.remove('hidden');

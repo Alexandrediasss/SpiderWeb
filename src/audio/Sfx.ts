@@ -114,6 +114,116 @@ export class Sfx {
     }
   }
 
+  /** Gosma espirrando (transição do ato 1): baque molhado grave com um chiado de bolhas. */
+  goo(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.shotVolume;
+    const body = this.noiseSource(t, 0.5);
+    const low = ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.setValueAtTime(1400, t);
+    low.frequency.exponentialRampToValueAtTime(260, t + 0.4);
+    body.connect(low).connect(this.envelope(t, vol, 0.006, 0.45)).connect(this.destination);
+    this.click(t, 180, 60, 0.18, vol * 0.7);
+    for (let i = 0; i < 5; i++) {
+      const at = t + 0.12 + i * 0.07 * this.vary();
+      this.click(at, 700 + i * 140 * this.vary(), 1300, 0.04, vol * 0.18);
+    }
+  }
+
+  /** Assobio de vento que passa (transição do ato 2): ruído com filtro subindo e descendo. */
+  whoosh(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const src = this.noiseSource(t, 0.95);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 1.2;
+    band.frequency.setValueAtTime(500, t);
+    band.frequency.exponentialRampToValueAtTime(2200, t + 0.45);
+    band.frequency.exponentialRampToValueAtTime(700, t + 0.9);
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.0001, t);
+    amp.gain.exponentialRampToValueAtTime(SFX.shotVolume * 0.8, t + 0.35);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    src.connect(band).connect(amp).connect(this.destination);
+  }
+
+  /** Choque do fio solto: zumbido elétrico picotado e um estalo. */
+  zap(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.zapVolume;
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.linearRampToValueAtTime(70, t + 0.3);
+    const chop = ctx.createGain();
+    chop.gain.value = 0.5;
+    const lfo = ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.value = 38;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.5;
+    lfo.connect(depth).connect(chop.gain);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 900;
+    band.Q.value = 0.7;
+    osc.connect(band).connect(chop).connect(this.envelope(t, vol, 0.004, 0.32)).connect(this.destination);
+    for (const o of [osc, lfo]) {
+      o.start(t);
+      o.stop(t + 0.36);
+    }
+    this.hiss(t, 0.2, 5200, 3000, vol * 0.8, 60);
+  }
+
+  /** Faísca na ponta do fio: um estalinho agudo e baixo. */
+  spark(): void {
+    const t = this.ctx.currentTime;
+    const src = this.noiseSource(t, 0.04);
+    const high = this.ctx.createBiquadFilter();
+    high.type = 'highpass';
+    high.frequency.value = 3500;
+    src.connect(high).connect(this.envelope(t, SFX.zapVolume * 0.25, 0.002, 0.035)).connect(this.destination);
+  }
+
+  /** A pisada do zumbi: baque grave, estalo seco por cima (a aranha) e um respingo. */
+  stomp(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.stompVolume;
+    this.click(t, 120, 38, 0.35, vol);
+    const crunch = this.noiseSource(t, 0.12);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 1700;
+    band.Q.value = 1.1;
+    crunch.connect(band).connect(this.envelope(t, vol * 0.6, 0.002, 0.1)).connect(this.destination);
+    const splash = this.noiseSource(t + 0.02, 0.25);
+    const low = ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.value = 1200;
+    splash.connect(low).connect(this.envelope(t + 0.02, vol * 0.35, 0.01, 0.22)).connect(this.destination);
+  }
+
+  /** Checkpoint: duas notas suaves subindo. */
+  checkpoint(): void {
+    const t = this.ctx.currentTime;
+    for (const [f, at] of [
+      [659, 0],
+      [988, 0.11],
+    ]) {
+      const osc = this.ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      osc.connect(this.envelope(t + at, SFX.shotVolume * 0.35, 0.01, 0.35)).connect(this.destination);
+      osc.start(t + at);
+      osc.stop(t + at + 0.4);
+    }
+  }
+
   // ---------- peças ----------
 
   /** Variação determinística de ±6% no tom, para os sons não serem idênticos. */
@@ -210,6 +320,8 @@ export class Sfx {
   private noiseSource(t: number, dur: number): AudioBufferSourceNode {
     const src = this.ctx.createBufferSource();
     src.buffer = this.noise;
+    // Em loop: sons longos (vento, gosma) não acabam no fim do buffer de 1 s.
+    src.loop = true;
     src.start(t, ((this.count * 0.137) % 0.8) + 0.01);
     src.stop(t + dur);
     return src;

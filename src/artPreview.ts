@@ -17,6 +17,8 @@ import {
 } from './art/streetArt';
 import { buildZombieSheets } from './art/zombieArt';
 import { buildActArt } from './art/actArt';
+import { bakeRooftops, buildDebrisSheet, buildZombieFoot } from './art/rooftopArt';
+import { drawGoo, drawWeb } from './art/transitionArt';
 import { buildGlint, buildNote, buildParchment } from './art/letterArt';
 import { ACTS } from './level/acts';
 import { LETTERS } from './level/letters';
@@ -107,6 +109,29 @@ for (const l of LETTERS) show(`Página: ${l.id}`, buildParchment(l.paper), 3);
 
 // Seleção de atos: a arte de cada ato.
 for (const a of ACTS) show(`Arte do ato ${a.number}: ${a.name}`, buildActArt(a.id), 3);
+
+// Transições de ato: alguns quadros de cada uma.
+for (const [name, draw] of [
+  ['gosma (ato 1)', drawGoo],
+  ['teia e vento (ato 2)', drawWeb],
+] as const) {
+  const strip = new PixelCanvas(5 * 162, 90);
+  [0.1, 0.3, 0.5, 0.7, 0.85].forEach((t, i) => {
+    const f = new PixelCanvas(160, 90);
+    f.rect(0, 0, 160, 90, 0x556070);
+    draw(f, t, 7);
+    strip.blit(f, i * 162, 0);
+  });
+  show(`Transição: ${name} (t = 0,1 0,3 0,5 0,7 0,85)`, strip, 1);
+}
+
+// Ato 2: o pé do zumbi, os detritos e a rua inteira (já com a noite e a luz das luminárias).
+show('Ato 2: o pé que pisa', buildZombieFoot(), 4);
+show('Ato 2: detritos (telha, jornal, galho, tampa)', buildDebrisSheet(), 6);
+const rooftops = bakeRooftops();
+const sky2 = buildStreetSky(rooftops.canvas.width, rooftops.canvas.height);
+sky2.blit(rooftops.canvas, 0, 0);
+show('Ato 2: a rua por cima dos postes', sky2, 1);
 
 // Cutscene: o palco já com a escuridão (só a luz do cano e a do buraco), a bolha e a poça verdes.
 const stage = buildIntroStage();
