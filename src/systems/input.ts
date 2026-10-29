@@ -12,6 +12,8 @@ export interface SpiderInput {
   /** Teia de ataque (tira vida) e teia que prende, só no frame em que foram apertadas. */
   attackPressed: boolean;
   trapPressed: boolean;
+  /** Ler a carta perto (F / Y), só no frame em que foi apertado. */
+  readPressed: boolean;
   /** Ponto mirado, em coordenadas do mundo. */
   aim: Vec2;
 }
@@ -25,6 +27,7 @@ export function emptyInput(): SpiderInput {
     webHeld: false,
     attackPressed: false,
     trapPressed: false,
+    readPressed: false,
     aim: { x: 0, y: 0 },
   };
 }

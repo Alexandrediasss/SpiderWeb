@@ -4,7 +4,7 @@ import { DECORATIONS, HOUSE_MAP, ROOF_HOLE, ROOMS } from '../src/level/houseMap'
 import { isSolidChar } from '../src/level/legend';
 import { LevelGrid } from '../src/physics/LevelGrid';
 import { SpiderMotor } from '../src/systems/SpiderMotor';
-import { inRoofHole, roofLeakRect, roofReturnPoint } from '../src/systems/roofHole';
+import { inRoofHole, roofLeakRect } from '../src/systems/roofHole';
 import { DT, input } from './helpers';
 
 const grid = LevelGrid.fromAscii(HOUSE_MAP, TILE, isSolidChar);
@@ -50,16 +50,6 @@ describe('buraco no telhado', () => {
       entered = inRoofHole(m.body, ROOF_HOLE, TILE);
     }
     expect(entered).toBe(true);
-  });
-
-  it('ao voltar da cutscene, a aranha cai do buraco e gruda no chão do sótão', () => {
-    const p = roofReturnPoint(ROOF_HOLE, TILE, SPIDER.half);
-    expect(inRoofHole(p, ROOF_HOLE, TILE)).toBe(false);
-    const m = new SpiderMotor(grid, 0, 0);
-    m.placeAt(p.x, p.y);
-    for (let i = 0; i < 120; i++) m.update(DT, input());
-    expect(m.surface).toBe('floor');
-    expect(Math.floor(m.body.y / TILE)).toBe(11);
   });
 
   it('a chuva que entra vai da borda do buraco até o chão do sótão', () => {

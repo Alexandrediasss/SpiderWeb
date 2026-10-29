@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import { SPIDER } from '../config';
 import { PixelCanvas } from './PixelCanvas';
+import { buildGlint, buildNote } from './letterArt';
 import { buildGooBlob, buildGooGlow, buildGooPuddle, buildIntroDarkness, buildIntroStage } from './introArt';
 import { getLevelArt } from './levelArt';
 import { RAT_FRAME, RAT_POSES, buildHearts, buildRatSheets, buildRatWeb } from './ratArt';
@@ -48,6 +49,8 @@ export const TEX = {
   nearGround: 'nearGround',
   wideStreet: 'wideStreet',
   roofEdge: 'roofEdge',
+  note: 'note',
+  glint: 'glint',
 } as const;
 
 function addCanvas(scene: Phaser.Scene, key: string, pc: PixelCanvas): Phaser.Textures.CanvasTexture {
@@ -89,6 +92,10 @@ export function registerTextures(scene: Phaser.Scene): void {
   addCanvas(scene, TEX.gooBlob, buildGooBlob());
   addCanvas(scene, TEX.gooPuddle, buildGooPuddle());
   addCanvas(scene, TEX.gooGlow, buildGooGlow());
+
+  // Cartas no cenário.
+  addCanvas(scene, TEX.note, buildNote());
+  addCanvas(scene, TEX.glint, buildGlint());
 
   // Cutscene da rua.
   for (const u of ZOMBIE_SIZES) {

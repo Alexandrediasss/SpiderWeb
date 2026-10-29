@@ -1,6 +1,7 @@
 // Cutscene da rua: a aranha sai pelo buraco do telhado; corte para a rua com só as pernas da horda;
 // a câmera sobe (com parallax) até as cabeças; relâmpago; e, no fim, a aranha na beira do telhado
-// olhando a horda. Depois o jogo volta (a GameScene estava dormindo). Spec: docs/features/street-cutscene.md
+// olhando a horda. É o fim do ato 1: no fim ela acorda a GameScene (que estava dormindo), que mostra
+// o "END OF ACT". Spec: docs/features/street-cutscene.md
 import Phaser from 'phaser';
 import { HORDE, STREET } from '../config';
 import { PAL } from '../art/palette';
@@ -484,7 +485,7 @@ export class StreetScene extends Phaser.Scene {
 
   // ---------- fim ----------
 
-  /** Pular (Enter/Esc/Espaço ou A/Start): escurece rápido e volta ao jogo. */
+  /** Pular (Enter/Esc/Espaço ou A/Start): escurece rápido e vai para o fim do ato. */
   private skip(): void {
     if (this.done) return;
     this.done = true;

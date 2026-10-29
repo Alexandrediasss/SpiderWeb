@@ -10,6 +10,10 @@ A casa está escura, iluminada só pelas luminárias. Lá fora chove, e de vez e
 
 E lá fora há algo pior: pelo buraco no telhado do sótão, a aranha vê a rua do bairro tomada por uma horda de **zumbis**.
 
+Pela casa há **cartas** do pai da família que morava ali. Elas contam o que aconteceu antes da aranha acordar.
+
+O jogo é dividido em **atos**, como os episódios da Telltale. O ato 1 é a casa, e termina quando a aranha sai pelo telhado e vê a horda.
+
 O jogo é em **inglês** (textos da interface). Código também em inglês; comentários e docs em português.
 
 ## Pilares
@@ -22,15 +26,26 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 ## Fluxo
 
 1. **Tela inicial:** só "SPIDER WEB" e o botão PLAY, por cima do sótão com chuva. A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
-2. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
-3. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
-4. **Buraco no telhado:** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. No fim, a aranha cai de volta no sótão (vida e ratos como estavam). Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
-5. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
-6. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
+2. **Seleção de atos:** estilo Telltale: o nome do ato entre setas (`LB`/`RB`), a arte do ato numa moldura gasta e `SELECT`/`BACK`. O ato 2 aparece bloqueado (COMING SOON). Spec: [features/acts.md](features/acts.md)
+3. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
+4. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
+5. **Cartas:** perto de uma folha aparece `READ`; ela abre em tela cheia, segurada pelas patas da aranha, e o jogo pausa. Spec: [features/letters.md](features/letters.md)
+6. **Buraco no telhado (fim do ato 1):** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
+7. **Fim do ato:** "END OF ACT 1 / AWAKENING", as cartas achadas (ex.: 2/3) e "ACT 2 · COMING SOON". Depois, volta para a seleção de atos. O progresso fica salvo no navegador. Spec: [features/acts.md](features/acts.md)
+8. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
+9. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
 
 ## História (rascunho)
 
 Os insetos sempre estiveram aqui e sobreviveram a predadores gigantes. A protagonista acorda dentro da parede de uma casa, coberta por um líquido verde **mutante** que pingou de um cano. Ainda vai ser desenvolvida: o que é o líquido, o que ele fez com ela e o que ela busca na casa.
+
+**As cartas do pai** (ato 1):
+
+1. **Dia 14** (mesa da sala): há duas semanas começou a invasão dos "doentes", gente que morre e volta matando. Ele se trancou em casa com a esposa e a filha; a comida está acabando e eles bebem água da chuva. A filha tem asma, e ele vai ter que sair para buscar remédio.
+2. **Dia 21** (cama): a comida acabou e eles estão com sede. Ele abriu um buraco no sótão para fugir, mas tem medo do que viu lá em cima. Vão sair pelos telhados, de casa em casa.
+3. **Extra** (canto do sótão): ele e a esposa, Jean Marry, estavam perto do divórcio; cuidar da filha e se proteger os uniu mais do que nunca.
+
+O buraco no telhado que a aranha usa para sair é o que o pai abriu. Fica para depois: a família conseguiu fugir? A filha achou o remédio?
 
 Lá fora o mundo acabou: uma horda de zumbis anda pela rua do bairro (americano, de classe média) debaixo da tempestade. Os zumbis misturam o do Minecraft (corpo em blocos, braços esticados) com o de Plants vs. Zombies (roupa do dia a dia, olhos grandes e desiguais, boca aberta). Fica para depois decidir se o líquido mutante tem a ver com isso.
 
@@ -48,7 +63,9 @@ Lá fora o mundo acabou: uma horda de zumbis anda pela rua do bairro (americano,
 | Soltar a teia | Soltar o botão do mouse (mantém o embalo) | Soltar o botão |
 | Teia de ataque (tira vida) | Botão direito do mouse | `X` |
 | Teia que prende (5 s) | `E` | `B` |
+| Ler a carta perto | `F` (fecha com `F`, `Esc`, `Enter`, `Espaço` ou clique) | `Y` (fecha com `Y`, `B`, `A` ou `Start`) |
 | Começar (tela inicial) | Clique em PLAY, `Enter` ou `Espaço` | `A` ou `Start` |
+| Seleção de atos | `←`/`→` ou `A`/`D` trocam, `Enter` escolhe, `Esc` volta | `LB`/`RB` ou ←/→ trocam, `A` escolhe, `B` volta |
 | Pular a cutscene | `Enter`, `Esc` ou `Espaço` | `A` ou `Start` |
 | Pausar | `Esc` ou `P` | `Start` |
 | Som liga/desliga | `M` | `Select` |
@@ -63,6 +80,7 @@ Na parede, apertar *em direção* à parede sobe e apertar *para fora* desce. Ao
 - **Correr.** `Shift` multiplica a velocidade (andar 70 px/s, correr 150 px/s).
 - **Pular.** Impulso para fora da superfície. No ar há gravidade e controle leve; ao encostar em qualquer superfície, a aranha gruda.
 - **Teia.** Raio até 240 px (alcança o teto a partir do chão). Se acertar algo, vira um pêndulo; dá para subir até o ponto e grudar lá. Spec: [features/web-swing.md](features/web-swing.md)
+- **Cartas.** Três folhas escritas pelo pai (duas da história e uma extra). Spec: [features/letters.md](features/letters.md)
 - **Vida e ratos.** 3 corações. Cada mordida tira 1. Ratos patrulham embaixo da mesa da sala, embaixo da mesa da cozinha, em cima da cama e no sótão, e têm 3 de vida. Teia de ataque tira 1; teia que prende os segura por 5 s. Spec: [features/combat.md](features/combat.md)
 
 ## Mundo: a casa
@@ -71,16 +89,16 @@ Um corte lateral da casa (estilo casa de bonecas), com 80×44 tiles de 16 px:
 
 | Andar | Cômodos | Destaques |
 |---|---|---|
-| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto; buraco no telhado (chuva entrando, poça embaixo) que leva à cutscene da rua |
-| Andar de cima | Quarto, Banheiro | Cama (dá para passar embaixo), armário, prateleira; banheira, vaso, pia |
-| Térreo | Sala, Cozinha | Estante, sofá, mesa com cadeiras; balcão, armários suspensos, geladeira |
+| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto; buraco no telhado (chuva entrando, poça embaixo) que leva à cutscene da rua; a carta extra no canto direito |
+| Andar de cima | Quarto, Banheiro | Cama (dá para passar embaixo) com a carta do dia 21, armário, prateleira; banheira, vaso, pia |
+| Térreo | Sala, Cozinha | Estante, sofá, mesa com cadeiras e a carta do dia 14; balcão, armários suspensos, geladeira |
 
 Os andares se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (quarto↔sótão). As portas são vãos nas paredes internas.
 
 ## Direção de arte
 
 - Resolução interna de 480×270, escalada em número inteiro, sem filtro.
-- Tiles de 16 px; a aranha tem cerca de 20×12 px (pequena num mundo grande).
+- Tiles de 16 px; o sprite da aranha tem 22×14 px (pequena num mundo grande).
 - O cenário é "assado" numa única textura no boot; os móveis de fundo (maiúsculas no mapa) ficam escurecidos para dar profundidade.
 - Sombra suave embaixo e ao lado de superfícies sólidas.
 - A teia é desenhada pixel a pixel (linha de Bresenham), sem anti-aliasing.
@@ -112,6 +130,9 @@ Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mos
 - [x] Cutscene de abertura (texto, despertar no líquido mutante, saída pelo buraco de rato)
 - [ ] Desenvolver a história do líquido mutante (mais cutscenes?)
 - [x] Buraco no telhado e cutscene da rua (horda de zumbis)
+- [x] Cartas do pai (mesa, cama, sótão) com a página segurada pelas patas
+- [x] Atos: seleção estilo Telltale, fim do ato, progresso salvo
+- [ ] Ato 2: a fuga pelos telhados (de casa em casa, como diz a carta 2)
 - [ ] Sair de verdade para o telhado ou para a rua (uma fase do lado de fora?)
 - [x] Menu de pausa (Resume, Restart, Main Menu)
 - [x] Perigo: ratos (vida, mordida, teias de ataque e de prender)

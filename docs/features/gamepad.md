@@ -21,16 +21,18 @@ Testado com o 8BitDo Ultimate 2C com fio no Windows (modo XInput, que aparece co
 | Balançar | Analógico esquerdo para os lados |
 | Teia de ataque (tira vida) | `X` |
 | Teia que prende (5 s) | `B` |
+| Ler a carta perto | `Y` (fecha com `Y`, `B`, `A` ou `Start`) |
 | Começar (tela inicial) | `A` ou `Start` |
+| Seleção de atos | `LB`/`RB`, D-pad ou analógico ←/→ trocam; `A`/`Start` escolhe; `B` volta |
 | Pausar | `Start` / `Menu` (no menu: ↑/↓ escolhe, `A` confirma, `B` volta) |
 | Som liga/desliga | `Select` / `View` (botão da esquerda no centro) |
 
-Teias de combate e ratos: [combat.md](combat.md). Menu de pausa: [pause-menu.md](pause-menu.md).
+Teias de combate e ratos: [combat.md](combat.md). Menu de pausa: [pause-menu.md](pause-menu.md). Cartas: [letters.md](letters.md). Atos: [acts.md](acts.md).
 
 ## Regras
 
 1. **Índices do mapa padrão** (W3C "standard gamepad"):
-   - botões: `A=0`, `B=1`, `X=2`, `LB=4`, `RB=5`, `LT=6`, `RT=7`, `Select=8`, `Start=9`, D-pad `12–15`;
+   - botões: `A=0`, `B=1`, `X=2`, `Y=3`, `LB=4`, `RB=5`, `LT=6`, `RT=7`, `Select=8`, `Start=9`, D-pad `12–15`;
    - analógico esquerdo nos eixos `0/1`, direito nos eixos `2/3`.
 2. **Zona morta radial:** abaixo de `GAMEPAD.moveDeadzone` o analógico conta como solto. Acima, a magnitude é reescalada para começar do zero.
 3. **Movimento em 8 direções:** o analógico esquerdo é "encaixado" na direção mais próxima entre 8 (setores de 45°) e vira `-1/0/1` em cada eixo, como o teclado.
@@ -47,13 +49,14 @@ Teias de combate e ratos: [combat.md](combat.md). Menu de pausa: [pause-menu.md]
    - Teias de combate: viram para um rato a até `SHOTS.aimAssistDeg` da mira (veja `combat.md`).
 8. **"Apertou neste frame"** (pulo, teias, confirmar, pausa, som) é a borda de subida, comparando com o frame anterior.
    - Apertar `RB` com `RT` já seguro (ou o contrário) não dispara outra teia.
-   - `navY` dá um passo de menu por empurrão do D-pad ou analógico.
+   - `navY` dá um passo de menu por empurrão do D-pad ou analógico; `navX` faz o mesmo para os lados, e também com `LB`/`RB`.
    - O leitor é um só e sobrevive aos reinícios da cena (veja `pause-menu.md`).
 9. **Teclado/mouse e controle juntos:** os dois funcionam ao mesmo tempo. O movimento soma e é limitado a `[-1, 1]`; os botões são OU.
 10. **Quem manda na mira:** o último dispositivo usado para mirar. Mover o analógico direito ou apertar a teia no controle passa a mira para o controle; mover ou clicar o mouse devolve para o mouse.
 11. **Retícula no modo controle:** se a teia alcança algo, a retícula fica branca no ponto de acerto (já com a mira assistida). Se não, fica cinza a `GAMEPAD.reticleDistance` px da aranha, na direção mirada.
 12. **Vibração:** quando a teia gruda em algo, o controle dá um tranco curto (`GAMEPAD.rumbleWeb`). Se o navegador ou o controle não suportarem, nada acontece.
-13. **Vários controles:** usa o primeiro conectado com mapa `standard`; se nenhum tiver, o primeiro conectado.
+13. **Teclas nos avisos:** o último dispositivo usado (qualquer botão ou analógico = controle; tecla ou mouse = teclado) liga a classe `pad` no `<body>`, e o HTML mostra `Y`/`A`/`B` ou `F`/`ENTER`/`ESC` conforme ela.
+14. **Vários controles:** usa o primeiro conectado com mapa `standard`; se nenhum tiver, o primeiro conectado.
 
 ## Casos de borda
 

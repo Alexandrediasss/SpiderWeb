@@ -169,6 +169,28 @@ describe('GamepadReader', () => {
     expect(r.read(pad(), 32)?.navY).toBe(0);
     expect(r.read(pad({ axes: [0, -1, 0, 0] }), 48)?.navY).toBe(-1);
   });
+
+  it('navegação para os lados: D-pad, analógico, LB e RB, um passo por aperto', () => {
+    const r = new GamepadReader();
+    expect(r.read(pad({ pressed: [BUTTON.RIGHT] }), 0)?.navX).toBe(1);
+    expect(r.read(pad({ pressed: [BUTTON.RIGHT] }), 16)?.navX).toBe(0);
+    expect(r.read(pad({ axes: [-1, 0, 0, 0] }), 32)?.navX).toBe(-1);
+    expect(r.read(pad(), 48)?.navX).toBe(0);
+    expect(r.read(pad({ pressed: [BUTTON.LB] }), 64)?.navX).toBe(-1);
+    expect(r.read(pad({ pressed: [BUTTON.LB] }), 80)?.navX).toBe(0);
+    expect(r.read(pad({ pressed: [BUTTON.RB] }), 96)?.navX).toBe(1);
+  });
+
+  it('Y lê a carta, uma vez por aperto; "active" só com o controle em uso', () => {
+    const r = new GamepadReader();
+    const idle = r.read(pad(), 0);
+    expect(idle?.readPressed).toBe(false);
+    expect(idle?.active).toBe(false);
+    const y = r.read(pad({ pressed: [BUTTON.Y] }), 16);
+    expect(y?.readPressed).toBe(true);
+    expect(y?.active).toBe(true);
+    expect(r.read(pad({ pressed: [BUTTON.Y] }), 32)?.readPressed).toBe(false);
+  });
 });
 
 describe('assistAim', () => {

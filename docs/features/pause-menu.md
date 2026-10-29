@@ -11,13 +11,13 @@ Código: `src/scenes/PauseMenu.ts` (controlador do HTML), o elemento `#pause` em
 | Confirmar | `Enter`, `Espaço` ou clique | `A` |
 | Voltar ao jogo | `Esc`/`P` de novo | `B` ou `Start` |
 
-Só dá para pausar durante o jogo: não na tela inicial nem enquanto a tela escurece depois de morrer.
+Só dá para pausar durante o jogo: não na tela inicial, na seleção de atos, enquanto a tela escurece (morte, buraco do telhado) nem no fim do ato. Com uma carta aberta, `Esc` fecha a carta em vez de pausar.
 
 ## Opções
 
 1. **RESUME:** volta ao jogo. Pulo e teias ficam ignorados por `TITLE.inputGraceSec`, para a tecla do menu não virar ação.
-2. **RESTART:** reinicia direto na jogatina (sem cutscene), com vida cheia, ratos de volta e a aranha no começo.
-3. **MAIN MENU:** volta para a tela inicial, e a música recomeça. O PLAY de lá mostra a cutscene de novo (dá para pular).
+2. **RESTART:** reinicia direto na jogatina (sem cutscene), com vida cheia, ratos de volta e a aranha no começo. As cartas já lidas continuam lidas.
+3. **MAIN MENU:** volta para a tela inicial, e a música recomeça. O PLAY de lá leva à seleção de atos, e o ato 1 mostra a cutscene de novo (dá para pular).
 
 ## Durante a pausa
 

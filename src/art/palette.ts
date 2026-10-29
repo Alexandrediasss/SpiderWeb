@@ -137,6 +137,41 @@ export const PAL = {
     reflection: 0x3a4a72,
   },
 
+  /** Cartas do pai: a folhinha no cenário e a página aberta (pergaminho). Spec: docs/features/letters.md */
+  letter: {
+    paper: 0xe9d6ad,
+    paperLight: 0xf4e6c4,
+    paperDark: 0xd4bb8c,
+    edge: 0xb48d5c,
+    edgeDark: 0x7e5a35,
+    outline: 0x2e1f16,
+    crease: 0xc9ac7a,
+    creaseLight: 0xf7ecd2,
+    stain: 0xcdb183,
+    stainRing: 0xa98657,
+    doodle: 0x8a2a2a,
+    shadow: 0x000000,
+    noteOutline: 0x3a2c28,
+    noteShade: 0xbfa77c,
+    noteInk: 0x6b5a52,
+    glint: 0xfff6d8,
+    /** Patas segurando a página: mais claras que no sprite, para aparecerem no fundo escuro. */
+    legBase: 0x4a3127,
+    legLight: 0x6e4a38,
+    legDark: 0x2a1b17,
+    legHair: 0x8c6650,
+  },
+
+  /** Seleção de atos: moldura gasta e o cadeado do ato bloqueado. Spec: docs/features/acts.md */
+  acts: {
+    frame: 0x110c0b,
+    frameRim: 0x3a2a22,
+    silhouette: 0x07080e,
+    lock: 0x8d93a5,
+    lockLight: 0xc7cbd6,
+    lockDark: 0x4b5062,
+  },
+
   ui: { reticle: 0xffffff, heart: 0xd8323c, heartLight: 0xff8a8a, heartEmpty: 0x3a2a33, heartOutline: 0x140c12 },
 
   sky: { top: 0x080a14, bottom: 0x1a2036, cloud: 0x2a3046, cloudShade: 0x1d2133 },

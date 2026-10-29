@@ -11,6 +11,7 @@ export const BUTTON = {
   A: 0,
   B: 1,
   X: 2,
+  Y: 3,
   LB: 4,
   RB: 5,
   LT: 6,
@@ -43,6 +44,8 @@ export interface GamepadFrame {
   attackPressed: boolean;
   /** `B`: teia que prende. Nos menus, `B` também é "voltar". */
   trapPressed: boolean;
+  /** `Y`: ler a carta perto. */
+  readPressed: boolean;
   /** `A` neste frame (confirmar em menus). */
   confirmPressed: boolean;
   /** `Start`: pausa. */
@@ -50,6 +53,10 @@ export interface GamepadFrame {
   musicPressed: boolean;
   /** Navegação vertical de menu: -1 (subiu) / 1 (desceu) só no frame em que o analógico/D-pad foi empurrado. */
   navY: number;
+  /** Navegação horizontal de menu: -1/1 ao empurrar para os lados (analógico ou D-pad) ou apertar `LB`/`RB`. */
+  navX: number;
+  /** O controle foi usado neste frame (qualquer botão, gatilho ou analógico). */
+  active: boolean;
 }
 
 /** Zona morta radial: abaixo de `dz` vira zero; acima, a magnitude é reescalada para 0..1. */
@@ -72,6 +79,7 @@ export function snapTo8(v: Vec2): Vec2 {
 export class GamepadReader {
   private prev = new Set<number>();
   private prevMoveY = 0;
+  private prevMoveX = 0;
   private aimDir: Vec2 = { x: 0, y: -1 };
   /** Inclinações recentes do analógico direito, para ignorar o "solavanco" ao soltar. */
   private aimHistory: { t: number; mag: number }[] = [];
@@ -101,6 +109,8 @@ export class GamepadReader {
     const webBefore = this.prev.has(BUTTON.RT) || this.prev.has(BUTTON.RB);
     const webNow = now.has(BUTTON.RT) || now.has(BUTTON.RB);
     const navY = move.y !== 0 && move.y !== this.prevMoveY ? move.y : 0;
+    const shoulder = (justDown(BUTTON.RB) ? 1 : 0) - (justDown(BUTTON.LB) ? 1 : 0);
+    const navX = shoulder || (move.x !== 0 && move.x !== this.prevMoveX ? move.x : 0);
 
     const frame: GamepadFrame = {
       move,
@@ -112,13 +122,17 @@ export class GamepadReader {
       aimMoved,
       attackPressed: justDown(BUTTON.X),
       trapPressed: justDown(BUTTON.B),
+      readPressed: justDown(BUTTON.Y),
       confirmPressed: justDown(BUTTON.A),
       pausePressed: justDown(BUTTON.START),
       musicPressed: justDown(BUTTON.SELECT),
       navY,
+      navX,
+      active: now.size > 0 || move.x !== 0 || move.y !== 0 || aimMoved,
     };
     this.prev = now;
     this.prevMoveY = move.y;
+    this.prevMoveX = move.x;
     return frame;
   }
 
@@ -184,6 +198,7 @@ export function mergeInput(
     webHeld: kb.webHeld || pad.webHeld,
     attackPressed: kb.attackPressed || pad.attackPressed,
     trapPressed: kb.trapPressed || pad.trapPressed,
+    readPressed: kb.readPressed || pad.readPressed,
     aim,
   };
 }

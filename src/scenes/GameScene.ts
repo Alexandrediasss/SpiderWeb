@@ -1,43 +1,63 @@
-// Cena principal: tela inicial, jogo, pausa e morte. Cenário, atmosfera, aranha, ratos, câmera, mira, som e debug.
+// Cena principal: tela inicial, seleção de atos, jogo, cartas, pausa, morte e fim do ato.
+// Cenário, atmosfera, aranha, ratos, câmera, mira, som e debug.
 import Phaser from 'phaser';
-import { GAMEPAD, INTRO, LIGHT, PLAYER, SHOTS, SPIDER, STREET, TILE, TITLE, VIEW, WEB } from '../config';
+import { GAMEPAD, INTRO, LETTER, LIGHT, PLAYER, SHOTS, STREET, TILE, TITLE, VIEW, WEB } from '../config';
 import { getLevelArt } from '../art/levelArt';
 import { TEX } from '../art/textures';
 import { type Sound, getSound } from '../audio/sound';
 import { Atmosphere } from '../entities/Atmosphere';
 import { CombatView } from '../entities/CombatView';
+import { LetterSprites } from '../entities/LetterSprites';
 import { Spider } from '../entities/Spider';
+import { type Act, ACTS } from '../level/acts';
 import { RATS, ROOF_HOLE, SPAWN } from '../level/houseMap';
+import { type Letter, LETTERS } from '../level/letters';
 import type { LevelGrid } from '../physics/LevelGrid';
 import type { Vec2 } from '../physics/surfaces';
 import { Combat, type CombatEvent, aimAtTarget } from '../systems/combat';
 import { type SpiderInput, emptyInput } from '../systems/input';
-import { inRoofHole, roofReturnPoint } from '../systems/roofHole';
+import { LetterLog, letterCenter, nearbyLetter } from '../systems/letters';
+import { recordActEnd } from '../systems/progress';
+import { inRoofHole } from '../systems/roofHole';
 import { raycastWeb } from '../systems/webRope';
+import { ActEnd } from './ActEnd';
+import { ActsMenu } from './ActsMenu';
 import { HeartsHud } from './HeartsHud';
 import { Hud } from './Hud';
+import { LetterReader } from './LetterReader';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
 import { TitleScreen } from './TitleScreen';
+import { loadProgress, saveProgress } from './progressStore';
 
 /**
- * title: tela inicial | leaving: escurecendo para a cutscene | emerge: aranha saindo do buraco |
- * play: jogando | paused: menu de pausa | dying: tela escurecendo depois de morrer |
- * exiting: entrou no buraco do telhado, escurecendo para a cutscene da rua (depois a cena dorme).
+ * title: tela inicial | acts: seleção de atos | leaving: escurecendo para a cutscene |
+ * emerge: aranha saindo do buraco | play: jogando | paused: menu de pausa | reading: lendo uma carta |
+ * dying: tela escurecendo depois de morrer |
+ * exiting: entrou no buraco do telhado, escurecendo para a cutscene da rua (depois a cena dorme) |
+ * actEnd: tela de fim do ato (depois da cutscene da rua).
  */
-type Mode = 'title' | 'leaving' | 'emerge' | 'play' | 'paused' | 'dying' | 'exiting';
+type Mode = 'title' | 'acts' | 'leaving' | 'emerge' | 'play' | 'paused' | 'reading' | 'dying' | 'exiting' | 'actEnd';
+
+/** Cartas lidas na jogada atual do ato: sobrevivem a morrer e a "Restart"; zeram ao escolher o ato. */
+const runLetters = new LetterLog();
 
 /** Enquanto a tela escurece no buraco do telhado, a aranha continua subindo sozinha. */
 const CLIMB_OUT: SpiderInput = { ...emptyInput(), move: { x: 0, y: -1 } };
 
 /**
  * Dados para `scene.start`/`restart`: `skipTitle` vai direto ao jogo (morte, Restart);
- * `emerge` (vindo da cutscene) faz a aranha sair do buraco de rato antes de liberar o controle.
+ * `emerge` (vindo da cutscene) faz a aranha sair do buraco de rato antes de liberar o controle;
+ * `openActs` (depois do fim do ato) abre direto na seleção de atos.
  */
 interface SceneData {
   skipTitle?: boolean;
   emerge?: boolean;
+  openActs?: boolean;
 }
+
+/** O ato que esta cena joga (por enquanto só existe a casa do ato 1). */
+const ACT = ACTS[0];
 
 export class GameScene extends Phaser.Scene {
   private grid!: LevelGrid;
@@ -52,6 +72,12 @@ export class GameScene extends Phaser.Scene {
   private hearts!: HeartsHud;
   private title!: TitleScreen;
   private pauseMenu!: PauseMenu;
+  private actsMenu!: ActsMenu;
+  private actEnd!: ActEnd;
+  private letters!: LetterSprites;
+  private reader!: LetterReader;
+  /** Carta perto da aranha neste quadro (mostra o "READ"). */
+  private nearLetter: Letter | null = null;
   private sound_!: Sound;
   private mode: Mode = 'title';
   /** Depois do Play/Resume, ignora pulo e teias por um instante (a tecla do menu não vira ação). */
@@ -90,15 +116,26 @@ export class GameScene extends Phaser.Scene {
     this.hud = new Hud();
     this.hearts = new HeartsHud(this, PLAYER.maxHp);
     this.hearts.setVisible(false);
-    this.title = new TitleScreen(() => this.goToIntro(), !data.skipTitle);
+    this.letters = new LetterSprites(this, LETTERS);
+    this.reader = new LetterReader(() => this.closeLetter());
+    this.title = new TitleScreen(() => this.openActs(), !data.skipTitle && !data.openActs);
     this.pauseMenu = new PauseMenu((a) => this.onPauseAction(a));
-    // A cutscene da rua acorda esta cena quando acaba.
-    this.events.on('wake', this.returnFromStreet, this);
+    this.actsMenu = new ActsMenu(
+      (act) => this.startAct(act),
+      () => this.backToTitle(),
+    );
+    this.actEnd = new ActEnd(() => this.scene.restart({ openActs: true } satisfies SceneData));
+    // A cutscene da rua acorda esta cena quando acaba: é o fim do ato.
+    const onWake = () => this.endAct(true);
+    this.events.on('wake', onWake);
     this.events.once('shutdown', () => {
       this.title.destroy();
       this.pauseMenu.destroy();
+      this.actsMenu.destroy();
+      this.actEnd.destroy();
+      this.reader.destroy();
       this.anims.resumeAll();
-      this.events.off('wake', this.returnFromStreet, this);
+      this.events.off('wake', onWake);
     });
 
     const cam = this.cameras.main;
@@ -112,6 +149,7 @@ export class GameScene extends Phaser.Scene {
       cam.centerOn(TITLE.cameraX, TITLE.cameraY);
       this.hud.showHelp(false);
       this.sound_.music.start();
+      if (data.openActs) this.openActs();
     }
 
     const kb = this.input.keyboard;
@@ -126,6 +164,7 @@ export class GameScene extends Phaser.Scene {
     kb?.on('keydown-M', () => this.sound_.hub.toggleMute());
     kb?.on('keydown-ESC', () => this.togglePause());
     kb?.on('keydown-P', () => this.togglePause());
+    kb?.on('keydown-ENTER', () => this.closeLetter());
 
     if (import.meta.env.DEV) {
       Object.assign(window, {
@@ -141,7 +180,26 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- modos ----------
 
-  /** PLAY na tela inicial: a música some, a tela escurece e começa a cutscene de abertura. */
+  /** PLAY na tela inicial: abre a seleção de atos (a música continua). */
+  private openActs(): void {
+    this.mode = 'acts';
+    this.actsMenu.show(loadProgress());
+  }
+
+  private backToTitle(): void {
+    this.actsMenu.hide();
+    this.title.reopen();
+    this.mode = 'title';
+  }
+
+  /** Escolheu um ato: zera as cartas lidas e começa a cutscene de abertura. */
+  private startAct(_act: Act): void {
+    runLetters.clear();
+    this.actsMenu.hide();
+    this.goToIntro();
+  }
+
+  /** A música some, a tela escurece e começa a cutscene de abertura. */
   private goToIntro(): void {
     this.mode = 'leaving';
     this.sound_.music.stop();
@@ -176,10 +234,12 @@ export class GameScene extends Phaser.Scene {
   private togglePause(): void {
     if (this.mode === 'play') this.pauseGame();
     else if (this.mode === 'paused') this.resumeGame();
+    else if (this.mode === 'reading') this.closeLetter();
   }
 
   private pauseGame(): void {
     this.mode = 'paused';
+    this.reader.hidePrompt();
     this.pauseMenu.show();
     this.hud.applyHelpPreference(true);
     this.atmosphere.setPaused(true);
@@ -215,18 +275,51 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  /** Volta da cutscene da rua: a aranha cai pelo buraco de volta no sótão; vida e ratos como estavam. */
-  private returnFromStreet(): void {
-    const p = roofReturnPoint(ROOF_HOLE, TILE, SPIDER.half);
-    this.spider.motor.placeAt(p.x, p.y);
-    this.mode = 'play';
-    this.graceLeft = TITLE.inputGraceSec;
-    this.reticle.setVisible(true);
-    this.hud.applyHelpPreference();
-    this.hud.showDebug(this.debug);
+  /**
+   * Fim do ato: salva o progresso e mostra a tela "END OF ACT" por cima do preto. Vem da cutscene da rua
+   * (a tela já está preta); `__scene.endAct()` no console escurece antes.
+   */
+  endAct(fromStreet = false): void {
+    if (this.mode === 'actEnd') return;
+    this.mode = 'actEnd';
+    this.reticle.setVisible(false);
+    this.hearts.setVisible(false);
+    this.hud.showHelp(false);
+    this.reader.hidePrompt();
+    saveProgress(recordActEnd(loadProgress(), ACT.id, runLetters.ids));
+    const show = () => this.actEnd.show(ACT, runLetters.count(ACT.letters), ACTS[ACTS.indexOf(ACT) + 1]);
+    if (fromStreet) {
+      show();
+      return;
+    }
     const cam = this.cameras.main;
-    cam.centerOn(p.x, p.y);
-    cam.fadeIn(600, 0, 0, 0);
+    cam.fadeOut(600, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, show);
+  }
+
+  /** Abre a carta (por id no console: `__scene.openLetter('table')`). O jogo pausa enquanto ela está aberta. */
+  openLetter(which: Letter | string): void {
+    const letter = typeof which === 'string' ? LETTERS.find((l) => l.id === which) : which;
+    if (!letter || this.mode !== 'play') return;
+    this.mode = 'reading';
+    runLetters.markRead(letter.id);
+    this.reader.hidePrompt();
+    this.reader.show(letter);
+    this.reticle.setVisible(false);
+    this.atmosphere.setPaused(true);
+    this.anims.pauseAll();
+    this.sound_.sfx.paper();
+  }
+
+  private closeLetter(): void {
+    if (this.mode !== 'reading') return;
+    this.mode = 'play';
+    this.reader.hide();
+    this.reticle.setVisible(true);
+    this.atmosphere.setPaused(false);
+    this.anims.resumeAll();
+    this.graceLeft = TITLE.inputGraceSec;
+    this.sound_.sfx.paper();
   }
 
   /** Vida zerou: a aranha cai, a tela escurece e o jogo reinicia. */
@@ -246,14 +339,23 @@ export class GameScene extends Phaser.Scene {
     const pi = this.playerInput;
     const m = this.spider.motor;
 
+    document.body.classList.toggle('pad', pi.device === 'gamepad');
     if (this.mode === 'paused') {
       pi.read(m.body);
       this.handlePausedPad();
       return;
     }
+    if (this.mode === 'reading') {
+      // F ou Espaço no teclado; Y, B, A ou Start no controle (Esc e Enter vêm pelos eventos de tecla).
+      const inp = pi.read(m.body);
+      const f = pi.padFrame;
+      if (f?.musicPressed) this.sound_.hub.toggleMute();
+      if (inp.readPressed || inp.jumpPressed || f?.trapPressed || f?.confirmPressed || f?.pausePressed) this.closeLetter();
+      return;
+    }
 
     const cam = this.cameras.main;
-    if (this.mode === 'title') {
+    if (this.mode === 'title' || this.mode === 'acts') {
       const drift = Math.sin((time / 1000) * TITLE.driftSpeed * Math.PI * 2) * TITLE.driftPx;
       cam.centerOn(TITLE.cameraX + drift, TITLE.cameraY);
     }
@@ -269,6 +371,8 @@ export class GameScene extends Phaser.Scene {
       this.spider.update(dt, this.mode === 'exiting' ? CLIMB_OUT : emptyInput());
       this.combat.update(dt, m);
       this.combatView.update(dt, time, light);
+      this.letters.update(time, runLetters, light);
+      this.reader.hidePrompt();
       this.spider.setLight(light(m.body.x, m.body.y), LIGHT.spiderMinLight);
       if (this.mode === 'emerge') this.updateEmerge(dt);
       else this.spider.setDamageFx(0, PLAYER.invulnSec, this.mode === 'dying');
@@ -277,7 +381,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.graceLeft > 0) {
       this.graceLeft -= dt;
-      input = { ...input, jumpPressed: false, webPressed: false, webHeld: false, attackPressed: false, trapPressed: false };
+      input = { ...input, jumpPressed: false, webPressed: false, webHeld: false, attackPressed: false, trapPressed: false, readPressed: false };
     }
 
     const hadRope = m.rope !== null;
@@ -291,6 +395,9 @@ export class GameScene extends Phaser.Scene {
     events.push(...this.combat.update(dt, m));
     this.handleCombatEvents(events);
     this.combatView.update(dt, time, light);
+    this.letters.update(time, runLetters, light);
+    this.updateLetterPrompt(input);
+    if (this.mode !== 'play') return;
 
     const health = this.combat.health;
     this.spider.setLight(light(m.body.x, m.body.y), LIGHT.spiderMinLight);
@@ -300,6 +407,26 @@ export class GameScene extends Phaser.Scene {
 
     if (this.debug) this.drawDebug();
     if (this.mode === 'play' && inRoofHole(m.body, ROOF_HOLE, TILE)) this.goToStreet();
+  }
+
+  /** "READ" em cima da carta perto (só grudada numa superfície); F / Y abre. */
+  private updateLetterPrompt(input: SpiderInput): void {
+    const m = this.spider.motor;
+    this.nearLetter = m.surface === 'air' ? null : nearbyLetter(LETTERS, m.body, TILE, LETTER.readRadius);
+    if (!this.nearLetter) {
+      this.reader.hidePrompt();
+      return;
+    }
+    if (input.readPressed) {
+      this.openLetter(this.nearLetter);
+      return;
+    }
+    // Do mundo para a janela: o canvas é escalado (Scale.FIT) e centrado.
+    const c = letterCenter(this.nearLetter, TILE);
+    const view = this.cameras.main.worldView;
+    const rect = this.game.canvas.getBoundingClientRect();
+    const k = rect.width / VIEW.width;
+    this.reader.showPrompt(rect.left + (c.x - view.x) * k, rect.top + (c.y - 10 - view.y) * k);
   }
 
   private updateEmerge(dt: number): void {
@@ -383,6 +510,16 @@ export class GameScene extends Phaser.Scene {
     if (f.musicPressed) this.sound_.hub.toggleMute();
     if (this.mode === 'title') {
       if (f.confirmPressed || f.pausePressed) this.title.confirm();
+      return false;
+    }
+    if (this.mode === 'acts') {
+      if (f.navX !== 0) this.actsMenu.move(f.navX);
+      if (f.confirmPressed || f.pausePressed) this.actsMenu.confirm();
+      else if (f.trapPressed) this.actsMenu.back();
+      return false;
+    }
+    if (this.mode === 'actEnd') {
+      if (f.confirmPressed || f.pausePressed) this.actEnd.confirm();
       return false;
     }
     if (f.pausePressed && this.mode === 'play') {

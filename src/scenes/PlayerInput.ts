@@ -6,13 +6,17 @@ import type { Vec2 } from '../physics/surfaces';
 import { type AimDevice, type GamepadFrame, GamepadReader, assistAim, mergeInput } from '../systems/gamepad';
 import type { SpiderInput } from '../systems/input';
 
-type KeyName = 'W' | 'A' | 'S' | 'D' | 'E' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'SPACE' | 'SHIFT';
+type KeyName = 'W' | 'A' | 'S' | 'D' | 'E' | 'F' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'SPACE' | 'SHIFT';
 
 /**
  * Um leitor de controle só, que sobrevive aos reinícios da cena: assim um botão que continua
  * apertado (o A que escolheu "Main Menu") não vira um "apertou agora" na cena nova.
  */
 const padReader = new GamepadReader();
+
+export type InputDevice = 'keyboard' | 'gamepad';
+/** O último dispositivo usado (para mostrar a tecla certa nos avisos). Também sobrevive aos reinícios. */
+let lastDevice: InputDevice = 'keyboard';
 
 export class PlayerInput {
   private readonly keys: Record<KeyName, Phaser.Input.Keyboard.Key>;
@@ -32,11 +36,20 @@ export class PlayerInput {
   ) {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('Teclado indisponível');
-    this.keys = kb.addKeys('W,A,S,D,E,UP,DOWN,LEFT,RIGHT,SPACE,SHIFT') as Record<KeyName, Phaser.Input.Keyboard.Key>;
+    this.keys = kb.addKeys('W,A,S,D,E,F,UP,DOWN,LEFT,RIGHT,SPACE,SHIFT') as Record<KeyName, Phaser.Input.Keyboard.Key>;
     scene.input.mouse?.disableContextMenu();
-    const useMouse = () => (this.aimDevice = 'mouse');
+    const useMouse = () => {
+      this.aimDevice = 'mouse';
+      lastDevice = 'keyboard';
+    };
     scene.input.on('pointermove', useMouse);
     scene.input.on('pointerdown', useMouse);
+    kb.on('keydown', () => (lastDevice = 'keyboard'));
+  }
+
+  /** Teclado/mouse ou controle: o que foi usado por último. */
+  get device(): InputDevice {
+    return lastDevice;
   }
 
   read(spiderPos: Vec2): SpiderInput {
@@ -61,11 +74,13 @@ export class PlayerInput {
       webHeld: mouseDown,
       attackPressed,
       trapPressed: Phaser.Input.Keyboard.JustDown(k.E),
+      readPressed: Phaser.Input.Keyboard.JustDown(k.F),
       aim: { x: aim.x, y: aim.y },
     };
 
     this.pad = findGamepad();
     this.padFrame = padReader.read(this.pad, performance.now());
+    if (this.padFrame?.active) lastDevice = 'gamepad';
     if (this.padFrame && (this.padFrame.aimMoved || this.padFrame.webPressed)) this.aimDevice = 'gamepad';
     if (this.padFrame) {
       this.padAimDir = assistAim(this.grid, spiderPos, this.padFrame.aimDir, WEB.range, GAMEPAD.aimAssistDeg, GAMEPAD.aimAssistStepDeg);
@@ -90,7 +105,9 @@ export class PlayerInput {
 
 /** Lê o controle fora da jogatina (cutscene), com o mesmo leitor compartilhado. */
 export function pollPad(): GamepadFrame | null {
-  return padReader.read(findGamepad(), performance.now());
+  const frame = padReader.read(findGamepad(), performance.now());
+  if (frame?.active) lastDevice = 'gamepad';
+  return frame;
 }
 
 /** Primeiro controle conectado com mapa "standard"; senão, o primeiro conectado. */
