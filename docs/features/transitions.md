@@ -4,8 +4,8 @@ Três transições, todas em HTML/canvas por cima do jogo (o Phaser continua rod
 
 | Quando | Transição |
 |---|---|
-| PLAY na tela inicial → seleção de atos (e o BACK de volta) | A tela escurece devagar e clareia já na outra tela. |
-| Escolher o **ato 1** | **Gosma verde**: o líquido mutante espirra na "lente" e escorre do alto até cobrir tudo; o verde apaga para o preto e começa a cutscene de abertura. |
+| Menu principal → seleção de atos (LOAD GAME), SCENES ou ACHIEVEMENTS (e o BACK de volta) | A tela escurece devagar e clareia já na outra tela. |
+| Escolher o **ato 1** (ou NEW GAME) | **Gosma verde**: o líquido mutante espirra na "lente" e escorre do alto até cobrir tudo; o verde apaga para o preto e começa a cutscene de abertura. |
 | Escolher o **ato 2** | **Teia e vento**: riscos de vento cruzam a tela, fios de teia saem das bordas e tecem uma teia no meio enquanto o fundo escurece; uma rajada arranca a teia e começa o ato 2. |
 
 Código:
@@ -14,7 +14,7 @@ Código:
 
 Testes: `tests/transitionArt.test.ts`.
 
-## Escurecer (PLAY e BACK)
+## Escurecer (entre as telas do menu)
 
 1. A tela vai ao preto em `TRANSITION.fadeOutSec`, fica preta por `TRANSITION.fadeHoldSec`, troca a tela por baixo e clareia em `TRANSITION.fadeInSec`.
 2. Durante a troca, teclas e botões da tela nova ficam ignorados (a seleção de atos já tem a espera de 250 ms).

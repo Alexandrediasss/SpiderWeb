@@ -49,6 +49,20 @@ export function isUnlocked(p: Progress, act: Act): boolean {
   return act.playable && (!act.requires || p.completed.includes(act.requires));
 }
 
+/** Já tem algo que um NEW GAME apagaria? (algum ato terminado ou carta achada) */
+export function hasProgress(p: Progress): boolean {
+  return p.completed.length > 0 || Object.values(p.letters).some((ids) => ids.length > 0);
+}
+
+/** O ato "atual" para o LOAD GAME: o mais adiantado que já está liberado (índice em `acts`). */
+export function currentActIndex(p: Progress, acts: Act[]): number {
+  let current = 0;
+  acts.forEach((a, i) => {
+    if (isUnlocked(p, a)) current = i;
+  });
+  return current;
+}
+
 export interface ActStatus {
   completed: boolean;
   /** Cartas já achadas / total do ato. */

@@ -25,7 +25,7 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 
 ## Fluxo
 
-1. **Tela inicial:** só "SPIDER WEB" e o botão PLAY, por cima do sótão com chuva. A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
+1. **Tela inicial:** "SPIDER WEB" e o menu principal por cima do sótão com chuva: **NEW GAME** (jogo novo, pergunta antes de apagar o salvo), **LOAD GAME** (abre a seleção de atos no ato atual), **SCENES** e **ACHIEVEMENTS** (por enquanto trancadas). A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
 2. **Seleção de atos:** estilo Telltale: o nome do ato entre setas (`LB`/`RB`), a arte do ato numa moldura gasta e `SELECT`/`BACK`. O ato 2 aparece bloqueado (COMING SOON). Spec: [features/acts.md](features/acts.md)
 3. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
 4. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
@@ -65,7 +65,7 @@ Lá fora o mundo acabou: uma horda de zumbis anda pela rua do bairro (americano,
 | Teia de ataque (tira vida) | Botão direito do mouse | `X` |
 | Teia que prende (5 s) | `E` | `B` |
 | Ler a carta perto | `F` (fecha com `F`, `Esc`, `Enter`, `Espaço` ou clique) | `Y` (fecha com `Y`, `B`, `A` ou `Start`) |
-| Começar (tela inicial) | Clique em PLAY, `Enter` ou `Espaço` | `A` ou `Start` |
+| Menu principal | `↑`/`↓` escolhe, `Enter`/`Espaço` ou clique confirma, `Esc` volta | D-pad/analógico escolhe, `A`/`Start` confirma, `B` volta |
 | Seleção de atos | `←`/`→` ou `A`/`D` trocam, `Enter` escolhe, `Esc` volta | `LB`/`RB` ou ←/→ trocam, `A` escolhe, `B` volta |
 | Pular a cutscene | `Enter`, `Esc` ou `Espaço` | `A` ou `Start` |
 | Pausar | `Esc` ou `P` | `Start` |
@@ -139,7 +139,10 @@ Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mos
 - [x] Cartas do pai (mesa, cama, sótão) com a página segurada pelas patas
 - [x] Atos: seleção estilo Telltale, fim do ato, progresso salvo
 - [x] Ato 2: a travessia pelos postes, com ventania, detritos, fios com faísca, checkpoints e a pisada do zumbi
-- [x] Transições: escurecer no PLAY, gosma verde (ato 1), teia e vento (ato 2)
+- [x] Transições: escurecer entre as telas do menu, gosma verde (ato 1), teia e vento (ato 2)
+- [x] Menu principal: NEW GAME, LOAD GAME, SCENES e ACHIEVEMENTS (as duas últimas trancadas)
+- [ ] SCENES: rever as cenas, como no museu do *Sonic Generations*
+- [ ] ACHIEVEMENTS: as conquistas
 - [ ] Ato 3: dentro da casa vizinha (a aranha entrou pela chaminé)
 - [ ] Sair de verdade para o telhado ou para a rua (uma fase do lado de fora?)
 - [x] Menu de pausa (Resume, Restart, Main Menu)

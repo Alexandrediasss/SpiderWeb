@@ -1,6 +1,6 @@
 # Spec: atos (seleção de atos e fim do ato)
 
-O jogo é dividido em atos, como os episódios de *The Walking Dead* da Telltale. Depois do PLAY aparece a seleção de atos; no fim de cada ato aparece a tela "END OF ACT".
+O jogo é dividido em atos, como os episódios de *The Walking Dead* da Telltale. O LOAD GAME do menu principal abre a seleção de atos (e o NEW GAME vai direto ao ato 1); no fim de cada ato aparece a tela "END OF ACT".
 
 Código:
 - `src/level/acts.ts`: a lista de atos (número, nome, se já existe, de qual ato depende, quais cartas tem).
@@ -22,7 +22,7 @@ Testes: `tests/progress.test.ts` e `tests/actArt.test.ts`.
 
 ## Seleção de atos
 
-Fluxo: tela inicial → PLAY (a tela escurece e clareia já aqui) → **seleção de atos** → transição do ato → o ato. As transições: [transitions.md](transitions.md).
+Fluxo: menu principal → LOAD GAME (a tela escurece e clareia já aqui, no ato mais adiantado liberado) → **seleção de atos** → transição do ato → o ato. As transições: [transitions.md](transitions.md).
 
 1. **Layout (estilo Telltale):**
    - em cima, o nome do ato (`ACT 1: AWAKENING`) entre duas setas cor de pergaminho (`LB`/`RB`, ou `◀`/`▶` no teclado);
@@ -30,7 +30,7 @@ Fluxo: tela inicial → PLAY (a tela escurece e clareia já aqui) → **seleçã
    - embaixo da arte, a situação: `COMPLETED · LETTERS 2/3` (ou nada, se nunca terminou);
    - na base, os botões: `(A) SELECT` e `(B) BACK`, ou `ENTER SELECT` e `ESC BACK` no teclado.
    - Os botões mostrados seguem o último dispositivo usado (`body.pad` no CSS).
-2. **Controles:** `←`/`→`, `A`/`D`, D-pad, analógico, `LB`/`RB` trocam de ato. `Enter`/`Espaço`/clique na arte ou `A`/`Start` escolhem. `Esc`/`Backspace` ou `B` voltam para a tela inicial.
+2. **Controles:** `←`/`→`, `A`/`D`, D-pad, analógico, `LB`/`RB` trocam de ato. `Enter`/`Espaço`/clique na arte ou `A`/`Start` escolhem. `Esc`/`Backspace` ou `B` voltam para o menu principal.
 3. **Ato bloqueado:** escolher não faz nada (o botão SELECT fica apagado).
    - Ato que ainda não existe: a arte tem o cadeado e aparece `COMING SOON`.
    - Ato que depende de outro (`requires`): a arte aparece apagada e `FINISH ACT 1 TO UNLOCK`.
