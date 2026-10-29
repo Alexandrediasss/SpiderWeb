@@ -12,11 +12,11 @@ Depois do PLAY vem a seleção de atos: [acts.md](acts.md).
 
 ## Regras
 
-1. **Começar:** clicar em PLAY, ou `Enter`/`Espaço`, ou `A`/`Start` no controle. O título some com fade e abre a **seleção de atos** ([acts.md](acts.md)), com a música ainda tocando. `Esc`/`B` lá volta para cá.
+1. **Começar:** clicar em PLAY, ou `Enter`/`Espaço`, ou `A`/`Start` no controle. A tela escurece devagar e clareia já na **seleção de atos** ([acts.md](acts.md), [transitions.md](transitions.md)), com a música ainda tocando. `Esc`/`B` lá volta para cá do mesmo jeito.
    - O `Enter` do PLAY não chega na seleção de atos (`stopImmediatePropagation`), senão ele já escolheria o ato 1.
 2. **Ao escolher o ato 1:**
    - a música some em `MUSIC.fadeOutSec`;
-   - a tela escurece em `TITLE.toIntroFadeSec` e começa a **cutscene de abertura** ([intro.md](intro.md));
+   - a gosma verde cobre a tela ([transitions.md](transitions.md)) e começa a **cutscene de abertura** ([intro.md](intro.md));
    - quando ela termina (ou é pulada), a aranha sai do buraco de rato na sala e aparecem os corações e o painel de ajuda (se o jogador não o escondeu com `H`).
 3. **Voltar:** "Main Menu" no menu de pausa reinicia a cena com a tela inicial, e a música recomeça (veja `pause-menu.md`). Depois de morrer ou de "Restart", a tela inicial e a cutscene são puladas. Depois do fim do ato, o jogo volta direto para a seleção de atos.
 4. **Sem pulo acidental:** por `TITLE.inputGraceSec` depois do Play (e ao fechar uma carta), pulo, teias e leitura são ignorados. Assim o `Espaço` ou `A` usado para começar não vira pulo.

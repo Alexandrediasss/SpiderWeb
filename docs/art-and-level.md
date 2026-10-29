@@ -18,6 +18,9 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Cutscene da rua: telhado de fora, casas, calçadas, asfalto, beira do telhado | `src/art/streetArt.ts` (cores em `PAL.street`; posições em `ROOF_SHOT`, `STREET_SHOT`, `WIDE_SHOT`) |
 | Cartas: folhinha no cenário, brilho, página aberta com as patas segurando | `src/art/letterArt.ts` (cores em `PAL.letter`; onde ficam: `LETTERS` em `src/level/letters.ts`) |
 | Arte de cada ato (seleção de atos), com moldura gasta | `src/art/actArt.ts` (cores em `PAL.acts`) |
+| Ato 2: tiles da rua (postes, fios, árvore, outdoor, ponto de ônibus, semáforo, telhados), noite e luz das luminárias | `src/art/rooftopArt.ts` (cores em `PAL.act2`; mapa e legenda próprios em `src/level/rooftops.ts`) |
+| Ato 2: o pé do zumbi e os detritos (telha, jornal, galho, tampa) | `src/art/rooftopArt.ts` |
+| Transições de ato (gosma verde, teia e vento) | `src/art/transitionArt.ts` |
 | Tiles e papéis de parede | `src/art/tilePainters.ts` |
 | Janelas, quadros, luminárias, teias... | `src/art/decorArt.ts` |
 | Montagem do cenário numa textura só (+ máscara do lado de fora) | `src/art/levelBaker.ts` |
@@ -28,7 +31,7 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 
 ## Editar o mapa
 
-O mapa é ASCII em `HOUSE_MAP`: cada caractere é um tile de 16×16, e todas as linhas precisam ter o mesmo tamanho (o teste `tests/houseMap.test.ts` confere).
+O mapa da casa é ASCII em `HOUSE_MAP` (o do ato 2 é `ROOFTOP_MAP`, com legenda própria: [features/act2-rooftops.md](features/act2-rooftops.md)): cada caractere é um tile de 16×16, e todas as linhas precisam ter o mesmo tamanho (o teste `tests/houseMap.test.ts` confere).
 
 | Char | Material | Colide? |
 |---|---|---|

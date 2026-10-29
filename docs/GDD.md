@@ -12,7 +12,7 @@ E lá fora há algo pior: pelo buraco no telhado do sótão, a aranha vê a rua 
 
 Pela casa há **cartas** do pai da família que morava ali. Elas contam o que aconteceu antes da aranha acordar.
 
-O jogo é dividido em **atos**, como os episódios da Telltale. O ato 1 é a casa, e termina quando a aranha sai pelo telhado e vê a horda.
+O jogo é dividido em **atos**, como os episódios da Telltale. O ato 1 é a casa, e termina quando a aranha sai pelo telhado e vê a horda. O ato 2 é a travessia da rua **por cima**, se balançando pelos postes na ventania, até entrar pela chaminé da casa vizinha.
 
 O jogo é em **inglês** (textos da interface). Código também em inglês; comentários e docs em português.
 
@@ -31,9 +31,10 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 4. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
 5. **Cartas:** perto de uma folha aparece `READ`; ela abre em tela cheia, segurada pelas patas da aranha, e o jogo pausa. Spec: [features/letters.md](features/letters.md)
 6. **Buraco no telhado (fim do ato 1):** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
-7. **Fim do ato:** "END OF ACT 1 / AWAKENING", as cartas achadas (ex.: 2/3) e "ACT 2 · COMING SOON". Depois, volta para a seleção de atos. O progresso fica salvo no navegador. Spec: [features/acts.md](features/acts.md)
-8. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
-9. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
+7. **Fim do ato:** "END OF ACT 1 / AWAKENING", as cartas achadas (ex.: 2/3) e o próximo ato. Depois, volta para a seleção de atos. O progresso fica salvo no navegador. Spec: [features/acts.md](features/acts.md)
+8. **Ato 2, ROOFTOPS** (liberado depois do ato 1): transição de teia e vento; a cutscene continua de onde o ato 1 parou (a aranha na calha) e ela se lança no poste de luz. Na fase, só balanço, ventania e obstáculos; cair na rua é ser pisada por um zumbi e voltar no último checkpoint. Termina entrando pela chaminé. Spec: [features/act2-rooftops.md](features/act2-rooftops.md)
+9. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
+10. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
 
 ## História (rascunho)
 
@@ -81,6 +82,7 @@ Na parede, apertar *em direção* à parede sobe e apertar *para fora* desce. Ao
 - **Pular.** Impulso para fora da superfície. No ar há gravidade e controle leve; ao encostar em qualquer superfície, a aranha gruda.
 - **Teia.** Raio até 240 px (alcança o teto a partir do chão). Se acertar algo, vira um pêndulo; dá para subir até o ponto e grudar lá. Spec: [features/web-swing.md](features/web-swing.md)
 - **Cartas.** Três folhas escritas pelo pai (duas da história e uma extra). Spec: [features/letters.md](features/letters.md)
+- **Ventania (ato 2).** Como na subida final do Celeste: de tempos em tempos vem uma rajada que empurra a aranha no ar e na teia; grudada ela aguenta. Na rajada voam detritos, e fios soltos dão choque. Spec: [features/wind.md](features/wind.md)
 - **Vida e ratos.** 3 corações. Cada mordida tira 1. Ratos patrulham embaixo da mesa da sala, embaixo da mesa da cozinha, em cima da cama e no sótão, e têm 3 de vida. Teia de ataque tira 1; teia que prende os segura por 5 s. Spec: [features/combat.md](features/combat.md)
 
 ## Mundo: a casa
@@ -93,7 +95,9 @@ Um corte lateral da casa (estilo casa de bonecas), com 80×44 tiles de 16 px:
 | Andar de cima | Quarto, Banheiro | Cama (dá para passar embaixo) com a carta do dia 21, armário, prateleira; banheira, vaso, pia |
 | Térreo | Sala, Cozinha | Estante, sofá, mesa com cadeiras e a carta do dia 14; balcão, armários suspensos, geladeira |
 
-Os andares se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (quarto↔sótão). As portas são vãos nas paredes internas.
+**Ato 2, a rua:** de lado, por cima dos postes: o telhado da casa do ato 1, poste de luz, poste de madeira com fios, árvore, ponto de ônibus, outdoor ("SUNNY DAYS AHEAD"), semáforo, garagem e a casa vizinha com a chaminé. Lá embaixo a horda passa na calçada.
+
+Os andares da casa se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (quarto↔sótão). As portas são vãos nas paredes internas.
 
 ## Direção de arte
 
@@ -109,6 +113,8 @@ Os andares se ligam por buracos no piso (banheiro↔cozinha) e pelo alçapão (q
 - **Música:** piano solo, calmo e misterioso: uma valsa lenta em Ré menor, como um tema clássico de filme de Drácula. Gerada por código, em loop de cerca de 1min30. **Toca só na tela inicial.** Spec: [features/music.md](features/music.md)
 - **No jogo:** passinhos da aranha, chuva abafada e trovões de vez em quando (24 a 55 s entre raios). Tudo sintetizado. Spec: [features/atmosphere.md](features/atmosphere.md)
 - **Combate:** cada dano tem som, como nos mobs do Minecraft: guinchos dos ratos, chiado da aranha, "fiuu" das teias. Spec: [features/combat.md](features/combat.md)
+- **Ato 2:** o vento sobe e desce com a rajada (ruído com assobio), choque dos fios, estalinhos das faíscas, a pisada (baque + estalo + respingo) e os gemidos da horda ficando mais altos quanto mais perto da rua. Spec: [features/wind.md](features/wind.md)
+- **Transições:** espirro de gosma (ato 1) e assobio de vento com "fiuu" de teia (ato 2). Spec: [features/transitions.md](features/transitions.md)
 - **Cutscene da rua:** coro de gemidos sintetizados (cada zumbi geme de tempos em tempos), passos molhados e a chuva de fora, mais alta. Spec: [features/street-cutscene.md](features/street-cutscene.md)
 
 ## Câmera
@@ -132,7 +138,9 @@ Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mos
 - [x] Buraco no telhado e cutscene da rua (horda de zumbis)
 - [x] Cartas do pai (mesa, cama, sótão) com a página segurada pelas patas
 - [x] Atos: seleção estilo Telltale, fim do ato, progresso salvo
-- [ ] Ato 2: a fuga pelos telhados (de casa em casa, como diz a carta 2)
+- [x] Ato 2: a travessia pelos postes, com ventania, detritos, fios com faísca, checkpoints e a pisada do zumbi
+- [x] Transições: escurecer no PLAY, gosma verde (ato 1), teia e vento (ato 2)
+- [ ] Ato 3: dentro da casa vizinha (a aranha entrou pela chaminé)
 - [ ] Sair de verdade para o telhado ou para a rua (uma fase do lado de fora?)
 - [x] Menu de pausa (Resume, Restart, Main Menu)
 - [x] Perigo: ratos (vida, mordida, teias de ataque e de prender)

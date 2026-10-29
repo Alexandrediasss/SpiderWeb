@@ -189,6 +189,10 @@ export const SFX = {
   groanVolume: 0.85,
   zombieStepVolume: 0.4,
   rainOutsideVolume: 0.22,
+  /** Ato 2: o vento na força máxima, o choque dos fios e a pisada. */
+  windVolume: 0.5,
+  zapVolume: 0.35,
+  stompVolume: 0.7,
 };
 
 /** Tela inicial. Spec: docs/features/title-screen.md */
@@ -199,8 +203,6 @@ export const TITLE = {
   /** Amplitude e velocidade do passeio lento da câmera. */
   driftPx: 70,
   driftSpeed: 0.06,
-  /** Ao apertar Play a tela escurece neste tempo antes da cutscene (s). */
-  toIntroFadeSec: 0.9,
   /** Depois do Play/Resume, ignora pulo/teia por este tempo (a mesma tecla não vira pulo). */
   inputGraceSec: 0.3,
 };
@@ -314,3 +316,97 @@ export const ACT_END = {
   /** Espera (s) antes de aparecer o "continue". */
   continueAfterSec: 3.2,
 };
+
+/** Transições de tela. Spec: docs/features/transitions.md */
+export const TRANSITION = {
+  /** PLAY ↔ seleção de atos: escurece, fica preto, clareia (s). */
+  fadeOutSec: 0.7,
+  fadeHoldSec: 0.2,
+  fadeInSec: 0.8,
+  /** Gosma verde (ato 1) e teia com vento (ato 2). */
+  gooSec: 2.4,
+  webSec: 2.6,
+  /** Largura do canvas da transição (a altura segue a proporção da janela). */
+  width: 160,
+};
+
+/** Ventania do ato 2 (como no Celeste). Spec: docs/features/wind.md */
+export const WIND = {
+  /** A primeira rajada só vem depois disso (s). */
+  firstCalmSec: 6,
+  /** Calma entre rajadas (s, mín–máx), aviso, rajada, subida da força e fim. */
+  calmSec: [4, 7] as const,
+  warnSec: 1.5,
+  /** Força no fim do aviso (0..1): poucos riscos, ainda não empurra quase nada. */
+  warnStrength: 0.18,
+  gustSec: 3.6,
+  rampSec: 0.5,
+  fadeSec: 0.9,
+  /** Chance da rajada vir contra (para a esquerda, empurrando para trás). */
+  againstChance: 0.65,
+  /** Aceleração horizontal com força 1 (px/s²; a gravidade é 700). */
+  gustAccel: 620,
+  /** No ar, o vento leva a aranha até esta velocidade (px/s) no sentido dele. */
+  maxAirSpeed: 250,
+  /** Andando grudada: contra o vento a velocidade cai até walkMin; a favor sobe até walkMax (fatores). */
+  walkMin: 0.3,
+  walkMax: 1.5,
+};
+
+/** Detritos voando na rajada. Spec: docs/features/wind.md */
+export const DEBRIS = {
+  /** Intervalo entre detritos (s, mín–máx) quando a rajada está forte. */
+  spawnEverySec: [0.35, 0.8] as const,
+  /** Nascem a esta distância (px) acima ou abaixo da aranha. */
+  spreadY: 70,
+  speed: [280, 380] as const,
+  /** Raio do círculo de colisão (px). */
+  radius: 6,
+  /** Empurrão ao acertar: no sentido do vento e para cima (px/s). */
+  knockback: { x: 190, y: 140 },
+};
+
+/** Fios soltos com faísca. Spec: docs/features/wind.md */
+export const WIRE = {
+  /** Distância (px) do centro da aranha até o fio que dá choque. */
+  touchRadius: 7,
+  /** Empurrão do choque, para longe do fio (px/s). */
+  knockback: { x: 220, y: 160 },
+  shockCooldownSec: 1,
+  /** Balanço sozinho (rad) e o amortecimento do pêndulo. */
+  idleSwing: 0.12,
+  damping: 1.6,
+  /** Faísca na ponta a cada (s, mín–máx). */
+  sparkEverySec: [0.5, 1.8] as const,
+};
+
+/** Ato 2: cutscenes, câmera e morte. Spec: docs/features/act2-rooftops.md */
+export const ACT2 = {
+  /** Cutscene de abertura (s). */
+  introFadeSec: 1.2,
+  introLookSec: 3.8,
+  introWindSec: 1.6,
+  introShootSec: 0.5,
+  /** Tempo máximo da subida pela teia até grudar no braço do poste. */
+  introSwingSec: 3.5,
+  /** A câmera olha um pouco abaixo da aranha (px), para a horda aparecer. */
+  cameraLookDown: 60,
+  /** Morte pisada: zoom, sombra crescendo, a pisada e o escurecer (s). */
+  stompZoom: 2.5,
+  stompShadowSec: 0.9,
+  stompDropSec: 0.12,
+  stompHoldSec: 0.6,
+  deathFadeSec: 0.7,
+  /** Fim: tempo máximo andando até a chaminé, olhar, entrar e escurecer (s). */
+  endWalkMaxSec: 8,
+  endPeekSec: 0.9,
+  endEnterSec: 0.9,
+  endFadeSec: 1.2,
+  /** Zoom da câmera na chaminé. */
+  endZoom: 2.2,
+  /** Zumbis na rua: fileira da frente (grande) e a de trás (pequena e escura). */
+  horde: [
+    { u: 2, count: 34, speed: [8, 12], voice: 0.4, steps: 0 },
+    { u: 4, count: 24, speed: [11, 16], voice: 1, steps: 0.5 },
+  ],
+} as const;

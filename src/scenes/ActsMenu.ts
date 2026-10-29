@@ -2,7 +2,7 @@
 // setas, a arte numa moldura e os botões embaixo. Elemento #acts em index.html. Spec: docs/features/acts.md
 import { buildActArt } from '../art/actArt';
 import { type Act, ACTS } from '../level/acts';
-import { type Progress, actStatus } from '../systems/progress';
+import { type Progress, actStatus, isUnlocked } from '../systems/progress';
 
 /** A arte de cada ato é gerada uma vez só. */
 const arts = new Map<string, HTMLCanvasElement>();
@@ -75,7 +75,7 @@ export class ActsMenu {
   /** Escolhe o ato mostrado (se ele já puder ser jogado). */
   confirm(): void {
     const act = ACTS[this.index];
-    if (!this.ready() || !act.playable) return;
+    if (!this.ready() || !isUnlocked(this.progress, act)) return;
     this.onPlay(act);
   }
 
@@ -97,20 +97,27 @@ export class ActsMenu {
     this.index = index;
     const act = ACTS[index];
     const st = actStatus(this.progress, act);
+    const open = isUnlocked(this.progress, act);
+    const needs = ACTS.find((a) => a.id === act.requires);
     if (this.title) this.title.textContent = act.playable ? `ACT ${act.number}: ${act.name}` : `ACT ${act.number}`;
     if (this.frame) {
       this.frame.querySelector('.acts-art')?.remove();
       this.frame.prepend(actCanvas(act));
-      this.frame.classList.toggle('locked', !act.playable);
+      this.frame.classList.toggle('locked', !open);
+      // Ato que já existe mas ainda não foi liberado: a arte aparece apagada.
+      this.frame.classList.toggle('needs', act.playable && !open);
     }
     if (this.status) {
+      const letters = st.lettersTotal > 0 ? `  ·  LETTERS ${st.lettersFound}/${st.lettersTotal}` : '';
       this.status.textContent = !act.playable
         ? 'COMING SOON'
-        : st.completed
-          ? `COMPLETED  ·  LETTERS ${st.lettersFound}/${st.lettersTotal}`
-          : '';
+        : !open
+          ? `FINISH ACT ${needs?.number ?? ''} TO UNLOCK`
+          : st.completed
+            ? `COMPLETED${letters}`
+            : '';
     }
-    this.select?.classList.toggle('disabled', !act.playable);
+    this.select?.classList.toggle('disabled', !open);
     this.dots?.replaceChildren(
       ...ACTS.map((_, i) => {
         const d = document.createElement('span');

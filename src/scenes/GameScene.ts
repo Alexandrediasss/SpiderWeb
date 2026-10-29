@@ -1,7 +1,7 @@
 // Cena principal: tela inicial, seleção de atos, jogo, cartas, pausa, morte e fim do ato.
 // Cenário, atmosfera, aranha, ratos, câmera, mira, som e debug.
 import Phaser from 'phaser';
-import { GAMEPAD, INTRO, LETTER, LIGHT, PLAYER, SHOTS, STREET, TILE, TITLE, VIEW, WEB } from '../config';
+import { GAMEPAD, INTRO, LETTER, LIGHT, PLAYER, SHOTS, STREET, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
 import { getLevelArt } from '../art/levelArt';
 import { TEX } from '../art/textures';
 import { type Sound, getSound } from '../audio/sound';
@@ -28,6 +28,7 @@ import { LetterReader } from './LetterReader';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
 import { TitleScreen } from './TitleScreen';
+import { fadeSwap, fadeTo, playActTransition } from './Transitions';
 import { loadProgress, saveProgress } from './progressStore';
 
 /**
@@ -85,14 +86,19 @@ export class GameScene extends Phaser.Scene {
   /** Segundos restantes da aranha saindo do buraco. */
   private emergeLeft = 0;
   private debug = false;
+  /** Uma transição de tela está em andamento (ignora outro PLAY/BACK/escolha no meio). */
+  private fading = false;
 
   constructor() {
     super('game');
   }
 
   create(data: SceneData = {}): void {
+    // O Phaser reaproveita a mesma instância da cena ao reiniciar: todo estado precisa voltar ao início aqui.
+    // (A trava da transição ficava ligada depois de escolher o ato 1 e bloqueava a seleção de atos para sempre.)
     this.mode = 'title';
     this.graceLeft = 0;
+    this.fading = false;
     const art = getLevelArt();
     this.grid = art.grid;
     const seed = (Date.now() & 0x7fffffff) || 1;
@@ -121,10 +127,14 @@ export class GameScene extends Phaser.Scene {
     this.title = new TitleScreen(() => this.openActs(), !data.skipTitle && !data.openActs);
     this.pauseMenu = new PauseMenu((a) => this.onPauseAction(a));
     this.actsMenu = new ActsMenu(
-      (act) => this.startAct(act),
+      (act) => void this.startAct(act),
       () => this.backToTitle(),
     );
-    this.actEnd = new ActEnd(() => this.scene.restart({ openActs: true } satisfies SceneData));
+    this.actEnd = new ActEnd(() => {
+      // A tela de fim já é preta: o preto fica por cima enquanto a cena reinicia na seleção de atos.
+      void fadeTo(1, 0);
+      this.scene.restart({ openActs: true } satisfies SceneData);
+    });
     // A cutscene da rua acorda esta cena quando acaba: é o fim do ato.
     const onWake = () => this.endAct(true);
     this.events.on('wake', onWake);
@@ -149,7 +159,7 @@ export class GameScene extends Phaser.Scene {
       cam.centerOn(TITLE.cameraX, TITLE.cameraY);
       this.hud.showHelp(false);
       this.sound_.music.start();
-      if (data.openActs) this.openActs();
+      if (data.openActs) this.openActs(true);
     }
 
     const kb = this.input.keyboard;
@@ -180,33 +190,50 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- modos ----------
 
-  /** PLAY na tela inicial: abre a seleção de atos (a música continua). */
-  private openActs(): void {
+  /**
+   * PLAY na tela inicial: a tela escurece e clareia já na seleção de atos (a música continua).
+   * `fromBlack`: a tela já está preta (voltando do fim do ato), só clareia.
+   */
+  private openActs(fromBlack = false): void {
     this.mode = 'acts';
-    this.actsMenu.show(loadProgress());
+    if (fromBlack) {
+      this.actsMenu.show(loadProgress());
+      void fadeTo(0, TRANSITION.fadeInSec);
+      return;
+    }
+    void this.withFade(() => this.actsMenu.show(loadProgress()));
   }
 
   private backToTitle(): void {
-    this.actsMenu.hide();
-    this.title.reopen();
-    this.mode = 'title';
+    void this.withFade(() => {
+      this.actsMenu.hide();
+      this.title.reopen();
+      this.mode = 'title';
+    });
   }
 
-  /** Escolheu um ato: zera as cartas lidas e começa a cutscene de abertura. */
-  private startAct(_act: Act): void {
-    runLetters.clear();
-    this.actsMenu.hide();
-    this.goToIntro();
+  private async withFade(swap: () => void): Promise<void> {
+    if (this.fading) return;
+    this.fading = true;
+    await fadeSwap(swap);
+    this.fading = false;
   }
 
-  /** A música some, a tela escurece e começa a cutscene de abertura. */
-  private goToIntro(): void {
+  /** Escolheu um ato: a música some e toca a transição do ato (gosma no 1, teia e vento no 2). */
+  private async startAct(act: Act): Promise<void> {
+    if (this.fading) return;
+    this.fading = true;
     this.mode = 'leaving';
     this.sound_.music.stop();
     this.hud.showHelp(false);
-    const cam = this.cameras.main;
-    cam.fadeOut(TITLE.toIntroFadeSec * 1000, 0, 0, 0);
-    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('intro'));
+    if (act.id === 'act1') {
+      runLetters.clear();
+      await playActTransition('goo');
+      this.scene.start('intro');
+    } else {
+      await playActTransition('web');
+      this.scene.start('act2', { intro: true });
+    }
   }
 
   /** Começa a jogatina com a câmera na aranha, a tela clareando (depois da cutscene, de morrer ou de Restart). */

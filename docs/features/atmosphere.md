@@ -11,6 +11,8 @@ Código:
 
 Testes: `tests/storm.test.ts` e `tests/lighting.test.ts`.
 
+O ato 2 (lá fora) usa o mesmo `Storm`, mas desenha a chuva, os raios e o clarão na tela com `src/entities/Weather.ts`, junto com o vento ([wind.md](wind.md)).
+
 ## Luz
 
 1. **Escuro ambiente:** o cenário é multiplicado pelo mapa de luz (blend MULTIPLY). Onde nenhuma lâmpada alcança, a cor é `PAL.light.ambient`: azulado, escuro, mas **nunca preto**.
