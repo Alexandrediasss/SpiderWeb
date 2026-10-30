@@ -241,7 +241,127 @@
         letter-spacing: 0.3em;
         color: #f6d36b;
       }
-      #locked .acts-buttons button {
+      /* ---------- conquistas (ACHIEVEMENTS do menu) ---------- */
+      #achievements {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2.4vh;
+        background: radial-gradient(ellipse at center, rgba(8, 9, 18, 0.6) 30%, rgba(4, 4, 9, 0.95) 100%);
+        color: #e8e4f0;
+      }
+      #achievements.hidden {
+        display: none;
+      }
+      #achievements h2 {
+        margin: 0;
+        font-size: clamp(16px, 3.2vw, 36px);
+        font-weight: normal;
+        letter-spacing: 0.12em;
+        text-shadow: 0 4px 0 #000;
+      }
+      #achievements-count {
+        margin: 0;
+        font-size: clamp(9px, 1.3vw, 15px);
+        letter-spacing: 0.2em;
+        color: #f6d36b;
+      }
+      #achievements-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2.6vh;
+        width: min(80vw, 980px);
+      }
+      #achievements-list h3 {
+        margin: 0 0 1.2vh;
+        font-size: clamp(9px, 1.25vw, 14px);
+        font-weight: normal;
+        letter-spacing: 0.14em;
+        color: #c9b48a;
+      }
+      .ach-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.2vh 1.4vw;
+      }
+      .ach-card {
+        display: flex;
+        align-items: center;
+        gap: 1.1em;
+        padding: 0.8em 1.1em;
+        background: rgba(17, 12, 11, 0.85);
+        border: 3px solid #8f6b2a;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+      }
+      .ach-card img {
+        width: clamp(36px, 4.4vw, 60px);
+        image-rendering: pixelated;
+        flex: none;
+      }
+      .ach-card p {
+        margin: 0;
+      }
+      .ach-name {
+        font-size: clamp(9px, 1.15vw, 14px);
+        letter-spacing: 0.08em;
+        color: #f6d36b;
+      }
+      .ach-desc {
+        margin-top: 0.7em !important;
+        font-size: clamp(7px, 0.85vw, 11px);
+        line-height: 1.6;
+        color: #e8e4f0;
+      }
+      .ach-card.locked {
+        border-color: #3a2a22;
+      }
+      .ach-card.locked .ach-name,
+      .ach-card.locked .ach-desc {
+        color: #6f6a88;
+      }
+
+      /* ---------- aviso de conquista conseguida ---------- */
+      #achievement-toast {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 18px 8px 10px;
+        background: rgba(12, 10, 16, 0.92);
+        border: 3px solid #d8b25a;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+        color: #e8e4f0;
+        pointer-events: none;
+        transform: translate(-50%, calc(-100% - 24px));
+        transition: transform 0.35s ease;
+      }
+      #achievement-toast.show {
+        transform: translate(-50%, 0);
+      }
+      #achievement-toast img {
+        width: 48px;
+        image-rendering: pixelated;
+      }
+      #achievement-toast .label {
+        margin: 0 0 6px;
+        font-size: 8px;
+        letter-spacing: 0.18em;
+        color: #c9b48a;
+      }
+      #achievement-toast .name {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: #f6d36b;
+      }
+
+      #locked .acts-buttons button,
+      #achievements .acts-buttons button {
         font: inherit;
         font-size: clamp(9px, 1.2vw, 14px);
         color: inherit;
@@ -792,6 +912,14 @@ START  pause   SELECT  mute</div>
         <button id="locked-back" type="button"><span class="btn b pad">B</span><span class="key kb">ESC</span>BACK</button>
       </div>
     </div>
+    <div id="achievements" class="hidden">
+      <h2>ACHIEVEMENTS</h2>
+      <p id="achievements-count"></p>
+      <div id="achievements-list"></div>
+      <div class="acts-buttons">
+        <button id="achievements-back" type="button"><span class="btn b pad">B</span><span class="key kb">ESC</span>BACK</button>
+      </div>
+    </div>
     <div id="intro" class="hidden">
       <p id="intro-text"></p>
       <div id="intro-skip" class="hidden">ENTER / START  skip</div>
@@ -840,6 +968,7 @@ START  pause   SELECT  mute</div>
     <canvas id="transition" class="hidden"></canvas>
     <div id="web-pull" class="hidden"><div class="strand"></div><img class="splat" alt="" /></div>
     <div id="fade"></div>
+    <div id="achievement-toast"><img alt="" /><div><p class="label">ACHIEVEMENT UNLOCKED</p><p class="name"></p></div></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

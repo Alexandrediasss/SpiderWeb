@@ -37,22 +37,26 @@ A rua fica embaixo (linhas 37–39) e mata ao encostar. Da esquerda para a direi
 - **Nada flutua:** o outdoor fica em cima de duas pernas (`P`, fundo, a aranha passa) que descem até a passarela, em cima dos postes dela. O teste confere.
 - Na rua, embaixo de tudo, a horda passa andando (zumbis grandes na frente e pequenos e escuros atrás) e geme. Os gemidos ficam mais altos quanto mais perto da rua a aranha está.
 
-## Cutscene de abertura (cerca de 7 s)
+## Cutscene de abertura (cerca de 4,5 s)
 
 | Etapa | O que acontece |
 |---|---|
 | `fadeIn` | A tela clareia na calha do telhado, com faixas de cinema. A aranha parada, de frente para a rua. |
 | `look` | A câmera desce até a horda passando lá embaixo e volta. Aparece o cartão `ACT 2` / `ROOFTOPS`. Cai um raio. |
 | `wind` | Começa a ventar (aviso): riscos, chuva inclinada, a aranha treme. |
-| `shoot` | Ela atira a teia no braço do poste de luz 1. |
-| `swing` | Se balança e sobe pela teia até grudar embaixo do braço. As faixas somem e o controle é liberado. |
+
+No fim, as faixas somem e o **controle volta com a aranha na calha**, onde ela estava; a câmera desliza até ela. Ela **não atira a teia sozinha**: o primeiro balanço (no braço do poste de luz 1, `FIRST_AIM`, ao alcance da calha) é do jogador. Antes a cutscene terminava com a aranha atirando a teia e subindo sozinha.
 
 - **Pular:** `Enter`, `Esc`, `Espaço`, `A` ou `Start`, e também os botões de pular e de teia (quem aperta quer jogar). O aviso `ENTER / START skip` aparece no canto depois de `ACT2.skipHintAfterSec`.
-- **Ao pular:** a tela escurece em `ACT2.skipFadeSec` (0,25 s). No escuro, a aranha vai para baixo do braço do poste 1, já virada de cabeça para baixo (`Spider.snapAngle`), e a tela clareia com a câmera já nela.
-  - Antes não havia escurecer: a aranha "teleportava" do telhado para o poste e a câmera deslizava atrás dela.
-  - Como `Espaço` e `A` também são pular, quem tentava jogar durante a cutscene via esse teleporte e achava que era bug.
-- **Duração:** antes eram quase 10 s sem nenhum aviso, e parecia que o jogo tinha travado. Agora são cerca de 7 s: `introLookSec` e `introWindSec` menores, e a subida pela teia começa logo (`introReelAfterSec`).
-- **Gruda a tempo:** se a subida não grudar até `introSwingSec`, a cutscene termina como no pular. O `tests/rooftops.test.ts` simula a subida a 30, 60, 144 e 240 quadros por segundo e confere que ela gruda com folga.
+- **Ao pular:** a tela escurece em `ACT2.skipFadeSec` (0,25 s) e clareia com a câmera já na aranha (ela continua na calha). O escurecer esconde a câmera voltando lá de baixo, da horda.
+- **Duração:** curta de propósito. Com quase 10 s sem nenhum aviso parecia que o jogo tinha travado.
+
+## Bordas do mapa
+
+- **Fora do mapa continua a borda** (`LevelGrid` com `outside: 'edge'`): à esquerda, a casa do ato 1 e a rua continuam sólidas; **acima do telhado e acima do mapa é ar**.
+- Antes, fora do mapa era tudo sólido: no topo do telhado, andando para a esquerda, a aranha subia pela borda invisível do mapa e andava de cabeça para baixo no "teto do céu" (y = 0). A teia também prendia no céu.
+- **Parede invisível:** a aranha não passa das bordas da esquerda e da direita (`motor.bounds`). Ela só para; não dá para escalar.
+- O `tests/rooftops.test.ts` confere: no topo do telhado ela para na borda e não sobe; a teia para cima não pega no céu; a casa e a rua continuam sólidas fora do mapa; a casa do ato 1 continua toda fechada (`outside: 'solid'`, o padrão).
 
 ## Checkpoints
 

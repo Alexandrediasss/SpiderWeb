@@ -1,6 +1,6 @@
 # Spec: tela inicial (menu principal)
 
-Código: `src/scenes/TitleScreen.ts` (o menu e a confirmação do NEW GAME, em HTML), `src/scenes/LockedScreen.ts` (as telas de SCENES e ACHIEVEMENTS, por enquanto trancadas), `src/systems/menu.ts` (andar no menu pulando o que está apagado, lógica pura), os elementos `#title` e `#locked` em `index.html` e os modos `title` e `extras` da `GameScene`.
+Código: `src/scenes/TitleScreen.ts` (o menu e a confirmação do NEW GAME, em HTML), `src/scenes/LockedScreen.ts` (a tela de SCENES, por enquanto trancada), `src/scenes/AchievementsScreen.ts` (as conquistas, [achievements.md](achievements.md)), `src/systems/menu.ts` (andar no menu pulando o que está apagado, lógica pura), os elementos `#title` e `#locked` em `index.html` e os modos `title` e `extras` da `GameScene`.
 
 Testes: `tests/menu.test.ts` e `tests/progress.test.ts`.
 
@@ -29,7 +29,7 @@ O item selecionado fica preenchido, com a setinha piscando. Item apagado (LOAD G
 2. **LOAD GAME:** carrega o jogo atual. A teia engata no botão e puxa o menu para a direita, trazendo a **seleção de atos** ([acts.md](acts.md)), já mostrando o ato mais adiantado que está liberado. Lá o BACK volta para cá.
    - Fica apagado se o navegador não tem nenhum jogo salvo (nunca começou um NEW GAME nem terminou um ato).
 3. **SCENES:** a teia puxa o menu e traz a tela de cenas, toda trancada: seis quadros de filme com cadeado e `???`, e o aviso `LOCKED`. Vai virar algo como o museu do *Sonic Generations* (rever cenas). Por enquanto só dá para voltar.
-4. **ACHIEVEMENTS:** igual, com oito conquistas trancadas (cadeado, `???` e `LOCKED`). Só dá para voltar.
+4. **ACHIEVEMENTS:** a teia puxa o menu e traz as conquistas de cada ato, acesas as já conseguidas, com a contagem (`2 / 4`). Só dá para voltar. Spec: [achievements.md](achievements.md).
 5. O item selecionado ao abrir: LOAD GAME se existe jogo salvo, senão NEW GAME.
 
 ## Regras

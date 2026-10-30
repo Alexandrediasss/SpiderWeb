@@ -1,7 +1,10 @@
 // HUD em HTML/CSS por cima do canvas (texto nítido, fácil de estilizar). Elementos em index.html.
 
-/** Preferência do jogador (H): vale também depois de morrer ou reiniciar. */
-let helpWanted = true;
+/**
+ * Preferência do jogador (H): vale também depois de morrer ou reiniciar. Começa escondida: o painel de
+ * controles por cima da fase incomodava. Os controles aparecem na pausa.
+ */
+let helpWanted = false;
 
 export class Hud {
   private readonly help = document.getElementById('help');

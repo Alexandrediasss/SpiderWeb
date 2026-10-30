@@ -25,6 +25,8 @@ import { ActsMenu } from './ActsMenu';
 import { HeartsHud } from './HeartsHud';
 import { Hud } from './Hud';
 import { LetterReader } from './LetterReader';
+import { achieve } from './AchievementToast';
+import { AchievementsScreen } from './AchievementsScreen';
 import { type LockedKind, LockedScreen } from './LockedScreen';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
@@ -80,6 +82,9 @@ export class GameScene extends Phaser.Scene {
   private pauseMenu!: PauseMenu;
   private actsMenu!: ActsMenu;
   private locked!: LockedScreen;
+  private achievementsScreen!: AchievementsScreen;
+  /** Qual tela do menu está aberta no modo 'extras' (para o BACK voltar da certa). */
+  private extras: LockedKind = 'scenes';
   private actEnd!: ActEnd;
   private letters!: LetterSprites;
   private reader!: LetterReader;
@@ -105,6 +110,7 @@ export class GameScene extends Phaser.Scene {
     this.mode = 'title';
     this.graceLeft = 0;
     this.fading = false;
+    this.extras = 'scenes';
     const art = getLevelArt();
     this.grid = art.grid;
     const seed = (Date.now() & 0x7fffffff) || 1;
@@ -134,6 +140,7 @@ export class GameScene extends Phaser.Scene {
     this.title.setEnabled('load', hasSave());
     this.title.focus(hasSave() ? 'load' : 'new');
     this.locked = new LockedScreen(() => this.closeExtras());
+    this.achievementsScreen = new AchievementsScreen(() => this.closeExtras());
     this.pauseMenu = new PauseMenu((a) => this.onPauseAction(a));
     this.actsMenu = new ActsMenu(
       (act) => void this.startAct(act),
@@ -152,6 +159,7 @@ export class GameScene extends Phaser.Scene {
       this.pauseMenu.destroy();
       this.actsMenu.destroy();
       this.locked.destroy();
+      this.achievementsScreen.destroy();
       this.actEnd.destroy();
       this.reader.destroy();
       this.anims.resumeAll();
@@ -244,29 +252,34 @@ export class GameScene extends Phaser.Scene {
     void this.withPull({ from: el('title'), to: el('acts'), hook: this.title.selectedButton, dir: 1, showTo: show, hideFrom: () => this.title.hide() });
   }
 
-  /** SCENES e ACHIEVEMENTS: por enquanto, telas trancadas (a teia puxa o menu e traz a tela). */
+  /** ACHIEVEMENTS (as conquistas) ou SCENES (ainda trancada): a teia puxa o menu e traz a tela. */
   private openExtras(kind: LockedKind): void {
+    if (this.fading) return;
     this.mode = 'extras';
+    this.extras = kind;
+    const achievements = kind === 'achievements';
     void this.withPull({
       from: el('title'),
-      to: el('locked'),
+      to: el(achievements ? 'achievements' : 'locked'),
       hook: this.title.selectedButton,
       dir: 1,
-      showTo: () => this.locked.show(kind),
+      showTo: () => (achievements ? this.achievementsScreen.show() : this.locked.show(kind)),
       hideFrom: () => this.title.hide(),
     });
   }
 
   /** Voltar: a teia vem da esquerda, engata no BACK e puxa a tela para a esquerda, trazendo o menu. */
   private closeExtras(): void {
+    const achievements = this.extras === 'achievements';
     void this.withPull({
-      from: el('locked'),
+      from: el(achievements ? 'achievements' : 'locked'),
       to: el('title'),
-      hook: el('locked-back'),
+      hook: el(achievements ? 'achievements-back' : 'locked-back'),
       dir: -1,
       showTo: () => this.title.reopen(),
       hideFrom: () => {
-        this.locked.hide();
+        if (achievements) this.achievementsScreen.hide();
+        else this.locked.hide();
         this.mode = 'title';
       },
     });
@@ -392,6 +405,7 @@ export class GameScene extends Phaser.Scene {
     this.hud.showHelp(false);
     this.reader.hidePrompt();
     saveProgress(recordActEnd(loadProgress(), ACT.id, runLetters.ids));
+    achieve({ type: 'actEnd', act: ACT.id });
     const show = () => this.actEnd.show(ACT, runLetters.count(ACT.letters), ACTS[ACTS.indexOf(ACT) + 1]);
     if (fromStreet) {
       show();
@@ -408,6 +422,7 @@ export class GameScene extends Phaser.Scene {
     if (!letter || this.mode !== 'play') return;
     this.mode = 'reading';
     runLetters.markRead(letter.id);
+    achieve({ type: 'letterRead', act: ACT.id, letter: letter.id });
     this.reader.hidePrompt();
     this.reader.show(letter);
     this.reticle.setVisible(false);
@@ -622,7 +637,10 @@ export class GameScene extends Phaser.Scene {
       return false;
     }
     if (this.mode === 'extras') {
-      if (f.trapPressed || f.confirmPressed || f.pausePressed) this.locked.back();
+      if (f.trapPressed || f.confirmPressed || f.pausePressed) {
+        if (this.extras === 'achievements') this.achievementsScreen.back();
+        else this.locked.back();
+      }
       return false;
     }
     if (this.mode === 'acts') {

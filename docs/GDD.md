@@ -25,14 +25,14 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 
 ## Fluxo
 
-1. **Tela inicial:** "SPIDER WEB" e o menu principal por cima do sótão com chuva: **NEW GAME** (jogo novo, pergunta antes de apagar o salvo), **LOAD GAME** (abre a seleção de atos no ato atual), **SCENES** e **ACHIEVEMENTS** (por enquanto trancadas). A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
+1. **Tela inicial:** "SPIDER WEB" e o menu principal por cima do sótão com chuva: **NEW GAME** (jogo novo, pergunta antes de apagar o salvo), **LOAD GAME** (abre a seleção de atos no ato atual), **SCENES** (por enquanto trancada) e **ACHIEVEMENTS** (as conquistas de cada ato; spec: [features/achievements.md](features/achievements.md)). A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
 2. **Seleção de atos:** estilo Telltale: o nome do ato entre setas (`LB`/`RB`), a arte do ato numa moldura gasta e `SELECT`/`BACK`. O ato 2 aparece bloqueado (COMING SOON). Spec: [features/acts.md](features/acts.md)
 3. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
 4. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
 5. **Cartas:** perto de uma folha aparece `READ`; ela abre em tela cheia, segurada pelas patas da aranha, e o jogo pausa. Spec: [features/letters.md](features/letters.md)
 6. **Buraco no telhado (fim do ato 1):** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
 7. **Fim do ato:** "END OF ACT 1 / AWAKENING", as cartas achadas (ex.: 2/3) e o próximo ato. Depois, volta para a seleção de atos. O progresso fica salvo no navegador. Spec: [features/acts.md](features/acts.md)
-8. **Ato 2, ROOFTOPS** (liberado depois do ato 1): transição de teia e vento; a cutscene continua de onde o ato 1 parou (a aranha na calha) e ela se lança no poste de luz. Na fase, só balanço, ventania e obstáculos; cair na rua é ser pisada por um zumbi e voltar no último checkpoint. Termina entrando pela chaminé. Spec: [features/act2-rooftops.md](features/act2-rooftops.md)
+8. **Ato 2, ROOFTOPS** (liberado depois do ato 1): transição de teia e vento; a cutscene continua de onde o ato 1 parou (a aranha na calha, olhando a horda, o vento começando) e devolve o controle ali: o primeiro balanço é do jogador. Na fase, só balanço, ventania e obstáculos; cair na rua é ser pisada por um zumbi e voltar no último checkpoint. Termina entrando pela chaminé. Spec: [features/act2-rooftops.md](features/act2-rooftops.md)
 9. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
 10. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
 
@@ -70,7 +70,7 @@ Lá fora o mundo acabou: uma horda de zumbis anda pela rua do bairro (americano,
 | Pular a cutscene | `Enter`, `Esc` ou `Espaço` | `A` ou `Start` |
 | Pausar | `Esc` ou `P` | `Start` |
 | Som liga/desliga | `M` | `Select` |
-| Ajuda | `H` | (aparece na pausa) |
+| Ajuda (painel de controles, começa escondido) | `H` (sempre aparece na pausa) | (aparece na pausa) |
 | Debug | `G` | — |
 
 Na parede, apertar *em direção* à parede sobe e apertar *para fora* desce. Ao virar um canto segurando a mesma tecla, a aranha continua andando (veja a spec de movimento). Teclado/mouse e controle funcionam juntos. Spec do controle: [features/gamepad.md](features/gamepad.md)
@@ -140,9 +140,9 @@ Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mos
 - [x] Atos: seleção estilo Telltale, fim do ato, progresso salvo
 - [x] Ato 2: a travessia pelos postes, com ventania, detritos, fios com faísca, checkpoints e a pisada do zumbi
 - [x] Transições: escurecer entre as telas do menu, gosma verde (ato 1), teia e vento (ato 2)
-- [x] Menu principal: NEW GAME, LOAD GAME, SCENES e ACHIEVEMENTS (as duas últimas trancadas)
+- [x] Menu principal: NEW GAME, LOAD GAME, SCENES (trancada) e ACHIEVEMENTS
 - [ ] SCENES: rever as cenas, como no museu do *Sonic Generations*
-- [ ] ACHIEVEMENTS: as conquistas
+- [x] ACHIEVEMENTS: três conquistas no ato 1 (ler uma carta, ler a carta de amor, sair pelo telhado) e uma no ato 2 (terminar a travessia), com aviso na tela
 - [ ] Ato 3: dentro da casa vizinha (a aranha entrou pela chaminé)
 - [ ] Sair de verdade para o telhado ou para a rua (uma fase do lado de fora?)
 - [x] Menu de pausa (Resume, Restart, Main Menu)

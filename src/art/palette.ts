@@ -247,6 +247,23 @@ export const PAL = {
 
   ui: { reticle: 0xffffff, heart: 0xd8323c, heartLight: 0xff8a8a, heartEmpty: 0x3a2a33, heartOutline: 0x140c12 },
 
+  /** Medalhas das conquistas (dourada = conseguida, cinza com cadeado = ainda não). */
+  medal: {
+    rim: 0xd8b25a,
+    rimLight: 0xf6d98a,
+    rimDark: 0x8f6b2a,
+    inner: 0x2b1f1a,
+    lockedRim: 0x5d5a78,
+    lockedRimDark: 0x3a3850,
+    lockedInner: 0x16141e,
+    lock: 0x8a87a3,
+    paper: 0xe8dcc0,
+    paperDark: 0xa8946c,
+    roof: 0x625f7c,
+    roofLight: 0x8a87a3,
+    web: 0xe8e4f0,
+  },
+
   sky: { top: 0x080a14, bottom: 0x1a2036, cloud: 0x2a3046, cloudShade: 0x1d2133 },
 
   /** Luz (multiplica as cores do cenário). Spec: docs/features/atmosphere.md */

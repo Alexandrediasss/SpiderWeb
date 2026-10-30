@@ -193,6 +193,14 @@ export const SFX = {
   windVolume: 0.5,
   zapVolume: 0.35,
   stompVolume: 0.7,
+  /** Sininho de conquista conseguida. */
+  achievementVolume: 0.32,
+};
+
+/** Aviso de conquista conseguida. Spec: docs/features/achievements.md */
+export const ACHIEVEMENT = {
+  /** Quanto tempo o aviso fica na tela (s), sem contar a entrada e a saída. */
+  toastSec: 3.2,
 };
 
 /** Tela inicial. Spec: docs/features/title-screen.md */
@@ -393,18 +401,13 @@ export const WIRE = {
 /** Ato 2: cutscenes, câmera e morte. Spec: docs/features/act2-rooftops.md */
 export const ACT2 = {
   /**
-   * Cutscene de abertura (s). Curta de propósito: com quase 10 s parecia que o jogo tinha travado
-   * (o jogador tentava andar e nada acontecia).
+   * Cutscene de abertura (s): clareia, olha a horda, começa o vento e o controle volta (a aranha não atira
+   * a teia sozinha). Curta de propósito: longa, parecia que o jogo tinha travado.
    */
   introFadeSec: 1,
   introLookSec: 2.6,
   introWindSec: 0.9,
-  introShootSec: 0.5,
-  /** Na subida pela teia, começa a recolher o fio depois deste tempo (s). */
-  introReelAfterSec: 0.2,
-  /** Tempo máximo da subida pela teia até grudar no braço do poste. */
-  introSwingSec: 3.5,
-  /** Pular a cutscene: a tela escurece rápido, a aranha vai para o braço e a tela clareia já nela. */
+  /** Pular a cutscene: a tela escurece rápido e clareia com a câmera já na aranha. */
   skipFadeSec: 0.25,
   /** O aviso "ENTER / START skip" aparece depois deste tempo (s). */
   skipHintAfterSec: 0.8,

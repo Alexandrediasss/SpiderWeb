@@ -1,15 +1,24 @@
 // Grade de colisão do cenário. Lógica pura: sem Phaser.
 
+/**
+ * O que existe fora do mapa:
+ * - 'solid': tudo sólido (a casa do ato 1 é fechada; a aranha nunca sai dela).
+ * - 'edge': continua o tile da borda mais próxima. No ato 2, acima do telhado é ar (não dá para subir
+ *   pela borda do mapa até o céu nem prender teia no céu); a casa e a rua continuam sólidas nos lados.
+ */
+export type Outside = 'solid' | 'edge';
+
 export class LevelGrid {
   constructor(
     readonly cols: number,
     readonly rows: number,
     readonly tileSize: number,
     private readonly solid: Uint8Array,
+    readonly outside: Outside = 'solid',
   ) {}
 
   /** Cria a grade a partir de linhas ASCII; `isSolidChar` diz quais caracteres colidem. */
-  static fromAscii(rows: string[], tileSize: number, isSolidChar: (c: string) => boolean): LevelGrid {
+  static fromAscii(rows: string[], tileSize: number, isSolidChar: (c: string) => boolean, outside: Outside = 'solid'): LevelGrid {
     const cols = rows[0]?.length ?? 0;
     const solid = new Uint8Array(cols * rows.length);
     rows.forEach((line, y) => {
@@ -18,7 +27,7 @@ export class LevelGrid {
       }
       for (let x = 0; x < cols; x++) solid[y * cols + x] = isSolidChar(line[x]) ? 1 : 0;
     });
-    return new LevelGrid(cols, rows.length, tileSize, solid);
+    return new LevelGrid(cols, rows.length, tileSize, solid, outside);
   }
 
   get widthPx(): number {
@@ -29,9 +38,13 @@ export class LevelGrid {
     return this.rows * this.tileSize;
   }
 
-  /** Fora do mapa conta como sólido. */
+  /** Fora do mapa: sólido, ou o tile da borda mais próxima (veja `Outside`). */
   isSolidTile(tx: number, ty: number): boolean {
-    if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) return true;
+    if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) {
+      if (this.outside === 'solid') return true;
+      tx = Math.max(0, Math.min(this.cols - 1, tx));
+      ty = Math.max(0, Math.min(this.rows - 1, ty));
+    }
     return this.solid[ty * this.cols + tx] === 1;
   }
 

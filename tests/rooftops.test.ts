@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACT2, SPIDER, TILE, WEB, WIND } from '../src/config';
+import { ACT2, SPIDER, TILE, WEB } from '../src/config';
 import {
   CHECKPOINTS,
   CHIMNEY,
@@ -107,38 +107,43 @@ describe('checkpoints', () => {
   });
 });
 
-/** Função (e não comparação direta) porque o TS "estreita" `surface` para 'floor' depois da atribuição. */
-const attached = (m: SpiderMotor) => m.surface !== 'air';
-
 describe('abertura do ato 2', () => {
-  // Mesmo roteiro da RooftopScene (etapas shoot e swing): se a aranha não grudar a tempo, a cutscene
-  // termina colocando-a no braço do poste, o que parecia um teleporte.
-  it('a subida pela teia gruda no braço do poste 1 com folga, em qualquer taxa de quadros', () => {
-    const grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid);
-    for (const hz of [30, 60, 144, 240]) {
-      const dt = 1 / hz;
-      const start = { x: (ROOFTOP_START.tx + 0.5) * TILE, y: (ROOFTOP_START.ty + 1) * TILE - SPIDER.half };
-      const m = new SpiderMotor(grid, start.x, start.y);
-      m.surface = 'floor';
-      m.update(1 / 60, input({ webPressed: true, webHeld: true, aim: FIRST_AIM }));
-      for (let t = 0; t < ACT2.introShootSec; t += dt) m.update(dt, input({ webHeld: true, aim: FIRST_AIM }));
-      let attachedAt = -1;
-      for (let t = 0; t < ACT2.introSwingSec && attachedAt < 0; t += dt) {
-        m.wind = 0.32 * WIND.gustAccel;
-        m.update(dt, input({ webHeld: true, move: { x: 0, y: t > ACT2.introReelAfterSec ? -1 : 0 }, aim: FIRST_AIM }));
-        m.wind = 0;
-        if (attached(m)) attachedAt = t;
-      }
-      expect(attachedAt, `${hz} Hz`).toBeGreaterThan(0);
-      expect(attachedAt, `${hz} Hz`).toBeLessThan(ACT2.introSwingSec - 0.8);
-      expect(m.surface).toBe('ceiling');
-      expect(Math.abs(m.body.x - FIRST_AIM.x)).toBeLessThan(TILE);
-    }
+  it('é curta e termina devolvendo o controle (sem a aranha atirar a teia sozinha)', () => {
+    expect(ACT2.introFadeSec + ACT2.introLookSec + ACT2.introWindSec).toBeLessThanOrEqual(5);
+    expect(ACT2).not.toHaveProperty('introShootSec');
+    expect(ACT2).not.toHaveProperty('introSwingSec');
+  });
+});
+
+describe('bordas do mapa do ato 2', () => {
+  const edgeGrid = () => LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid, 'edge');
+
+  it('no topo do telhado, andando para a esquerda, para na borda e não sobe para o céu', () => {
+    const grid = edgeGrid();
+    // Topo do telhado: o primeiro 'r' das colunas 0–4 está na linha 9.
+    const m = new SpiderMotor(grid, 3 * TILE + 8, 9 * TILE - SPIDER.half);
+    m.surface = 'floor';
+    m.bounds = { minX: 0, maxX: grid.widthPx };
+    for (let i = 0; i < 6 / DT; i++) m.update(DT, input({ move: { x: -1, y: 0 } }));
+    expect(m.surface).toBe('floor');
+    expect(m.body.x).toBe(SPIDER.half);
+    expect(m.body.y).toBeCloseTo(9 * TILE - SPIDER.half, 5);
+    // Apertando "para cima" na borda também não escala nada.
+    for (let i = 0; i < 2 / DT; i++) m.update(DT, input({ move: { x: 0, y: -1 } }));
+    expect(m.body.y).toBeGreaterThan(8 * TILE);
   });
 
-  it('a cutscene inteira é curta', () => {
-    const total = ACT2.introFadeSec + ACT2.introLookSec + ACT2.introWindSec + ACT2.introShootSec + ACT2.introSwingSec;
-    expect(total).toBeLessThanOrEqual(8.5);
+  it('a teia não prende no céu (acima do mapa é ar)', () => {
+    expect(raycastWeb(edgeGrid(), { x: 300, y: 200 }, { x: 300, y: -100 }, WEB.range)).toBeNull();
+  });
+
+  it('a casa e a rua continuam sólidas fora do mapa; a casa do ato 1 continua toda fechada', () => {
+    const grid = edgeGrid();
+    expect(grid.isSolidTile(-1, 15)).toBe(true);
+    expect(grid.isSolidTile(-1, 3)).toBe(false);
+    expect(grid.isSolidTile(10, -1)).toBe(false);
+    expect(grid.isSolidTile(10, ROOFTOP_MAP.length)).toBe(true);
+    expect(LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid).isSolidTile(10, -1)).toBe(true);
   });
 });
 

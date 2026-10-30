@@ -34,6 +34,11 @@ export class SpiderMotor {
   wind = 0;
   /** Parada, mas sendo arrastada pelo vento neste quadro (as patas se mexem, segurando). */
   sliding = false;
+  /**
+   * Limite horizontal do mundo (px). O ato 2 usa: a borda do mapa é uma parede invisível que não dá
+   * para escalar; a aranha só para nela.
+   */
+  bounds: { minX: number; maxX: number } | null = null;
 
   private stickCooldown = 0;
   private lock: InputLock | null = null;
@@ -64,6 +69,17 @@ export class SpiderMotor {
 
     if (this.surface === 'air') this.updateAir(dt, input);
     else this.updateAttached(dt, input);
+    this.keepInBounds();
+  }
+
+  private keepInBounds(): void {
+    if (!this.bounds) return;
+    const b = this.body;
+    const lo = this.bounds.minX + b.half;
+    const hi = this.bounds.maxX - b.half;
+    if (b.x >= lo && b.x <= hi) return;
+    b.x = clamp(b.x, lo, hi);
+    b.vx = 0;
   }
 
   // ---------- grudada numa superfície ----------

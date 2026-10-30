@@ -64,12 +64,6 @@ export class Spider {
     this.drawWeb();
   }
 
-  /** Vira o sprite na hora para o ângulo da superfície (sem girar aos poucos), depois de reposicionar. */
-  snapAngle(): void {
-    this.angleDeg = this.targetAngle();
-    this.updateSprite(0);
-  }
-
   private targetAngle(): number {
     const m = this.motor;
     if (m.rope) {

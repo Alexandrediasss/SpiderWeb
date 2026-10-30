@@ -19,7 +19,6 @@ import {
   CHECKPOINTS,
   CHIMNEY,
   END_ZONE,
-  FIRST_AIM,
   LOOSE_WIRES,
   ROOFTOP_MAP,
   STREET_ROW,
@@ -39,6 +38,7 @@ import { Wind } from '../systems/wind';
 import { Timeline } from '../systems/cutscene';
 import { ActEnd } from './ActEnd';
 import { Hud } from './Hud';
+import { achieve } from './AchievementToast';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
 import { fadeTo } from './Transitions';
@@ -135,7 +135,8 @@ export class RooftopScene extends Phaser.Scene {
     this.tl = null;
     this.hordeSprites = [];
     this.sootPuffs = [];
-    this.grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid);
+    // Fora do mapa continua a borda: acima do telhado é ar (não dá para subir ao céu pela borda do mapa).
+    this.grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid, 'edge');
     this.art = ensureTextures(this, this.grid);
     const seed = (Date.now() & 0x7fffffff) || 1;
     this.storm = new Storm(seed);
@@ -159,6 +160,7 @@ export class RooftopScene extends Phaser.Scene {
       if (this.mode === 'play' || this.mode === 'ending') sound.footsteps.step(this.spider.motor.running);
     });
     this.spider.motor.surface = 'floor';
+    this.spider.motor.bounds = { minX: 0, maxX: this.grid.widthPx };
     this.playerInput = new PlayerInput(this, this.grid);
     this.reticle = this.add.image(0, 0, TEX.reticle).setDepth(10).setVisible(false);
 
@@ -285,12 +287,11 @@ export class RooftopScene extends Phaser.Scene {
     this.mode = 'intro';
     this.elapsed = 0;
     this.stepIndex = -1;
+    // Termina no vento: o controle volta com a aranha na calha (ela não atira a teia sozinha).
     this.tl = new Timeline([
       { name: 'fadeIn', sec: ACT2.introFadeSec },
       { name: 'look', sec: ACT2.introLookSec },
       { name: 'wind', sec: ACT2.introWindSec },
-      { name: 'shoot', sec: ACT2.introShootSec },
-      { name: 'swing', sec: ACT2.introSwingSec },
     ]);
     this.setBars(true, 0);
     this.wind.script(0);
@@ -305,9 +306,8 @@ export class RooftopScene extends Phaser.Scene {
   }
 
   /**
-   * Pular a cutscene de abertura (ou ela acabou sem a aranha grudar): a tela escurece rápido, a aranha vai
-   * para baixo do braço do poste 1 e a tela clareia com a câmera já nela. Sem o escurecer, a aranha
-   * "teleportava" do telhado para o poste e a câmera deslizava atrás dela.
+   * Pular a cutscene de abertura: a tela escurece rápido e clareia com a câmera já na aranha (na calha,
+   * onde ela estava). O escurecer esconde a câmera voltando lá de baixo, da horda.
    */
   private skipIntro(): void {
     if (this.mode !== 'intro') return;
@@ -317,24 +317,8 @@ export class RooftopScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.fadeOut(ACT2.skipFadeSec * 1000, 0, 0, 0);
     cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      if (this.mode !== 'skipping') return;
-      this.placeOnFirstArm();
-      this.startPlay(true);
+      if (this.mode === 'skipping') this.startPlay(true);
     });
-  }
-
-  /** A aranha grudada embaixo do braço do poste de luz 1 (onde a cutscene termina). */
-  private placeOnFirstArm(): void {
-    const m = this.spider.motor;
-    m.rope = null;
-    m.body.x = FIRST_AIM.x;
-    m.body.y = Math.ceil(FIRST_AIM.y / TILE) * TILE + SPIDER.half;
-    m.body.vx = 0;
-    m.body.vy = 0;
-    m.surface = 'ceiling';
-    // O sprite já começa virado (de cabeça para baixo), sem girar na frente do jogador.
-    this.spider.update(0, emptyInput());
-    this.spider.snapAngle();
   }
 
   private showSkipHint(on: boolean): void {
@@ -430,6 +414,7 @@ export class RooftopScene extends Phaser.Scene {
   private endAct(): void {
     this.mode = 'actEnd';
     saveProgress(recordActEnd(loadProgress(), ACT.id, []));
+    achieve({ type: 'actEnd', act: ACT.id });
     this.actEnd.show(ACT, 0, ACTS[ACTS.indexOf(ACT) + 1]);
   }
 
@@ -597,12 +582,6 @@ export class RooftopScene extends Phaser.Scene {
       case 'wind':
         this.wind.script(0.32, 1);
         break;
-      case 'shoot':
-        this.spider.update(1 / 60, { ...emptyInput(), webPressed: true, webHeld: true, aim: FIRST_AIM });
-        sfx.webShot('rope');
-        cam.startFollow(m.body, true, 0.08, 0.08);
-        cam.setFollowOffset(0, -ACT2.cameraLookDown / 2);
-        break;
       // Morte.
       case 'drop':
         break;
@@ -659,15 +638,6 @@ export class RooftopScene extends Phaser.Scene {
         // Ela treme no vento.
         this.spider.sprite.x += Math.round(Math.sin(local * 60)) * (p > 0.3 ? 1 : 0);
         break;
-      case 'shoot':
-        this.spider.update(dt, { ...emptyInput(), webHeld: true, aim: FIRST_AIM });
-        break;
-      case 'swing':
-        m.wind = this.wind.accel;
-        this.spider.update(dt, { ...emptyInput(), webHeld: true, move: { x: 0, y: local > ACT2.introReelAfterSec ? -1 : 0 }, aim: FIRST_AIM });
-        m.wind = 0;
-        if (m.surface !== 'air') this.startPlay();
-        break;
       case 'shadow': {
         // A sombra do pé cresce em volta da aranha caída.
         const s = 6 + p * 34;
@@ -707,8 +677,9 @@ export class RooftopScene extends Phaser.Scene {
 
   private finishTimeline(): void {
     if (this.mode === 'intro') {
-      // Passou o tempo sem grudar: coloca no braço do poste.
-      this.skipIntro();
+      // Fim da abertura: o controle volta com a aranha na calha; a câmera desliza até ela.
+      this.chapter?.classList.remove('show');
+      this.startPlay();
     } else if (this.mode === 'dying') {
       this.respawn();
     } else if (this.mode === 'ending') {

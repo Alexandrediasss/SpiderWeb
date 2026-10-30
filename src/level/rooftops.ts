@@ -105,7 +105,7 @@ export const STREET_ROW = 37;
 /** Onde a aranha começa: na calha do telhado do ato 1 (tile vazio logo acima da superfície). */
 export const ROOFTOP_START = { tx: 15, ty: 19 };
 
-/** Na cutscene de abertura, a teia vai neste ponto (px): embaixo do braço do poste de luz 1. */
+/** Primeiro ponto de teia do caminho (px): embaixo do braço do poste de luz 1, ao alcance da calha. */
 export const FIRST_AIM = { x: 408, y: 287 };
 
 /** Retângulo em tiles (inclusivo). */
