@@ -89,7 +89,8 @@ export class Spider {
     this.sprite.setAngle(this.angleDeg);
     this.sprite.setFlipX(m.facing < 0);
 
-    const anim = m.surface === 'air' ? 'spider-air' : m.isWalking ? 'spider-walk' : 'spider-idle';
+    // Arrastada pelo vento, as patas se mexem como se tentasse se segurar.
+    const anim = m.surface === 'air' ? 'spider-air' : m.isWalking || m.sliding ? 'spider-walk' : 'spider-idle';
     if (this.sprite.anims.currentAnim?.key !== anim) this.sprite.play(anim);
     this.sprite.anims.timeScale = anim === 'spider-walk' && m.running ? 1.9 : 1;
   }

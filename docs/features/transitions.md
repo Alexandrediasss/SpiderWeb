@@ -4,7 +4,9 @@ Três transições, todas em HTML/canvas por cima do jogo (o Phaser continua rod
 
 | Quando | Transição |
 |---|---|
-| Menu principal → seleção de atos (LOAD GAME), SCENES ou ACHIEVEMENTS (e o BACK de volta) | A tela escurece devagar e clareia já na outra tela. |
+| Menu principal → seleção de atos (LOAD GAME), SCENES ou ACHIEVEMENTS (e o BACK de volta) | **Teia que puxa**: um fio de teia sai da borda, engata no botão escolhido e puxa a tela para o lado, trazendo a outra no lugar (cerca de 0,7 s). |
+| Fim do ato → seleção de atos | A tela (já preta) clareia na seleção de atos. |
+| SCENES → assistir uma cena (e a volta) | Escurece em `RECAP.enterFadeSec` e a cena começa; no fim ela escurece e o SCENES clareia em `TRANSITION.fadeInSec`, com a mesma cena escolhida ([scenes.md](scenes.md)). |
 | Escolher o **ato 1** (ou NEW GAME) | **Gosma verde**: o líquido mutante espirra na "lente" e escorre do alto até cobrir tudo; o verde apaga para o preto e começa a cutscene de abertura. |
 | Escolher o **ato 2** | **Teia e vento**: riscos de vento cruzam a tela, fios de teia saem das bordas e tecem uma teia no meio enquanto o fundo escurece; uma rajada arranca a teia e começa o ato 2. |
 
@@ -14,11 +16,25 @@ Código:
 
 Testes: `tests/transitionArt.test.ts`.
 
-## Escurecer (entre as telas do menu)
+## Teia que puxa (entre as telas do menu)
 
-1. A tela vai ao preto em `TRANSITION.fadeOutSec`, fica preta por `TRANSITION.fadeHoldSec`, troca a tela por baixo e clareia em `TRANSITION.fadeInSec`.
-2. Durante a troca, teclas e botões da tela nova ficam ignorados (a seleção de atos já tem a espera de 250 ms).
-3. A música continua tocando.
+Antes era escurecer e clarear (1,7 s para ir e mais 1,7 s para voltar): longo demais para só trocar de tela. Agora (`webPull` em `Transitions.ts`, tempos em `TRANSITION.pull`):
+
+1. **Atirar (`shootSec`, 0,14 s):** um fio de teia (2 px, cor de teia) sai da borda da tela e vai até o botão escolhido, na altura do meio dele. Som de teia (`Sfx.webShot`).
+2. **Engatar (`hookSec`, 0,08 s):** aparece um respingo de teia em pixel art (`buildWebSplat` em `uiArt.ts`) no ponto onde engatou, e o botão dá um tranco de 6 px para o lado da teia.
+3. **Puxar (`pullSec`, 0,42 s):** a tela atual sai para o lado da teia (acelerando), levando o fio junto. A tela nova entra pelo outro lado (desacelerando, com `enterLagSec` de atraso). Som de vento (`Sfx.whoosh`).
+
+- **Ir** (LOAD GAME, SCENES, ACHIEVEMENTS): a teia vem da **direita**, engata no botão escolhido e puxa o menu para a direita; a tela nova entra pela esquerda.
+- **Voltar** (BACK): o contrário. A teia vem da **esquerda**, engata no BACK e puxa para a esquerda; o menu principal entra pela direita.
+- Durante a transição, teclas e botões ficam ignorados (`GameScene.fading`).
+- A música continua tocando.
+- É feita com a Web Animations API (`element.animate`) em cima das telas HTML. No fim, as animações são canceladas e o `transform` volta ao normal.
+
+Teste no painel do navegador do app: com o painel escondido, o navegador não roda quadros e a animação fica parada. Tire screenshots para ela andar, ou aumente os tempos de `TRANSITION.pull` no console para ver os quadros do meio.
+
+## Escurecer (fim do ato)
+
+1. Voltando do fim do ato, a tela já está preta: só clareia em `TRANSITION.fadeInSec`, já na seleção de atos.
 
 ## Gosma verde (ato 1)
 

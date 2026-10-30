@@ -1,6 +1,6 @@
 # Spec: ventania e obstáculos (ato 2)
 
-Inspirada na subida final do *Celeste*: de tempos em tempos vem uma rajada forte que empurra a aranha por alguns segundos. Grudada numa superfície ela aguenta; no ar ou pendurada na teia, é arrastada.
+Inspirada na subida final do *Celeste*: de tempos em tempos vem uma rajada forte que empurra a aranha por alguns segundos. Grudada numa superfície ela não solta, mas parada no chão ou no teto é arrastada para trás (para ficar no lugar, tem que andar contra o vento); no ar ou pendurada na teia, é levada.
 
 Código:
 - `src/systems/wind.ts`: lógica pura. Ciclo das rajadas e a força agora.
@@ -28,7 +28,11 @@ Testes: `tests/wind.test.ts`.
 ## Efeito na aranha
 
 1. **No ar e na teia:** aceleração horizontal de `força × WIND.gustAccel`, até a velocidade `WIND.maxAirSpeed` no sentido do vento. Na teia, o pêndulo é empurrado para o lado.
-2. **Grudada:** nunca solta. Andando no chão ou no teto, a velocidade muda conforme o vento ao longo do caminho: contra fica mais lenta (até `WIND.walkMin`), a favor mais rápida. Nas paredes não muda.
+2. **Grudada:** nunca solta.
+   - **Andando** no chão ou no teto, a velocidade muda conforme o vento ao longo do caminho: contra fica mais lenta (até `WIND.walkMin`), a favor mais rápida.
+   - **Parada** no chão ou no teto, a rajada **arrasta** a aranha no sentido do vento a `força × WIND.idleSlide` px/s (55 px/s na rajada cheia). Ela continua grudada: desliza pela superfície, contorna cantos (na ponta de uma plataforma, vira para a lateral e fica segura ali) e as patas se mexem (`motor.sliding`, animação de andar). Para não ser levada, é preciso andar contra o vento, como no Celeste. No aviso (força baixa) ela já escorrega um pouquinho.
+   - Nas paredes o vento horizontal não muda nada (nem andando, nem parada).
+   - Se for arrastada para fora de uma beirada sem canto para contornar, sai voando com o vento.
 3. Pular durante a rajada: o pulo é carregado pelo vento.
 
 ## Detritos (só na rajada)

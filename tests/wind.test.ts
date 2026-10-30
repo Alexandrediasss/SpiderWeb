@@ -97,12 +97,58 @@ describe('vento na aranha', () => {
     for (const m of [calm, against, behind]) expect(m.surface).toBe('floor');
     expect(against.body.x - 100).toBeCloseTo((calm.body.x - 100) * WIND.walkMin, 0);
     expect(behind.body.x).toBeGreaterThan(calm.body.x);
-    // Parada, nem se mexe.
-    const idle = new SpiderMotor(grid(OPEN), 100, floorY);
-    idle.surface = 'floor';
-    idle.wind = -WIND.gustAccel;
-    for (let i = 0; i < 30; i++) idle.update(DT, input());
-    expect([idle.surface, idle.body.x]).toEqual(['floor', 100]);
+  });
+
+  it('parada no chão ou no teto, a rajada arrasta a aranha no sentido do vento, sem soltar', () => {
+    const floorY = 11 * 16 - SPIDER.half;
+    const ceilY = 16 + SPIDER.half;
+    const idle = (surface: 'floor' | 'ceiling', y: number, wind: number) => {
+      const m = new SpiderMotor(grid(OPEN), 160, y);
+      m.surface = surface;
+      m.wind = wind;
+      for (let i = 0; i < 30; i++) m.update(DT, input());
+      return m;
+    };
+    // Meio segundo de rajada contra: volta cerca de idleSlide / 2 px.
+    const back = idle('floor', floorY, -WIND.gustAccel);
+    expect(back.surface).toBe('floor');
+    expect(back.sliding).toBe(true);
+    expect(160 - back.body.x).toBeCloseTo(WIND.idleSlide * 0.5, 0);
+    // No teto também, e no sentido do vento (não da tangente).
+    const ceil = idle('ceiling', ceilY, -WIND.gustAccel);
+    expect(ceil.surface).toBe('ceiling');
+    expect(ceil.body.x).toBeLessThan(160 - 20);
+    // A favor, vai para a frente.
+    expect(idle('floor', floorY, WIND.gustAccel).body.x).toBeGreaterThan(160 + 20);
+    // Vento fraco arrasta pouco; sem vento, fica parada.
+    const weak = idle('floor', floorY, -WIND.gustAccel * 0.2);
+    expect(160 - weak.body.x).toBeCloseTo(WIND.idleSlide * 0.1, 0);
+    const calm = idle('floor', floorY, 0);
+    expect([calm.body.x, calm.sliding]).toEqual([160, false]);
+  });
+
+  it('parada na parede, o vento horizontal não arrasta', () => {
+    const m = new SpiderMotor(grid(OPEN), 16 + SPIDER.half, 100);
+    m.surface = 'wallLeft';
+    m.wind = WIND.gustAccel;
+    for (let i = 0; i < 30; i++) m.update(DT, input());
+    expect([m.surface, m.body.x, m.body.y]).toEqual(['wallLeft', 16 + SPIDER.half, 100]);
+  });
+
+  it('andando contra a rajada ainda avança (devagar); parada, é levada para trás', () => {
+    const floorY = 11 * 16 - SPIDER.half;
+    const walk = new SpiderMotor(grid(OPEN), 160, floorY);
+    const stand = new SpiderMotor(grid(OPEN), 160, floorY);
+    for (const m of [walk, stand]) {
+      m.surface = 'floor';
+      m.wind = -WIND.gustAccel;
+    }
+    for (let i = 0; i < 60; i++) {
+      walk.update(DT, input({ move: { x: 1, y: 0 } }));
+      stand.update(DT, input());
+    }
+    expect(walk.body.x).toBeGreaterThan(160);
+    expect(stand.body.x).toBeLessThan(160);
   });
 });
 

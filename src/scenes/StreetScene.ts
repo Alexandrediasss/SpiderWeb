@@ -1,7 +1,7 @@
 // Cutscene da rua: a aranha sai pelo buraco do telhado; corte para a rua com só as pernas da horda;
 // a câmera sobe (com parallax) até as cabeças; relâmpago; e, no fim, a aranha na beira do telhado
 // olhando a horda. É o fim do ato 1: no fim ela acorda a GameScene (que estava dormindo), que mostra
-// o "END OF ACT". Spec: docs/features/street-cutscene.md
+// o "END OF ACT". Assistida pelo SCENES (`replay`), no fim volta para o menu. Spec: docs/features/street-cutscene.md
 import Phaser from 'phaser';
 import { HORDE, STREET } from '../config';
 import { PAL } from '../art/palette';
@@ -15,6 +15,8 @@ import { Timeline } from '../systems/cutscene';
 import { Horde, type HordeEvent, walkFrame } from '../systems/horde';
 import { Storm, boltPath } from '../systems/storm';
 import { pollPad } from './PlayerInput';
+import { fadeTo } from './Transitions';
+import { markSceneSeen } from './sceneStore';
 
 type ShotName = 'roof' | 'street' | 'wide';
 type Layer = 'sky' | 'houses' | 'far' | 'mid' | 'near';
@@ -68,6 +70,8 @@ export class StreetScene extends Phaser.Scene {
   /** Pulou ou acabou: o roteiro para (o mundo continua animado durante o escurecimento). */
   private done = false;
   private finished = false;
+  /** Assistindo pelo SCENES: no fim (ou pulando) volta para o SCENES em vez do fim do ato. */
+  private replay = false;
   private shot: ShotName = 'roof';
   private storm!: Storm;
   private horde!: Horde;
@@ -94,7 +98,11 @@ export class StreetScene extends Phaser.Scene {
     super('street');
   }
 
-  create(): void {
+  create(data: { replay?: boolean } = {}): void {
+    this.replay = !!data.replay;
+    // Vista no jogo: libera no SCENES (mesmo se pular). Pelo SCENES a tela chega preta pelo HTML.
+    if (this.replay) void fadeTo(0, 0);
+    else markSceneSeen('act1-street');
     this.elapsed = 0;
     this.stepIndex = -1;
     this.done = false;
@@ -501,6 +509,11 @@ export class StreetScene extends Phaser.Scene {
     const sound = getSound();
     sound.storm.setOutside(false);
     sound.zombies.setDistance(1, 0.5);
+    if (this.replay) {
+      void fadeTo(1, 0);
+      this.scene.start('game', { openScenes: 'act1-street' });
+      return;
+    }
     this.scene.wake('game');
     this.scene.stop();
   }

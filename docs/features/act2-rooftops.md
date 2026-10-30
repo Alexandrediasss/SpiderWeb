@@ -33,19 +33,31 @@ A rua fica embaixo (linhas 37–39) e mata ao encostar. Da esquerda para a direi
 
 - Legenda (minúscula = sólido, maiúscula = só fundo): `r` telhado, `h` parede de madeira, `c` chaminé, `p` poste de metal, `a` braço de metal, `L` luminária (fundo: a teia passa), `u` poste de madeira, `x` cruzeta, `k` tronco, `b` galho, `F` copa, `g` outdoor, `y` passarela, `s` teto do ponto, `P` haste do ponto, `G` vidro, `t` semáforo, `_` rua.
 - Nenhum vão entre dois pontos de teia passa de `WEB.range` (240 px). O teste confere os mais importantes.
+- **Peça sólida ocupa o tile inteiro no desenho**, porque a colisão é o tile inteiro (16×16). Postes, cruzetas, braços, galhos, a passarela e o teto do ponto de ônibus eram desenhados mais finos e a aranha ficava "flutuando" longe deles (em pé, de cabeça para baixo ou do lado). Treliças (braço, passarela) podem ser vazadas no meio, mas as bordas são cheias. O `tests/rooftops.test.ts` confere todas as faces expostas.
+- **Nada flutua:** o outdoor fica em cima de duas pernas (`P`, fundo, a aranha passa) que descem até a passarela, em cima dos postes dela. O teste confere.
 - Na rua, embaixo de tudo, a horda passa andando (zumbis grandes na frente e pequenos e escuros atrás) e geme. Os gemidos ficam mais altos quanto mais perto da rua a aranha está.
 
-## Cutscene de abertura (cerca de 10 s)
+## Cutscene de abertura (cerca de 4,5 s)
 
 | Etapa | O que acontece |
 |---|---|
 | `fadeIn` | A tela clareia na calha do telhado, com faixas de cinema. A aranha parada, de frente para a rua. |
 | `look` | A câmera desce até a horda passando lá embaixo e volta. Aparece o cartão `ACT 2` / `ROOFTOPS`. Cai um raio. |
 | `wind` | Começa a ventar (aviso): riscos, chuva inclinada, a aranha treme. |
-| `shoot` | Ela atira a teia no braço do poste de luz 1. |
-| `swing` | Se balança e sobe pela teia até grudar embaixo do braço. As faixas somem e o controle é liberado. |
 
-Pular: `Enter`, `Esc`, `Espaço`, `A` ou `Start`. A aranha já aparece grudada embaixo do braço do poste 1.
+No fim, as faixas somem e o **controle volta com a aranha na calha**, onde ela estava; a câmera desliza até ela. Ela **não atira a teia sozinha**: o primeiro balanço (no braço do poste de luz 1, `FIRST_AIM`, ao alcance da calha) é do jogador. Antes a cutscene terminava com a aranha atirando a teia e subindo sozinha.
+
+- **Pular:** `Enter`, `Esc`, `Espaço`, `A` ou `Start`, e também os botões de pular e de teia (quem aperta quer jogar). O aviso `ENTER / START skip` aparece no canto depois de `ACT2.skipHintAfterSec`.
+- **Ao pular:** a tela escurece em `ACT2.skipFadeSec` (0,25 s) e clareia com a câmera já na aranha (ela continua na calha). O escurecer esconde a câmera voltando lá de baixo, da horda.
+- **Duração:** curta de propósito. Com quase 10 s sem nenhum aviso parecia que o jogo tinha travado.
+- **SCENES:** começar a cutscene libera "THE STORM" no SCENES ([scenes.md](scenes.md)). Assistida de lá (`replay: 'act2-intro'`), no fim ou pulando volta para o SCENES.
+
+## Bordas do mapa
+
+- **Fora do mapa continua a borda** (`LevelGrid` com `outside: 'edge'`): à esquerda, a casa do ato 1 e a rua continuam sólidas; **acima do telhado e acima do mapa é ar**.
+- Antes, fora do mapa era tudo sólido: no topo do telhado, andando para a esquerda, a aranha subia pela borda invisível do mapa e andava de cabeça para baixo no "teto do céu" (y = 0). A teia também prendia no céu.
+- **Parede invisível:** a aranha não passa das bordas da esquerda e da direita (`motor.bounds`). Ela só para; não dá para escalar.
+- O `tests/rooftops.test.ts` confere: no topo do telhado ela para na borda e não sobe; a teia para cima não pega no céu; a casa e a rua continuam sólidas fora do mapa; a casa do ato 1 continua toda fechada (`outside: 'solid'`, o padrão).
 
 ## Checkpoints
 
@@ -67,6 +79,8 @@ Pular: `Enter`, `Esc`, `Espaço`, `A` ou `Start`. A aranha já aparece grudada e
 2. O controle trava (faixas de cinema). Ela anda sozinha telhado acima até a chaminé, sobe pela lateral e para no meio do topo.
 3. Olha para dentro, dá um pulinho e **entra**: desce por trás da borda da chaminé e some, com uma nuvem de fuligem.
 4. A tela escurece e aparece o "END OF ACT 2" ([acts.md](acts.md)). Depois, a seleção de atos.
+5. **SCENES:** começar a cutscene libera "THE CHIMNEY", e o fim do ato libera o resumo "ACROSS THE STREET" ([scenes.md](scenes.md)). Assistida de lá (`replay: 'act2-ending'`), a aranha começa no beiral da casa vizinha (`ENDING_START`); dá para pular, e no fim volta para o SCENES, sem a tela de fim. O resumo do ato também roda nesta cena (`replay: 'act2-recap'`, modo `recap`).
+6. **Faixas de cinema:** são postas a cada quadro compensando o zoom da câmera (`placeBars` em `src/scenes/cinema.ts`); antes elas saíam da tela no zoom da chaminé.
 
 ## Pausa
 

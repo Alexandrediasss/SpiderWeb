@@ -224,6 +224,30 @@ export class Sfx {
     }
   }
 
+  /**
+   * Conquista: sininho de três notas subindo (Dó, Mi, Sol agudos). Cada nota é um seno com um parcial de
+   * sino (2,76×) mais baixo, que dá o brilho metálico, e decai devagar.
+   */
+  achievement(): void {
+    const t = this.ctx.currentTime;
+    [1046.5, 1318.5, 1568].forEach((f, i) => {
+      const at = t + i * 0.09;
+      const last = i === 2;
+      const dur = last ? 0.9 : 0.45;
+      for (const [mult, level] of [
+        [1, 1],
+        [2.76, 0.18],
+      ]) {
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = f * mult;
+        osc.connect(this.envelope(at, SFX.achievementVolume * level * (last ? 1 : 0.8), 0.006, dur)).connect(this.destination);
+        osc.start(at);
+        osc.stop(at + dur + 0.05);
+      }
+    });
+  }
+
   // ---------- peças ----------
 
   /** Variação determinística de ±6% no tom, para os sons não serem idênticos. */

@@ -193,6 +193,14 @@ export const SFX = {
   windVolume: 0.5,
   zapVolume: 0.35,
   stompVolume: 0.7,
+  /** Sininho de conquista conseguida. */
+  achievementVolume: 0.32,
+};
+
+/** Aviso de conquista conseguida. Spec: docs/features/achievements.md */
+export const ACHIEVEMENT = {
+  /** Quanto tempo o aviso fica na tela (s), sem contar a entrada e a saída. */
+  toastSec: 3.2,
 };
 
 /** Tela inicial. Spec: docs/features/title-screen.md */
@@ -319,10 +327,15 @@ export const ACT_END = {
 
 /** Transições de tela. Spec: docs/features/transitions.md */
 export const TRANSITION = {
-  /** PLAY ↔ seleção de atos: escurece, fica preto, clareia (s). */
+  /** Escurecer e clarear (s): volta do fim do ato para a seleção de atos. */
   fadeOutSec: 0.7,
   fadeHoldSec: 0.2,
   fadeInSec: 0.8,
+  /**
+   * Menu principal ↔ LOAD GAME / SCENES / ACHIEVEMENTS: a teia sai da borda e engata no botão (`shoot`),
+   * dá um tranco (`hook`) e puxa a tela para o lado, trazendo a outra no lugar (`pull`) (s).
+   */
+  pull: { shootSec: 0.14, hookSec: 0.08, pullSec: 0.42, enterLagSec: 0.05 },
   /** Gosma verde (ato 1) e teia com vento (ato 2). */
   gooSec: 2.4,
   webSec: 2.6,
@@ -351,6 +364,11 @@ export const WIND = {
   /** Andando grudada: contra o vento a velocidade cai até walkMin; a favor sobe até walkMax (fatores). */
   walkMin: 0.3,
   walkMax: 1.5,
+  /**
+   * Parada no chão ou no teto, a rajada arrasta a aranha (ela continua grudada) até esta velocidade (px/s,
+   * com força 1). Para não ser levada, é preciso andar contra o vento, como no Celeste.
+   */
+  idleSlide: 55,
 };
 
 /** Detritos voando na rajada. Spec: docs/features/wind.md */
@@ -382,13 +400,17 @@ export const WIRE = {
 
 /** Ato 2: cutscenes, câmera e morte. Spec: docs/features/act2-rooftops.md */
 export const ACT2 = {
-  /** Cutscene de abertura (s). */
-  introFadeSec: 1.2,
-  introLookSec: 3.8,
-  introWindSec: 1.6,
-  introShootSec: 0.5,
-  /** Tempo máximo da subida pela teia até grudar no braço do poste. */
-  introSwingSec: 3.5,
+  /**
+   * Cutscene de abertura (s): clareia, olha a horda, começa o vento e o controle volta (a aranha não atira
+   * a teia sozinha). Curta de propósito: longa, parecia que o jogo tinha travado.
+   */
+  introFadeSec: 1,
+  introLookSec: 2.6,
+  introWindSec: 0.9,
+  /** Pular a cutscene: a tela escurece rápido e clareia com a câmera já na aranha. */
+  skipFadeSec: 0.25,
+  /** O aviso "ENTER / START skip" aparece depois deste tempo (s). */
+  skipHintAfterSec: 0.8,
   /** A câmera olha um pouco abaixo da aranha (px), para a horda aparecer. */
   cameraLookDown: 60,
   /** Morte pisada: zoom, sombra crescendo, a pisada e o escurecer (s). */
@@ -410,3 +432,26 @@ export const ACT2 = {
     { u: 4, count: 24, speed: [11, 16], voice: 1, steps: 0.5 },
   ],
 } as const;
+
+/** SCENES do menu: assistir de novo as cutscenes e os resumos dos atos. Spec: docs/features/scenes.md */
+export const RECAP = {
+  /** O resumo roda em passos fixos (s): sempre igual, em qualquer taxa de quadros, e igual aos testes. */
+  stepSec: 1 / 60,
+  /** No máximo tantos passos por quadro (aba em segundo plano não vira um salto enorme). */
+  maxStepsPerFrame: 4,
+  /** Semente fixa dos ratos (o resumo é sempre o mesmo). */
+  seed: 1,
+  /** Corte entre planos: escurece e clareia (s). */
+  cutSec: 0.3,
+  /** Cartão do começo (ACT N / nome da cena) antes do primeiro plano e o escurecer do fim (s). */
+  titleSec: 3.4,
+  endFadeSec: 1.2,
+  /** Faixas pretas de cinema (px da tela de 480×270). */
+  letterboxPx: 24,
+  /** A página da carta aparece por cima do plano, menor (fração da altura da tela). */
+  letterGlimpse: 0.62,
+  /** Entrar numa cena a partir do SCENES: escurecer (s). */
+  enterFadeSec: 0.5,
+  /** Ato 2: força do vento nos planos sem rajada (só a chuva e o som; a aranha não sente). */
+  breeze: 0.15,
+};

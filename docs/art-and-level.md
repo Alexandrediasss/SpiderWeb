@@ -18,7 +18,7 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Cutscene da rua: telhado de fora, casas, calçadas, asfalto, beira do telhado | `src/art/streetArt.ts` (cores em `PAL.street`; posições em `ROOF_SHOT`, `STREET_SHOT`, `WIDE_SHOT`) |
 | Cartas: folhinha no cenário, brilho, página aberta com as patas segurando | `src/art/letterArt.ts` (cores em `PAL.letter`; onde ficam: `LETTERS` em `src/level/letters.ts`) |
 | Arte de cada ato (seleção de atos), com moldura gasta | `src/art/actArt.ts` (cores em `PAL.acts`) |
-| Cadeado (atos bloqueados e as telas trancadas do menu) | `src/art/uiArt.ts` |
+| Cadeado (atos bloqueados, cenas e conquistas ainda não liberadas) | `src/art/uiArt.ts` |
 | Ato 2: tiles da rua (postes, fios, árvore, outdoor, ponto de ônibus, semáforo, telhados), noite e luz das luminárias | `src/art/rooftopArt.ts` (cores em `PAL.act2`; mapa e legenda próprios em `src/level/rooftops.ts`) |
 | Ato 2: o pé do zumbi e os detritos (telha, jornal, galho, tampa) | `src/art/rooftopArt.ts` |
 | Transições de ato (gosma verde, teia e vento) | `src/art/transitionArt.ts` |
@@ -72,4 +72,5 @@ O mapa da casa é ASCII em `HOUSE_MAP` (o do ato 2 é `ROOFTOP_MAP`, com legenda
 - Fundo mais apagado que o primeiro plano, para a aranha e os móveis se destacarem.
 - **As cores da paleta são as "de dia":** o escuro da noite vem do mapa de luz, que multiplica tudo no jogo. A exceção é o lado de fora (céu, vidro), que já é pintado escuro porque a luz lá vale 1. A galeria mostra o cenário com e sem luz.
 - Sombra suave (AO) embaixo e ao lado de sólidos já é automática no baker.
+- **Tile sólido é desenhado até a borda.** A colisão é sempre o tile inteiro: se a peça for pintada mais fina (um braço de poste de 8 px num tile de 16), a aranha anda e pendura a alguns pixels dela, "flutuando". Peças finas de verdade viram treliça (bordas cheias, meio vazado) ou ficam como fundo (maiúscula, não colide). Peça grande precisa de apoio desenhado (pernas, postes), senão parece solta no ar.
 - Variação de textura com `hash(x, y, k)` (determinístico), nunca `Math.random`, para o cenário ficar igual a cada carregamento.

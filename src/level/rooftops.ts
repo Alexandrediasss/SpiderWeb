@@ -73,7 +73,7 @@ export const ROOFTOP_MAP: string[] = [
   'rrrrrrrrr............................xxxxxxx....FFFFFFFFFFFFFFFF......................gggggggggggggg............u...............................................u.............................ccrrrrrrrr',
   'rrrrrrrrrr..............................u......FFFFFFFFFFFFFFFFFF.....................gggggggggggggg............u.............aaaaaaaaaaa.......................u.............................rrrrrrrrrr',
   'rrrrrrrrrrr.............................u......FFFFFFFFFFFFFFFFFF...........aaaaa.....gggggggggggggg............u.............p......tt.........................u............................rrrrrrrrrrr',
-  'rrrrrrrrrrrr............................u......FFFFFFFFFFFFFFFFFF...........L...p...............................u.............p......tt.............aaaaa.......u...........................rrrrrrrrrrrr',
+  'rrrrrrrrrrrr............................u......FFFFFFFFFFFFFFFFFF...........L...p.......P........P..............u.............p......tt.............aaaaa.......u...........................rrrrrrrrrrrr',
   'rrrrrrrrrrrrr..........aaaaa............u......FFFFbbbbkkFFFFFFFF...............p....yyyyyyyyyyyyyyyy...........u.............p......tt.............p...L.......u..........................rrrrrrrrrrrrr',
   'rrrrrrrrrrrrrr.........L...p............u......FFFFFFFFkkFFFFFFFF...............p.......p........p..............u.............p.....................p...........u.........................rrrrrrrrrrrrrr',
   'rrrrrrrrrrrrrrr............p............u......FFFFFFFFkkFFFFFFFF...............p.......p........p..............u.............p.....................p...........u........................rrrrrrrrrrrrrrr',
@@ -105,7 +105,7 @@ export const STREET_ROW = 37;
 /** Onde a aranha começa: na calha do telhado do ato 1 (tile vazio logo acima da superfície). */
 export const ROOFTOP_START = { tx: 15, ty: 19 };
 
-/** Na cutscene de abertura, a teia vai neste ponto (px): embaixo do braço do poste de luz 1. */
+/** Primeiro ponto de teia do caminho (px): embaixo do braço do poste de luz 1, ao alcance da calha. */
 export const FIRST_AIM = { x: 408, y: 287 };
 
 /** Retângulo em tiles (inclusivo). */
@@ -146,6 +146,9 @@ export const WIRE_SPANS = [
   { x0: 1768, y0: 190, x1: 2536, y1: 190, sag: 34 },
   { x0: 1832, y0: 190, x1: 2600, y1: 190, sag: 30 },
 ];
+
+/** Onde a aranha começa a cena da chaminé assistida pelo SCENES: no beiral da casa vizinha (tile vazio acima). */
+export const ENDING_START = { tx: 182, ty: 21 };
 
 /** Grudar no telhado da casa vizinha (estas colunas, acima da calha) começa o fim do ato. */
 export const END_ZONE: TileZone = { x0: 182, y0: 0, x1: 199, y1: 22 };

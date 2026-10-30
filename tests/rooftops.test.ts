@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SPIDER, TILE, WEB } from '../src/config';
+import { ACT2, SPIDER, TILE, WEB } from '../src/config';
 import {
   CHECKPOINTS,
   CHIMNEY,
@@ -107,6 +107,46 @@ describe('checkpoints', () => {
   });
 });
 
+describe('abertura do ato 2', () => {
+  it('é curta e termina devolvendo o controle (sem a aranha atirar a teia sozinha)', () => {
+    expect(ACT2.introFadeSec + ACT2.introLookSec + ACT2.introWindSec).toBeLessThanOrEqual(5);
+    expect(ACT2).not.toHaveProperty('introShootSec');
+    expect(ACT2).not.toHaveProperty('introSwingSec');
+  });
+});
+
+describe('bordas do mapa do ato 2', () => {
+  const edgeGrid = () => LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid, 'edge');
+
+  it('no topo do telhado, andando para a esquerda, para na borda e não sobe para o céu', () => {
+    const grid = edgeGrid();
+    // Topo do telhado: o primeiro 'r' das colunas 0–4 está na linha 9.
+    const m = new SpiderMotor(grid, 3 * TILE + 8, 9 * TILE - SPIDER.half);
+    m.surface = 'floor';
+    m.bounds = { minX: 0, maxX: grid.widthPx };
+    for (let i = 0; i < 6 / DT; i++) m.update(DT, input({ move: { x: -1, y: 0 } }));
+    expect(m.surface).toBe('floor');
+    expect(m.body.x).toBe(SPIDER.half);
+    expect(m.body.y).toBeCloseTo(9 * TILE - SPIDER.half, 5);
+    // Apertando "para cima" na borda também não escala nada.
+    for (let i = 0; i < 2 / DT; i++) m.update(DT, input({ move: { x: 0, y: -1 } }));
+    expect(m.body.y).toBeGreaterThan(8 * TILE);
+  });
+
+  it('a teia não prende no céu (acima do mapa é ar)', () => {
+    expect(raycastWeb(edgeGrid(), { x: 300, y: 200 }, { x: 300, y: -100 }, WEB.range)).toBeNull();
+  });
+
+  it('a casa e a rua continuam sólidas fora do mapa; a casa do ato 1 continua toda fechada', () => {
+    const grid = edgeGrid();
+    expect(grid.isSolidTile(-1, 15)).toBe(true);
+    expect(grid.isSolidTile(-1, 3)).toBe(false);
+    expect(grid.isSolidTile(10, -1)).toBe(false);
+    expect(grid.isSolidTile(10, ROOFTOP_MAP.length)).toBe(true);
+    expect(LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid).isSolidTile(10, -1)).toBe(true);
+  });
+});
+
 describe('arte do ato 2', () => {
   it('pinta o mapa inteiro rápido, com as três luminárias', () => {
     const t0 = performance.now();
@@ -119,6 +159,41 @@ describe('arte do ato 2', () => {
     const alpha = (x: number, y: number) => art.canvas.data[(y * art.canvas.width + x) * 4 + 3];
     expect(alpha(5, 5)).toBe(0);
     expect(alpha(100, STREET_ROW * TILE + 20)).toBe(255);
+  });
+
+  it('peça sólida é desenhada até a borda do tile: a aranha não fica flutuando longe dela', () => {
+    // A colisão é o tile inteiro; se o desenho for mais fino, a aranha anda/pendura no "nada".
+    const art = bakeRooftops();
+    const W = art.canvas.width;
+    const painted = (x: number, y: number) => art.canvas.data[(y * W + x) * 4 + 3] > 0;
+    const cols = ROOFTOP_MAP[0].length;
+    const solidAt = (tx: number, ty: number) => tx >= 0 && ty >= 0 && tx < cols && ty < ROOFTOP_MAP.length && isRooftopSolid(ROOFTOP_MAP[ty][tx]);
+    const thin: string[] = [];
+    ROOFTOP_MAP.forEach((row, ty) => {
+      for (let tx = 0; tx < cols; tx++) {
+        if (!isRooftopSolid(row[tx]) || rooftopTile(row[tx]).material === 'street') continue;
+        const faces: [boolean, (i: number) => [number, number]][] = [
+          [!solidAt(tx, ty - 1), (i) => [tx * TILE + i, ty * TILE]],
+          [!solidAt(tx, ty + 1), (i) => [tx * TILE + i, ty * TILE + TILE - 1]],
+          [!solidAt(tx - 1, ty), (i) => [tx * TILE, ty * TILE + i]],
+          [!solidAt(tx + 1, ty), (i) => [tx * TILE + TILE - 1, ty * TILE + i]],
+        ];
+        for (const [exposed, at] of faces) {
+          if (!exposed) continue;
+          let n = 0;
+          for (let i = 0; i < TILE; i++) if (painted(...at(i))) n++;
+          // Pontas arredondadas (galhos) podem perder alguns pixels; mais que isso é peça flutuando.
+          if (n < TILE * 0.6) thin.push(`${row[tx]} (${tx}, ${ty}): ${n}/16`);
+        }
+      }
+    });
+    expect(thin).toEqual([]);
+  });
+
+  it('o outdoor tem pernas até a passarela (não flutua)', () => {
+    const billboardBottom = ROOFTOP_MAP.length - 1 - [...ROOFTOP_MAP].reverse().findIndex((row) => row.includes('g'));
+    const catwalkRow = ROOFTOP_MAP.findIndex((row) => row.includes('y'));
+    for (let ty = billboardBottom + 1; ty < catwalkRow; ty++) expect(ROOFTOP_MAP[ty].slice(85, 101)).toContain('P');
   });
 
   it('um recorte tem o tamanho pedido', () => {

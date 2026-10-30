@@ -54,7 +54,8 @@ export class LetterReader {
     this.prompt?.classList.add('hidden');
   }
 
-  show(letter: Letter): void {
+  /** `glimpse`: só um relance (resumo do ato): menor, sem o aviso de fechar e sem clique. */
+  show(letter: Letter, glimpse = false): void {
     if (!this.root || !this.page || !this.body || !this.heading) return;
     this.page.querySelector('.letter-art')?.remove();
     this.page.prepend(pageCanvas(letter));
@@ -67,6 +68,7 @@ export class LetterReader {
         return p;
       }),
     );
+    this.root.classList.toggle('glimpse', glimpse);
     this.root.classList.remove('hidden');
     // Força o recálculo para a página subir com a transição.
     void this.root.offsetWidth;

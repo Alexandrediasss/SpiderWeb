@@ -23,7 +23,7 @@ Só dá para pausar durante o jogo: não na tela inicial, na seleção de atos, 
 ## Durante a pausa
 
 - O jogo para: aranha, ratos, teias, chuva, raios e animações. A poeira dos feixes congela no ar.
-- O painel de controles aparece, mesmo que o jogador tenha escondido com `H`. Ao voltar, vale a escolha dele.
+- O painel de controles aparece (no jogo ele começa escondido; `H` mostra). Ao voltar, vale a escolha do jogador.
 - A chuva continua soando. `M` / `Select` ainda deixa tudo mudo.
 
 ## Detalhes de implementação

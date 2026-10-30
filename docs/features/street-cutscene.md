@@ -20,6 +20,7 @@ Testes: `tests/horde.test.ts`, `tests/roofHole.test.ts` e `tests/zombieArt.test.
 3. **Gatilho:** quando o centro da aranha entra no retângulo do buraco, a tela escurece em `STREET.exitFadeSec`. Nesse meio-tempo a aranha sobe sozinha (input "para cima"), sem pulo nem teias, e não dá para pausar.
 4. **Fim do ato:** a cena do jogo **dorme** durante a cutscene (`scene.sleep`/`wake`). Quando a cutscene acaba (ou é pulada), ela acorda a cena do jogo, que continua com a tela preta e mostra o "END OF ACT 1" ([acts.md](acts.md)). A aranha não volta mais para o sótão.
 5. Dá para pular.
+6. **SCENES:** começar a cutscene libera "THE HORDE" no SCENES. Assistida de lá (`replay`), a cena do jogo não está dormindo: no fim ou pulando ela volta para o SCENES, sem fim do ato ([scenes.md](scenes.md)).
 
 ## Roteiro (cerca de 27 s)
 

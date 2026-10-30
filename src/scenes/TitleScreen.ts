@@ -43,6 +43,11 @@ export class TitleScreen {
     return this.open;
   }
 
+  /** O botão selecionado (onde a teia da transição engata). */
+  get selectedButton(): HTMLElement | null {
+    return this.items[this.index] ?? null;
+  }
+
   /** Mostrando a pergunta do NEW GAME (YES/NO lado a lado). */
   get isAsking(): boolean {
     return this.asking !== null;
