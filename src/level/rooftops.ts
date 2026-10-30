@@ -147,6 +147,9 @@ export const WIRE_SPANS = [
   { x0: 1832, y0: 190, x1: 2600, y1: 190, sag: 30 },
 ];
 
+/** Onde a aranha começa a cena da chaminé assistida pelo SCENES: no beiral da casa vizinha (tile vazio acima). */
+export const ENDING_START = { tx: 182, ty: 21 };
+
 /** Grudar no telhado da casa vizinha (estas colunas, acima da calha) começa o fim do ato. */
 export const END_ZONE: TileZone = { x0: 182, y0: 0, x1: 199, y1: 22 };
 

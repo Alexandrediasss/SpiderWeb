@@ -7,11 +7,14 @@ const KEY = 'spiderweb.scenes';
 
 /** Cópia em memória, para o caso do localStorage estar bloqueado. */
 let memory: string[] = [];
+/** A última gravação falhou (navegador sem espaço): vale a cópia em memória, mesmo sem nada salvo. */
+let writeFailed = false;
 
 export function loadSeenScenes(): string[] {
   try {
+    // Sem nada salvo (ou apagado no console) = nada liberado.
     const raw = localStorage.getItem(KEY);
-    if (raw !== null) memory = parseUnlocked(raw, SCENES);
+    if (raw !== null || !writeFailed) memory = parseUnlocked(raw, SCENES);
   } catch {
     // Sem localStorage: fica a cópia em memória.
   }
@@ -25,7 +28,9 @@ export function markSceneSeen(id: SceneId): boolean {
   memory = unlocked;
   try {
     localStorage.setItem(KEY, JSON.stringify(unlocked));
+    writeFailed = false;
   } catch {
+    writeFailed = true;
     // Só não fica salvo.
   }
   return true;

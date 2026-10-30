@@ -18,7 +18,7 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Cutscene da rua: telhado de fora, casas, calçadas, asfalto, beira do telhado | `src/art/streetArt.ts` (cores em `PAL.street`; posições em `ROOF_SHOT`, `STREET_SHOT`, `WIDE_SHOT`) |
 | Cartas: folhinha no cenário, brilho, página aberta com as patas segurando | `src/art/letterArt.ts` (cores em `PAL.letter`; onde ficam: `LETTERS` em `src/level/letters.ts`) |
 | Arte de cada ato (seleção de atos), com moldura gasta | `src/art/actArt.ts` (cores em `PAL.acts`) |
-| Cadeado (atos bloqueados e as telas trancadas do menu) | `src/art/uiArt.ts` |
+| Cadeado (atos bloqueados, cenas e conquistas ainda não liberadas) | `src/art/uiArt.ts` |
 | Ato 2: tiles da rua (postes, fios, árvore, outdoor, ponto de ônibus, semáforo, telhados), noite e luz das luminárias | `src/art/rooftopArt.ts` (cores em `PAL.act2`; mapa e legenda próprios em `src/level/rooftops.ts`) |
 | Ato 2: o pé do zumbi e os detritos (telha, jornal, galho, tampa) | `src/art/rooftopArt.ts` |
 | Transições de ato (gosma verde, teia e vento) | `src/art/transitionArt.ts` |

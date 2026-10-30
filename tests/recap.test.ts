@@ -2,15 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { RECAP, TILE } from '../src/config';
 import { HOUSE_MAP, RATS } from '../src/level/houseMap';
 import { isSolidChar } from '../src/level/legend';
-import { ACT1_RECAP } from '../src/level/recaps';
+import { ACT1_RECAP, ACT2_RECAP } from '../src/level/recaps';
+import { ENDING_START, END_ZONE, ROOFTOP_MAP, STREET_ROW, isRooftopSolid } from '../src/level/rooftops';
 import { LevelGrid } from '../src/physics/LevelGrid';
 import { SpiderMotor } from '../src/systems/SpiderMotor';
 import { Combat } from '../src/systems/combat';
 import { type RecapShot, RecapRun, goalReached } from '../src/systems/recap';
 
 /** Roda o resumo como a cena roda (passos fixos, aranha invencível, ratos com semente fixa). */
-function run(shots: RecapShot[], grid: LevelGrid, withRats: boolean) {
+function run(shots: RecapShot[], grid: LevelGrid, withRats: boolean, onStep?: (m: SpiderMotor) => void) {
   const motor = new SpiderMotor(grid, 0, 0);
+  // Como no ato 2: a borda do mapa é uma parede invisível.
+  if (grid.outside === 'edge') motor.bounds = { minX: 0, maxX: grid.widthPx };
   const combat = withRats ? new Combat(grid, RATS, RECAP.seed) : null;
   const rec = new RecapRun(shots, { motor, combat, stepSpider: (dt, input) => motor.update(dt, input) }, TILE);
   const reads: string[] = [];
@@ -18,6 +21,7 @@ function run(shots: RecapShot[], grid: LevelGrid, withRats: boolean) {
   for (let i = 0; i < 60 * 180 && !rec.director.done; i++) {
     const { events } = rec.advance(i % 7 === 3 ? 1 / 30 : 1 / 61);
     for (const e of events) if (e.type === 'read') reads.push(e.letter);
+    onStep?.(motor);
   }
   return { director: rec.director, reads, motor, combat };
 }
@@ -72,5 +76,40 @@ describe('resumo do ato 1 (THE HOUSE)', () => {
       expect(grid.isSolidTile(s.start.tx, s.start.ty), s.name).toBe(false);
       expect(grid.isSolidTile(s.start.tx, s.start.ty + 1), s.name).toBe(true);
     }
+  });
+});
+
+describe('resumo do ato 2 (ACROSS THE STREET)', () => {
+  const grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid, 'edge');
+
+  it('toda ação chega no objetivo com a física de verdade (e o vento dos planos)', () => {
+    const { director } = run(ACT2_RECAP, grid, false);
+    expect(director.done).toBe(true);
+    expect(director.timeouts).toEqual([]);
+  });
+
+  it('nunca encosta na rua (seria pisada) e termina no telhado da casa vizinha', () => {
+    let lowest = 0;
+    const { motor } = run(ACT2_RECAP, grid, false, (m) => (lowest = Math.max(lowest, m.body.y + m.body.half)));
+    expect(lowest).toBeLessThan(STREET_ROW * TILE - 8);
+    expect(motor.surface).toBe('floor');
+    expect(motor.body.x).toBeGreaterThan(182 * TILE);
+  });
+
+  it('cada plano começa num tile vazio em cima de chão', () => {
+    for (const s of ACT2_RECAP) {
+      expect(grid.isSolidTile(s.start.tx, s.start.ty), s.name).toBe(false);
+      expect(grid.isSolidTile(s.start.tx, s.start.ty + 1), s.name).toBe(true);
+    }
+  });
+});
+
+describe('chaminé assistida pelo SCENES', () => {
+  it('começa no beiral da casa vizinha, dentro da área do fim do ato', () => {
+    const grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid, 'edge');
+    expect(grid.isSolidTile(ENDING_START.tx, ENDING_START.ty)).toBe(false);
+    expect(grid.isSolidTile(ENDING_START.tx, ENDING_START.ty + 1)).toBe(true);
+    expect(ENDING_START.tx).toBeGreaterThanOrEqual(END_ZONE.x0);
+    expect(ENDING_START.tx).toBeLessThanOrEqual(END_ZONE.x1);
   });
 });

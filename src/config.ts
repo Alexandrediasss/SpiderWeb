@@ -444,7 +444,7 @@ export const RECAP = {
   /** Corte entre planos: escurece e clareia (s). */
   cutSec: 0.3,
   /** Cartão do começo (ACT N / nome da cena) antes do primeiro plano e o escurecer do fim (s). */
-  titleSec: 2.4,
+  titleSec: 3.4,
   endFadeSec: 1.2,
   /** Faixas pretas de cinema (px da tela de 480×270). */
   letterboxPx: 24,
@@ -452,4 +452,6 @@ export const RECAP = {
   letterGlimpse: 0.62,
   /** Entrar numa cena a partir do SCENES: escurecer (s). */
   enterFadeSec: 0.5,
+  /** Ato 2: força do vento nos planos sem rajada (só a chuva e o som; a aranha não sente). */
+  breeze: 0.15,
 };

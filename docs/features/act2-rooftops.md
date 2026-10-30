@@ -50,6 +50,7 @@ No fim, as faixas somem e o **controle volta com a aranha na calha**, onde ela e
 - **Pular:** `Enter`, `Esc`, `Espaço`, `A` ou `Start`, e também os botões de pular e de teia (quem aperta quer jogar). O aviso `ENTER / START skip` aparece no canto depois de `ACT2.skipHintAfterSec`.
 - **Ao pular:** a tela escurece em `ACT2.skipFadeSec` (0,25 s) e clareia com a câmera já na aranha (ela continua na calha). O escurecer esconde a câmera voltando lá de baixo, da horda.
 - **Duração:** curta de propósito. Com quase 10 s sem nenhum aviso parecia que o jogo tinha travado.
+- **SCENES:** começar a cutscene libera "THE STORM" no SCENES ([scenes.md](scenes.md)). Assistida de lá (`replay: 'act2-intro'`), no fim ou pulando volta para o SCENES.
 
 ## Bordas do mapa
 
@@ -78,6 +79,8 @@ No fim, as faixas somem e o **controle volta com a aranha na calha**, onde ela e
 2. O controle trava (faixas de cinema). Ela anda sozinha telhado acima até a chaminé, sobe pela lateral e para no meio do topo.
 3. Olha para dentro, dá um pulinho e **entra**: desce por trás da borda da chaminé e some, com uma nuvem de fuligem.
 4. A tela escurece e aparece o "END OF ACT 2" ([acts.md](acts.md)). Depois, a seleção de atos.
+5. **SCENES:** começar a cutscene libera "THE CHIMNEY", e o fim do ato libera o resumo "ACROSS THE STREET" ([scenes.md](scenes.md)). Assistida de lá (`replay: 'act2-ending'`), a aranha começa no beiral da casa vizinha (`ENDING_START`); dá para pular, e no fim volta para o SCENES, sem a tela de fim. O resumo do ato também roda nesta cena (`replay: 'act2-recap'`, modo `recap`).
+6. **Faixas de cinema:** são postas a cada quadro compensando o zoom da câmera (`placeBars` em `src/scenes/cinema.ts`); antes elas saíam da tela no zoom da chaminé.
 
 ## Pausa
 

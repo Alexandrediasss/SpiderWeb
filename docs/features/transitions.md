@@ -6,6 +6,7 @@ Três transições, todas em HTML/canvas por cima do jogo (o Phaser continua rod
 |---|---|
 | Menu principal → seleção de atos (LOAD GAME), SCENES ou ACHIEVEMENTS (e o BACK de volta) | **Teia que puxa**: um fio de teia sai da borda, engata no botão escolhido e puxa a tela para o lado, trazendo a outra no lugar (cerca de 0,7 s). |
 | Fim do ato → seleção de atos | A tela (já preta) clareia na seleção de atos. |
+| SCENES → assistir uma cena (e a volta) | Escurece em `RECAP.enterFadeSec` e a cena começa; no fim ela escurece e o SCENES clareia em `TRANSITION.fadeInSec`, com a mesma cena escolhida ([scenes.md](scenes.md)). |
 | Escolher o **ato 1** (ou NEW GAME) | **Gosma verde**: o líquido mutante espirra na "lente" e escorre do alto até cobrir tudo; o verde apaga para o preto e começa a cutscene de abertura. |
 | Escolher o **ato 2** | **Teia e vento**: riscos de vento cruzam a tela, fios de teia saem das bordas e tecem uma teia no meio enquanto o fundo escurece; uma rajada arranca a teia e começa o ato 2. |
 

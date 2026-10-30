@@ -1,6 +1,6 @@
 # Spider Web
 
-Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Pela casa há cartas do pai da família contando a invasão dos zumbis. Fluxo: menu principal (NEW GAME, LOAD GAME, SCENES ainda trancada e ACHIEVEMENTS com as conquistas de cada ato) → seleção de atos (estilo Telltale) → cutscene de abertura → jogo. O ato 1 termina no buraco do telhado do sótão: cutscene da rua (a horda de zumbis) → "END OF ACT 1" → seleção de atos. O ato 2 (liberado depois do 1) é a travessia da rua por cima dos postes, na ventania (como no Celeste), até a chaminé da casa vizinha; cair na rua é ser pisada por um zumbi. Cada ato tem a sua transição (gosma verde, teia e vento).
+Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Pela casa há cartas do pai da família contando a invasão dos zumbis. Fluxo: menu principal (NEW GAME, LOAD GAME, SCENES para rever as cutscenes já vistas e o resumo cinematográfico de cada ato terminado, e ACHIEVEMENTS com as conquistas de cada ato) → seleção de atos (estilo Telltale) → cutscene de abertura → jogo. O ato 1 termina no buraco do telhado do sótão: cutscene da rua (a horda de zumbis) → "END OF ACT 1" → seleção de atos. O ato 2 (liberado depois do 1) é a travessia da rua por cima dos postes, na ventania (como no Celeste), até a chaminé da casa vizinha; cair na rua é ser pisada por um zumbi. Cada ato tem a sua transição (gosma verde, teia e vento).
 Visão de design completa: [docs/GDD.md](docs/GDD.md).
 
 ## Stack e comandos
@@ -18,12 +18,12 @@ src/
   config.ts          todas as constantes ajustáveis (velocidades, gravidade, luz, tempestade, volumes)
   main.ts            cria o Phaser.Game
   physics/           LÓGICA PURA, sem Phaser: grade de tiles (com linha de visão), colisão AABB, superfícies
-  systems/           LÓGICA PURA, sem Phaser: SpiderMotor, teia, input, controle, tempestade, ratos, combate, cutscene, horda, buraco do telhado, cartas, progresso salvo, conquistas, vento, detritos, fios soltos, checkpoints
-  level/             mapa ASCII da casa + legenda + cômodos + decorações + ratos + texto da história (story.ts) + cartas (letters.ts) + atos (acts.ts) + conquistas (achievements.ts) + mapa do ato 2 (rooftops.ts)
-  art/               pixel art gerada por código (sem PNG): paleta, sprites (aranha, rato, corações, zumbis), tiles, cenário, rua, luz, cartas, arte dos atos, rua do ato 2, transições
+  systems/           LÓGICA PURA, sem Phaser: SpiderMotor, teia, input, controle, tempestade, ratos, combate, cutscene, horda, buraco do telhado, cartas, progresso salvo, conquistas, vento, detritos, fios soltos, checkpoints, resumo dos atos (diretor que pilota a aranha)
+  level/             mapa ASCII da casa + legenda + cômodos + decorações + ratos + texto da história (story.ts) + cartas (letters.ts) + atos (acts.ts) + conquistas (achievements.ts) + cenas do SCENES (scenes.ts) + roteiro dos resumos (recaps.ts) + mapa do ato 2 (rooftops.ts)
+  art/               pixel art gerada por código (sem PNG): paleta, sprites (aranha, rato, corações, zumbis), tiles, cenário, rua, luz, cartas, arte dos atos, miniaturas das cenas, rua do ato 2, transições
   audio/             som gerado por código (sem MP3): música, chuva, trovão, passos, guinchos/chiados, gemidos, papel, vento, choque, pisada; `sound.ts` cria tudo uma vez
   entities/          objetos Phaser que desenham a lógica (Spider; Atmosphere = luz/chuva/raios; CombatView = ratos/teias; LetterSprites = cartas; Weather = chuva/vento do ato 2; Hazards = fios e detritos)
-  scenes/            BootScene (texturas), GameScene (menu, atos, ato 1), IntroScene e StreetScene (cutscenes), RooftopScene (ato 2), Transitions (teia que puxa as telas do menu, escurecer e transição de ato), HUD e menus em HTML
+  scenes/            BootScene (texturas), GameScene (menu, atos, ato 1, resumo do ato 1), IntroScene e StreetScene (cutscenes), RooftopScene (ato 2 e o resumo dele), Transitions (teia que puxa as telas do menu, escurecer e transição de ato), cinema (faixas pretas e legenda), HUD e menus em HTML (SCENES, ACHIEVEMENTS, pausa...)
 tests/               testes Vitest da lógica pura
 docs/                GDD + uma spec por feature
 ```
@@ -51,8 +51,9 @@ docs/                GDD + uma spec por feature
 - Teia e balanço: [docs/features/web-swing.md](docs/features/web-swing.md)
 - Pixel art, paleta, tiles e como editar o mapa: [docs/art-and-level.md](docs/art-and-level.md)
 - Noite chuvosa (luz das luminárias, chuva, relâmpagos, trovões, passos): [docs/features/atmosphere.md](docs/features/atmosphere.md)
-- Menu principal (NEW GAME, LOAD GAME, SCENES trancada, ACHIEVEMENTS, confirmação do jogo novo): [docs/features/title-screen.md](docs/features/title-screen.md)
+- Menu principal (NEW GAME, LOAD GAME, SCENES, ACHIEVEMENTS, confirmação do jogo novo): [docs/features/title-screen.md](docs/features/title-screen.md)
 - Conquistas (lista, quando libera, aviso na tela, tela do menu, salvo separado do jogo): [docs/features/achievements.md](docs/features/achievements.md)
+- SCENES (rever cutscenes vistas no jogo, como no *Sonic Generations*; resumo cinematográfico de cada ato terminado, com a aranha pilotada por um roteiro e testado com a física de verdade): [docs/features/scenes.md](docs/features/scenes.md)
 - Cutscene de abertura (texto, despertar no líquido mutante, buraco de rato, como editar): [docs/features/intro.md](docs/features/intro.md)
 - Buraco no telhado e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos; é o fim do ato 1): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
 - Cartas do pai (onde ficam, aviso READ, página com as patas, texto): [docs/features/letters.md](docs/features/letters.md)
@@ -77,6 +78,7 @@ docs/                GDD + uma spec por feature
   - `__scene.openLetter('table')` (ou `'bed'`, `'attic'`) abre uma carta; `__scene.endAct()` mostra o fim do ato;
   - `__spider.placeAt(x, y)` teleporta a aranha (px do mundo; ela cai e gruda no que estiver embaixo);
   - `localStorage.removeItem('spiderweb.achievements')` zera as conquistas (ficam separadas do jogo salvo; o NEW GAME não apaga); `(await import('/src/scenes/AchievementToast.ts')).achieve({ type: 'actEnd', act: 'act1' })` libera uma na hora;
+  - `localStorage.removeItem('spiderweb.scenes')` tranca de novo as cenas do SCENES (também separadas do jogo salvo); `localStorage.setItem('spiderweb.scenes', '["act1-intro","act1-recap","act1-street","act2-intro","act2-recap","act2-ending"]')` libera todas. `__scene.scene.restart({ openScenes: 'act1-recap' })` abre o SCENES direto e `__scene.scene.restart({ recap: true })` roda o resumo do ato 1 (`__scene.recap.director` mostra o plano e a ação; mais em [docs/features/scenes.md](docs/features/scenes.md));
   - `localStorage.removeItem('spiderweb.progress')` zera o progresso salvo (para liberar o ato 2 sem jogar o 1: `localStorage.setItem('spiderweb.progress', '{"completed":["act1"]}')`);
   - no ato 2: `__scene2` é a `RooftopScene` (`__scene2.respawn()`, `__scene2.checkpoint = 2`, `__scene2.startEnding()`), `__wind.forceGust(-1)` faz vir uma rajada contra agora, e `__spider.placeAt(x, y)` funciona igual. Para abrir o ato 2 direto: `__scene.game.scene.stop('game'); __scene.game.scene.start('act2', { intro: true })`.
 - Galeria em http://localhost:5173/art.html: mostra a aranha, o rato (e o rato preso), os corações, as cartas (folhinha e páginas), a arte dos atos, quadros das transições, a rua do ato 2 inteira, o pé do zumbi e os detritos, os zumbis, as decorações, os cenários da rua, o cenário com e sem a luz da noite, o mapa de luz e o do relâmpago, e tem botões para ouvir a música e a horda.

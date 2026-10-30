@@ -1,6 +1,6 @@
 // Cutscene de abertura: texto na tela preta, a luz clareando a aranha desacordada no líquido mutante,
 // ela acorda, desvira e sai pelo buraco de rato. Depois o jogo começa com ela saindo do buraco na sala.
-// Spec: docs/features/intro.md
+// Assistida pelo SCENES (`replay`), no fim volta para o menu. Spec: docs/features/intro.md
 import Phaser from 'phaser';
 import { INTRO } from '../config';
 import { STAGE } from '../art/introArt';
@@ -10,6 +10,7 @@ import { getSound } from '../audio/sound';
 import { INTRO_PAGES } from '../level/story';
 import { Timeline, textPageAt, textPageSec } from '../systems/cutscene';
 import { pollPad } from './PlayerInput';
+import { markSceneSeen } from './sceneStore';
 import { fadeTo } from './Transitions';
 
 interface Bit {
@@ -40,6 +41,8 @@ export class IntroScene extends Phaser.Scene {
   private bits: Bit[] = [];
   private dripLeft = 0;
   private flipped = false;
+  /** Assistindo pelo SCENES: no fim (ou pulando) volta para o SCENES em vez de começar o jogo. */
+  private replay = false;
   private readonly root = document.getElementById('intro');
   private readonly text = document.getElementById('intro-text');
   private readonly skipHint = document.getElementById('intro-skip');
@@ -48,7 +51,10 @@ export class IntroScene extends Phaser.Scene {
     super('intro');
   }
 
-  create(): void {
+  create(data: { replay?: boolean } = {}): void {
+    this.replay = !!data.replay;
+    // Vista no jogo: libera no SCENES (mesmo se pular).
+    if (!this.replay) markSceneSeen('act1-intro');
     this.elapsed = 0;
     this.stepIndex = -1;
     this.done = false;
@@ -257,6 +263,12 @@ export class IntroScene extends Phaser.Scene {
   }
 
   private startGame(): void {
+    if (this.replay) {
+      // A câmera já escureceu: o preto do HTML segura a tela enquanto o menu volta.
+      void fadeTo(1, 0);
+      this.scene.start('game', { openScenes: 'act1-intro' });
+      return;
+    }
     this.scene.start('game', { skipTitle: true, emerge: true });
   }
 }

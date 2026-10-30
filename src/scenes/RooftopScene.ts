@@ -1,8 +1,9 @@
 // Ato 2, ROOFTOPS: a travessia da rua por cima dos postes, na chuva e na ventania.
 // Cutscene de abertura, jogo, checkpoints, morte pisada pelo zumbi, fim entrando pela chaminé e pausa.
-// Spec: docs/features/act2-rooftops.md (ventania e obstáculos: docs/features/wind.md)
+// Pelo SCENES (`replay`): a abertura, a chaminé ou o resumo do ato, e depois volta para o menu.
+// Spec: docs/features/act2-rooftops.md (ventania e obstáculos: docs/features/wind.md; SCENES: docs/features/scenes.md)
 import Phaser from 'phaser';
-import { ACT2, DEBRIS, GAMEPAD, LIGHT, SPIDER, TILE, TITLE, VIEW, WEB, WIRE } from '../config';
+import { ACT2, DEBRIS, GAMEPAD, LIGHT, RECAP, SPIDER, TILE, TITLE, TRANSITION, VIEW, WEB, WIRE } from '../config';
 import { buildBeam, coneFactor } from '../art/lighting';
 import { PAL } from '../art/palette';
 import { DEBRIS_FRAME, type RooftopArt, bakeRooftops, buildDebrisSheet, buildZombieFoot } from '../art/rooftopArt';
@@ -15,16 +16,19 @@ import { Hazards } from '../entities/Hazards';
 import { Spider } from '../entities/Spider';
 import { Weather } from '../entities/Weather';
 import { ACTS } from '../level/acts';
+import { ACT2_RECAP } from '../level/recaps';
 import {
   CHECKPOINTS,
   CHIMNEY,
   END_ZONE,
+  ENDING_START,
   LOOSE_WIRES,
   ROOFTOP_MAP,
   STREET_ROW,
   WIRE_SPANS,
   isRooftopSolid,
 } from '../level/rooftops';
+import { SCENES, type SceneId } from '../level/scenes';
 import { LevelGrid } from '../physics/LevelGrid';
 import { inZone, nextCheckpoint, spawnPoint, touchedStreet } from '../systems/checkpoints';
 import { DEBRIS_KINDS, DebrisField } from '../systems/debris';
@@ -32,6 +36,7 @@ import { Horde, walkFrame } from '../systems/horde';
 import { type SpiderInput, emptyInput } from '../systems/input';
 import { LooseWire } from '../systems/looseWire';
 import { recordActEnd } from '../systems/progress';
+import { RecapRun } from '../systems/recap';
 import { Storm } from '../systems/storm';
 import { raycastWeb } from '../systems/webRope';
 import { Wind } from '../systems/wind';
@@ -41,20 +46,30 @@ import { Hud } from './Hud';
 import { achieve } from './AchievementToast';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
-import { fadeTo } from './Transitions';
+import { placeBars, showCaption } from './cinema';
+import { fadeTo, hideChapter, showChapter } from './Transitions';
 import { loadProgress, saveProgress } from './progressStore';
+import { markSceneSeen } from './sceneStore';
 
 /**
  * intro: cutscene de abertura | play: jogando | paused: menu de pausa | dying: caiu na rua (o pé pisa) |
  * ending: cutscene da chaminé | actEnd: tela de fim do ato.
  */
-/** skipping: pulou a cutscene de abertura e a tela está escurecendo para a aranha ir para o braço do poste. */
-type Mode = 'intro' | 'skipping' | 'play' | 'paused' | 'dying' | 'ending' | 'actEnd';
+/**
+ * skipping: pulou a cutscene de abertura e a tela está escurecendo para a aranha ir para o braço do poste
+ * (ou, assistindo pelo SCENES, para voltar ao menu) | recap: o resumo do ato (pelo SCENES).
+ */
+type Mode = 'intro' | 'skipping' | 'play' | 'paused' | 'dying' | 'ending' | 'actEnd' | 'recap';
 
 interface Act2Data {
   /** true = começa pela cutscene de abertura (vindo da seleção de atos). */
   intro?: boolean;
+  /** Assistindo pelo SCENES: qual cena (abertura, resumo ou chaminé); no fim volta para o SCENES. */
+  replay?: SceneId;
 }
+
+/** Altura das faixas de cinema nas cutscenes do ato (px da tela). */
+const BARS_PX = 22;
 
 const ACT = ACTS[1];
 const T2 = { level: 'act2Level', sky: 'act2Sky', foot: 'zombieFoot', debris: 'debris', beam: (i: number) => `act2Beam${i}` } as const;
@@ -103,6 +118,14 @@ export class RooftopScene extends Phaser.Scene {
   private chimneyFront!: Phaser.GameObjects.Image;
   private soot!: Phaser.GameObjects.Graphics;
   private bars!: Phaser.GameObjects.Rectangle[];
+  /** Altura atual das faixas (px da tela; animada): posta a cada quadro, compensando o zoom. */
+  private barH = { h: 0 };
+  /** Cena do SCENES sendo assistida (null = jogando). */
+  private replay: SceneId | null = null;
+  /** Resumo do ato (modo 'recap'): quem pilota a aranha, o cartão do começo e o corte do plano. */
+  private recap: RecapRun | null = null;
+  private recapWait = 0;
+  private recapCut = false;
   private debugGfx!: Phaser.GameObjects.Graphics;
   private hud!: Hud;
   private pauseMenu!: PauseMenu;
@@ -119,7 +142,6 @@ export class RooftopScene extends Phaser.Scene {
   private stepIndex = -1;
   private sootPuffs: { x: number; y: number; vy: number; life: number }[] = [];
   private debug = false;
-  private readonly chapter = document.getElementById('chapter');
   private readonly toast = document.getElementById('toast');
   private readonly skipHint = document.getElementById('skip-hint');
 
@@ -135,6 +157,11 @@ export class RooftopScene extends Phaser.Scene {
     this.tl = null;
     this.hordeSprites = [];
     this.sootPuffs = [];
+    this.barH = { h: 0 };
+    this.replay = data.replay ?? null;
+    this.recap = null;
+    this.recapWait = 0;
+    this.recapCut = false;
     // Fora do mapa continua a borda: acima do telhado é ar (não dá para subir ao céu pela borda do mapa).
     this.grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid, 'edge');
     this.art = ensureTextures(this, this.grid);
@@ -157,7 +184,7 @@ export class RooftopScene extends Phaser.Scene {
     const sound = this.sound_;
     const start = spawnPoint(CHECKPOINTS[0], TILE, SPIDER.half);
     this.spider = new Spider(this, this.grid, start.x, start.y, () => {
-      if (this.mode === 'play' || this.mode === 'ending') sound.footsteps.step(this.spider.motor.running);
+      if (this.mode === 'play' || this.mode === 'ending' || this.mode === 'recap') sound.footsteps.step(this.spider.motor.running);
     });
     this.spider.motor.surface = 'floor';
     this.spider.motor.bounds = { minX: 0, maxX: this.grid.widthPx };
@@ -176,8 +203,8 @@ export class RooftopScene extends Phaser.Scene {
       .setVisible(false);
     this.soot = this.add.graphics().setDepth(DEPTH.soot);
     this.weather = new Weather(this, seed + 4);
-    const bar = (y: number) => this.add.rectangle(0, y, VIEW.width, 0, 0x000000).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH.bars);
-    this.bars = [bar(0), bar(VIEW.height)];
+    const bar = () => this.add.rectangle(0, 0, VIEW.width, 0, 0x000000).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH.bars);
+    this.bars = [bar(), bar()];
     this.debugGfx = this.add.graphics().setDepth(21);
 
     this.hud = new Hud();
@@ -207,15 +234,15 @@ export class RooftopScene extends Phaser.Scene {
       this.hud.showDebug(this.debug);
       if (!this.debug) this.debugGfx.clear();
     });
-    for (const key of ['keydown-ENTER', 'keydown-SPACE']) kb?.on(key, () => this.skipIntro());
-    kb?.on('keydown-ESC', () => this.skipIntro());
+    for (const key of ['keydown-ENTER', 'keydown-SPACE', 'keydown-ESC']) kb?.on(key, () => this.skip());
 
     this.events.once('shutdown', () => {
       this.pauseMenu.destroy();
       this.actEnd.destroy();
       this.hud.showHelp(false);
       this.hud.showDebug(false);
-      this.chapter?.classList.remove('show');
+      hideChapter();
+      showCaption(null);
       this.showSkipHint(false);
       this.anims.resumeAll();
       sound.storm.setOutside(false);
@@ -223,7 +250,9 @@ export class RooftopScene extends Phaser.Scene {
       sound.zombies.setDistance(1, 0.5);
     });
 
-    if (data.intro) this.startIntro();
+    if (this.replay === 'act2-recap') this.startRecap();
+    else if (this.replay === 'act2-ending') this.replayEnding();
+    else if (data.intro || this.replay === 'act2-intro') this.startIntro();
     else this.startPlay(true);
 
     if (import.meta.env.DEV) Object.assign(window, { __scene2: this, __wind: this.wind, __spider: this.spider.motor });
@@ -284,6 +313,8 @@ export class RooftopScene extends Phaser.Scene {
   }
 
   private startIntro(): void {
+    // Vista no jogo: libera no SCENES (mesmo se pular).
+    if (!this.replay) markSceneSeen('act2-intro');
     this.mode = 'intro';
     this.elapsed = 0;
     this.stepIndex = -1;
@@ -311,14 +342,121 @@ export class RooftopScene extends Phaser.Scene {
    */
   private skipIntro(): void {
     if (this.mode !== 'intro') return;
+    if (this.replay) {
+      this.exitReplay(ACT2.skipFadeSec);
+      return;
+    }
     this.mode = 'skipping';
-    this.chapter?.classList.remove('show');
+    hideChapter();
     this.showSkipHint(false);
     const cam = this.cameras.main;
     cam.fadeOut(ACT2.skipFadeSec * 1000, 0, 0, 0);
     cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       if (this.mode === 'skipping') this.startPlay(true);
     });
+  }
+
+  /** Enter/Espaço/Esc: pula a abertura; assistindo pelo SCENES, pula também a chaminé e o resumo. */
+  private skip(): void {
+    if (this.mode === 'intro') this.skipIntro();
+    else if (this.replay && (this.mode === 'ending' || this.mode === 'recap')) this.exitReplay(ACT2.skipFadeSec);
+  }
+
+  /** Fim (ou pulo) de uma cena assistida pelo SCENES: escurece e volta para o menu. */
+  private exitReplay(fadeSec: number): void {
+    if (this.mode === 'skipping') return;
+    this.mode = 'skipping';
+    hideChapter();
+    showCaption(null);
+    this.showSkipHint(false);
+    if (this.recap) this.sound_.music.stop(fadeSec);
+    const cam = this.cameras.main;
+    cam.fadeOut(fadeSec * 1000, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.leaveReplay());
+  }
+
+  /** Com a tela preta: volta para o SCENES com esta cena escolhida. */
+  private leaveReplay(): void {
+    void fadeTo(1, 0);
+    this.scene.start('game', { openScenes: this.replay ?? undefined });
+  }
+
+  /** A chaminé pelo SCENES: a aranha já no telhado da casa vizinha, e a cutscene do fim. */
+  private replayEnding(): void {
+    const m = this.spider.motor;
+    m.placeAt((ENDING_START.tx + 0.5) * TILE, (ENDING_START.ty + 1) * TILE - SPIDER.half);
+    this.startPlay(true);
+    this.startEnding();
+    this.time.delayedCall(ACT2.skipHintAfterSec * 1000, () => {
+      if (this.mode === 'ending') this.showSkipHint(true);
+    });
+  }
+
+  // ---------- resumo do ato (SCENES) ----------
+
+  /**
+   * O resumo: cartão "ACT 2 / ACROSS THE STREET" no preto e depois os planos do roteiro (src/level/recaps.ts),
+   * com faixas de cinema, legenda, a música do menu e o vento de cada plano. A aranha anda sozinha.
+   */
+  private startRecap(): void {
+    this.mode = 'recap';
+    this.reticle.setVisible(false);
+    this.hud.showHelp(false);
+    this.sound_.music.start();
+    const motor = this.spider.motor;
+    this.recap = new RecapRun(ACT2_RECAP, { motor, combat: null, stepSpider: (dt, input) => this.spider.update(dt, input) }, TILE);
+    this.setBars(true, 0, RECAP.letterboxPx);
+    // Preto da câmera por baixo do cartão; o preto do HTML (de quem abriu a cena) sai.
+    this.cameras.main.fadeOut(1, 0, 0, 0);
+    void fadeTo(0, 0);
+    this.recapWait = RECAP.titleSec;
+    showChapter(`ACT ${ACT.number}`, SCENES.find((s) => s.id === 'act2-recap')?.name ?? ACT.name);
+    this.time.delayedCall(ACT2.skipHintAfterSec * 1000, () => {
+      if (this.mode === 'recap') this.showSkipHint(true);
+    });
+  }
+
+  /** Um quadro do resumo: cartão, diretor em passos fixos, cortes e legenda. */
+  private updateRecap(dt: number): void {
+    const rec = this.recap;
+    if (!rec) return;
+    if (this.recapWait > 0) {
+      this.recapWait -= dt;
+      return;
+    }
+    const out = rec.advance(dt);
+    if (out.webShots > 0) this.sound_.sfx.webShot('rope');
+    for (const e of out.events) {
+      if (e.type === 'shot') this.cutTo(e.index);
+      else if (e.type === 'end') this.leaveReplay();
+    }
+    // Fim do plano: escurece para o corte (no último, mais devagar, e a música vai junto).
+    const left = rec.director.holdLeft;
+    const last = rec.director.shot === ACT2_RECAP.length - 1;
+    const fade = last ? RECAP.endFadeSec : RECAP.cutSec;
+    if (left !== null && left <= fade && !this.recapCut) {
+      this.recapCut = true;
+      showCaption(null);
+      this.cameras.main.fadeOut(fade * 1000, 0, 0, 0);
+      if (last) this.sound_.music.stop(fade);
+    }
+  }
+
+  /** Corte para o plano `index`: a aranha já está no começo dele; câmera, vento, legenda e clareia. */
+  private cutTo(index: number): void {
+    const shot = ACT2_RECAP[index];
+    const cam = this.cameras.main;
+    const b = this.spider.motor.body;
+    const look = shot.look ?? { x: 0, y: ACT2.cameraLookDown };
+    this.wind.script(shot.wind?.strength ?? RECAP.breeze, shot.wind?.dir ?? -1);
+    this.debris.clear();
+    cam.setZoom(shot.zoom);
+    cam.startFollow(b, true, VIEW.cameraLerp, VIEW.cameraLerp);
+    cam.setFollowOffset(-look.x, -look.y);
+    cam.centerOn(b.x + look.x, b.y + look.y);
+    cam.fadeIn(RECAP.cutSec * 1000, 0, 0, 0);
+    this.recapCut = false;
+    showCaption(shot.caption ?? null);
   }
 
   private showSkipHint(on: boolean): void {
@@ -394,6 +532,7 @@ export class RooftopScene extends Phaser.Scene {
   /** Chegou no telhado da casa vizinha: cutscene da chaminé (público para o console). */
   startEnding(): void {
     if (this.mode === 'ending' || this.mode === 'actEnd') return;
+    if (!this.replay) markSceneSeen('act2-ending');
     this.mode = 'ending';
     this.elapsed = 0;
     this.stepIndex = -1;
@@ -415,6 +554,8 @@ export class RooftopScene extends Phaser.Scene {
     this.mode = 'actEnd';
     saveProgress(recordActEnd(loadProgress(), ACT.id, []));
     achieve({ type: 'actEnd', act: ACT.id });
+    // Terminar o ato libera o resumo dele no SCENES.
+    markSceneSeen('act2-recap');
     this.actEnd.show(ACT, 0, ACTS[ACTS.indexOf(ACT) + 1]);
   }
 
@@ -441,6 +582,7 @@ export class RooftopScene extends Phaser.Scene {
     }
     // Na cutscene, quem aperta pular ou teia quer jogar: pula (com o escurecer rápido).
     if (this.mode === 'intro' && (pad?.confirmPressed || pad?.pausePressed || input.jumpPressed || input.webPressed)) this.skipIntro();
+    else if (pad?.confirmPressed || pad?.pausePressed || pad?.trapPressed) this.skip();
     if (this.mode === 'play' && pad?.pausePressed) {
       this.togglePause();
       return;
@@ -458,6 +600,9 @@ export class RooftopScene extends Phaser.Scene {
       case 'ending':
         this.runTimeline(dt);
         break;
+      case 'recap':
+        this.updateRecap(dt);
+        break;
       case 'play': {
         if (this.graceLeft > 0) {
           this.graceLeft -= dt;
@@ -470,6 +615,7 @@ export class RooftopScene extends Phaser.Scene {
 
     const b = m.body;
     this.spider.setLight(this.lightAt(b.x, b.y), LIGHT.spiderMinLight);
+    placeBars(this.cameras.main, this.bars, this.barH.h);
     if (this.debug) this.drawDebug();
   }
 
@@ -478,7 +624,9 @@ export class RooftopScene extends Phaser.Scene {
     const sound = this.sound_;
     for (const thunder of this.storm.update(dt)) sound.storm.thunder(thunder);
     this.wind.update(dt);
-    const wind = { phase: this.wind.phase, dir: this.wind.dir, strength: this.wind.strength };
+    // No resumo a rajada é roteirizada (a fase não muda): forte, conta como rajada para os detritos.
+    const gust = this.mode === 'recap' && this.wind.strength > 0.6;
+    const wind = { phase: gust ? ('gust' as const) : this.wind.phase, dir: this.wind.dir, strength: this.wind.strength };
     sound.wind.setStrength(wind.strength);
 
     const cam = this.cameras.main;
@@ -577,7 +725,7 @@ export class RooftopScene extends Phaser.Scene {
     switch (name) {
       // Abertura.
       case 'look':
-        this.showChapter();
+        showChapter(`ACT ${ACT.number}`, ACT.name);
         break;
       case 'wind':
         this.wind.script(0.32, 1);
@@ -679,12 +827,15 @@ export class RooftopScene extends Phaser.Scene {
   private finishTimeline(): void {
     if (this.mode === 'intro') {
       // Fim da abertura: o controle volta com a aranha na calha; a câmera desliza até ela.
-      this.chapter?.classList.remove('show');
-      this.startPlay();
+      hideChapter();
+      if (this.replay) this.exitReplay(TRANSITION.fadeOutSec);
+      else this.startPlay();
     } else if (this.mode === 'dying') {
       this.respawn();
     } else if (this.mode === 'ending') {
-      this.endAct();
+      // Pelo SCENES a chaminé termina no preto e volta para o menu, sem a tela de fim do ato.
+      if (this.replay) this.leaveReplay();
+      else this.endAct();
     }
   }
 
@@ -766,28 +917,15 @@ export class RooftopScene extends Phaser.Scene {
     this.reticle.setTint(hit ? 0xffffff : 0x777777).setAlpha(hit ? 1 : 0.7);
   }
 
-  /** Faixas pretas de cinema (entram e saem deslizando). */
-  private setBars(on: boolean, durationMs = 500): void {
-    const h = on ? 22 : 0;
-    const [top, bottom] = this.bars;
-    this.tweens.add({ targets: top, height: h, duration: durationMs });
-    this.tweens.add({ targets: bottom, y: VIEW.height - h, height: h, duration: durationMs });
-    if (durationMs === 0) {
-      top.setSize(VIEW.width, h);
-      bottom.setPosition(0, VIEW.height - h).setSize(VIEW.width, h);
-    }
-  }
-
-  private showChapter(): void {
-    const el = this.chapter;
-    if (!el) return;
-    const act = el.querySelector('.chapter-act');
-    const name = el.querySelector('.chapter-name');
-    if (act) act.textContent = `ACT ${ACT.number}`;
-    if (name) name.textContent = ACT.name;
-    el.classList.remove('show');
-    void el.offsetWidth;
-    el.classList.add('show');
+  /**
+   * Faixas pretas de cinema (entram e saem deslizando). A altura é animada aqui e as faixas são postas a
+   * cada quadro em `update`, compensando o zoom (sem isso elas saíam da tela no zoom da chaminé).
+   */
+  private setBars(on: boolean, durationMs = 500, px = BARS_PX): void {
+    const h = on ? px : 0;
+    this.tweens.killTweensOf(this.barH);
+    if (durationMs === 0) this.barH.h = h;
+    else this.tweens.add({ targets: this.barH, h, duration: durationMs });
   }
 
   private showToast(text: string): void {

@@ -42,7 +42,8 @@ Depois, a cena do jogo começa com a aranha **saindo do buraco de rato** da sala
    - tem 160×90 px, mostrado com zoom `INTRO.zoom` (3×) para a aranha ficar grande;
    - a escuridão é uma imagem preta com alfa = 1 − luz, em faixas com pontilhado;
    - há duas versões da escuridão: só com a luz do cano, e com a luz do buraco também. Para o buraco "acender", a de cima some aos poucos.
-5. **Texto:** fica em `src/level/story.ts` (em inglês, como o resto do jogo; o original em português está no comentário do arquivo). Cada item é uma "página", e `\n` quebra a linha. A duração se ajusta sozinha ao tamanho do texto.
+5. **SCENES:** começar a cutscene no jogo libera "IN THE BEGINNING" no SCENES (mesmo pulando). Assistida de lá (`replay`), no fim ou pulando ela volta para o SCENES em vez de começar o jogo ([scenes.md](scenes.md)).
+6. **Texto:** fica em `src/level/story.ts` (em inglês, como o resto do jogo; o original em português está no comentário do arquivo). Cada item é uma "página", e `\n` quebra a linha. A duração se ajusta sozinha ao tamanho do texto.
 
 ## Como mexer
 

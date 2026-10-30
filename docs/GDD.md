@@ -25,7 +25,7 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 
 ## Fluxo
 
-1. **Tela inicial:** "SPIDER WEB" e o menu principal por cima do sótão com chuva: **NEW GAME** (jogo novo, pergunta antes de apagar o salvo), **LOAD GAME** (abre a seleção de atos no ato atual), **SCENES** (por enquanto trancada) e **ACHIEVEMENTS** (as conquistas de cada ato; spec: [features/achievements.md](features/achievements.md)). A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
+1. **Tela inicial:** "SPIDER WEB" e o menu principal por cima do sótão com chuva: **NEW GAME** (jogo novo, pergunta antes de apagar o salvo), **LOAD GAME** (abre a seleção de atos no ato atual), **SCENES** (rever as cutscenes já vistas e o resumo de cada ato terminado, como no museu do *Sonic Generations*; spec: [features/scenes.md](features/scenes.md)) e **ACHIEVEMENTS** (as conquistas de cada ato; spec: [features/achievements.md](features/achievements.md)). A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
 2. **Seleção de atos:** estilo Telltale: o nome do ato entre setas (`LB`/`RB`), a arte do ato numa moldura gasta e `SELECT`/`BACK`. O ato 2 aparece bloqueado (COMING SOON). Spec: [features/acts.md](features/acts.md)
 3. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
 4. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
@@ -140,9 +140,9 @@ Segue a aranha com suavização, presa aos limites do mapa. Na tela inicial, mos
 - [x] Atos: seleção estilo Telltale, fim do ato, progresso salvo
 - [x] Ato 2: a travessia pelos postes, com ventania, detritos, fios com faísca, checkpoints e a pisada do zumbi
 - [x] Transições: escurecer entre as telas do menu, gosma verde (ato 1), teia e vento (ato 2)
-- [x] Menu principal: NEW GAME, LOAD GAME, SCENES (trancada) e ACHIEVEMENTS
-- [ ] SCENES: rever as cenas, como no museu do *Sonic Generations*
-- [x] ACHIEVEMENTS: três conquistas no ato 1 (ler uma carta, ler a carta de amor, sair pelo telhado) e uma no ato 2 (terminar a travessia), com aviso na tela
+- [x] Menu principal: NEW GAME, LOAD GAME, SCENES e ACHIEVEMENTS
+- [x] SCENES: rever as cenas, como no museu do *Sonic Generations*, mais um resumo cinematográfico de cada ato terminado
+- [x] ACHIEVEMENTS: quatro conquistas no ato 1 (ler uma carta, ler a carta de amor, sair pelo telhado, matar todos os ratos) e duas no ato 2 (terminar a travessia, ser pisado por um doente), com aviso na tela
 - [ ] Ato 3: dentro da casa vizinha (a aranha entrou pela chaminé)
 - [ ] Sair de verdade para o telhado ou para a rua (uma fase do lado de fora?)
 - [x] Menu de pausa (Resume, Restart, Main Menu)

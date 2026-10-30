@@ -2,7 +2,7 @@
 // pelo mapa, plano a plano, com entradas roteirizadas (andar, pular, teia, atirar, ler). Cada ação termina
 // ao chegar no objetivo; o tempo máximo é só para nunca travar (os testes exigem que nenhuma estoure).
 // Lógica pura. Spec: docs/features/scenes.md
-import { RECAP } from '../config';
+import { RECAP, WIND } from '../config';
 import type { AttachedSurface, Surface, Vec2 } from '../physics/surfaces';
 import type { SpiderMotor } from './SpiderMotor';
 import type { Combat, CombatEvent, ShotKind } from './combat';
@@ -45,6 +45,13 @@ export interface RecapShot {
   caption?: string;
   /** Zoom da câmera neste plano. */
   zoom: number;
+  /** Para onde a câmera olha além da aranha (px; +y = mais embaixo, para mostrar a horda). */
+  look?: Vec2;
+  /**
+   * Vento do plano (ato 2): força 0..1 e direção, constante. A aranha sente (como no jogo) e a cena mostra
+   * a chuva, o som e os detritos da rajada.
+   */
+  wind?: { strength: number; dir: -1 | 1 };
   actions: RecapAction[];
   /** Segura o plano depois da última ação (s); o corte para o próximo acontece no fim. */
   holdSec: number;
@@ -265,7 +272,10 @@ export class RecapRun {
     }
     out.events.push(...events);
     if (input.webPressed) out.webShots++;
+    const wind = this.director.shots[this.director.shot]?.wind;
+    motor.wind = wind ? wind.dir * wind.strength * WIND.gustAccel : 0;
     this.a.stepSpider(dt, input);
+    motor.wind = 0;
     if (!combat) return;
     // Invencível: os ratos dão o bote, mas a mordida não tira vida nem empurra.
     combat.health.invulnLeft = Number.POSITIVE_INFINITY;

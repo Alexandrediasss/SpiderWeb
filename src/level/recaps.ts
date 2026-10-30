@@ -98,3 +98,93 @@ export const ACT1_RECAP: RecapShot[] = [
     holdSec: 1.4,
   },
 ];
+
+/** Ato 2, a rua: da calha para os postes, a ventania, os fios soltos e o telhado da casa vizinha. */
+export const ACT2_RECAP: RecapShot[] = [
+  {
+    // Desce o telhado até a calha, olha a horda, balança no braço do poste 1 e sobe pelo poste.
+    name: 'gutter',
+    start: { tx: 12, ty: 16, facing: 1 },
+    caption: 'THE STREET BELOW WAS FULL OF THE SICK.',
+    zoom: 1,
+    look: { x: 70, y: 85 },
+    actions: [
+      { type: 'wait', sec: 0.5 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 15 * T + 4 }, maxSec: 4 },
+      { type: 'wait', sec: 1 },
+      { type: 'web', anchor: { x: 408, y: 287 }, move: { x: 1, y: 0 }, until: { minX: 25 * T }, maxSec: 4 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { attached: true }, maxSec: 3 },
+      { type: 'move', move: { x: 1, y: -1 }, until: { maxY: 300 }, maxSec: 4 },
+    ],
+    holdSec: 0.6,
+  },
+  {
+    // Da cruzeta do poste de madeira, pula, laça o galho da árvore e cai em cima dele.
+    name: 'tree',
+    start: { tx: 41, ty: 12, facing: 1 },
+    caption: 'IT SWUNG FROM POLE TO POLE.',
+    zoom: 1.3,
+    actions: [
+      { type: 'wait', sec: 0.5 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 43 * T }, maxSec: 2 },
+      { type: 'jump', move: { x: 1, y: 0 }, until: { maxY: 190 }, maxSec: 0.6 },
+      { type: 'web', anchor: { x: 846, y: 289 }, move: { x: 1, y: 0 }, until: { minX: 50 * T }, maxSec: 4 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { attached: true }, maxSec: 3 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 54 * T }, maxSec: 3 },
+    ],
+    holdSec: 0.8,
+  },
+  {
+    // No teto do ponto de ônibus, com a horda passando embaixo.
+    name: 'bus',
+    start: { tx: 67, ty: 26, facing: 1 },
+    caption: 'THE SICK NEVER LOOKED UP.',
+    zoom: 1.4,
+    look: { x: 0, y: 70 },
+    actions: [
+      { type: 'wait', sec: 0.6 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 74 * T }, maxSec: 4 },
+    ],
+    holdSec: 1,
+  },
+  {
+    // Na passarela do outdoor, andando contra a rajada (detritos voando).
+    name: 'wind',
+    start: { tx: 88, ty: 16, facing: 1 },
+    caption: 'THE WIND TRIED TO THROW IT DOWN.',
+    zoom: 1.4,
+    look: { x: 30, y: 0 },
+    wind: { strength: 0.9, dir: -1 },
+    actions: [{ type: 'move', move: { x: 1, y: 0 }, until: { minX: 93 * T }, maxSec: 6 }],
+    holdSec: 0.6,
+  },
+  {
+    // Da ponta da passarela, balança embaixo da cruzeta dos fios soltos e sobe pelo poste.
+    name: 'wires',
+    start: { tx: 100, ty: 16, facing: 1 },
+    caption: 'BROKEN WIRES SPARKED IN THE DARK.',
+    zoom: 1.2,
+    wind: { strength: 0.4, dir: -1 },
+    actions: [
+      { type: 'wait', sec: 0.4 },
+      { type: 'web', anchor: { x: 1760, y: 209 }, move: { x: 1, y: 0 }, until: { minX: 109 * T }, maxSec: 4 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { attached: true }, maxSec: 3 },
+      { type: 'move', move: { x: 1, y: -1 }, until: { maxY: 280 }, maxSec: 4 },
+    ],
+    holdSec: 0.6,
+  },
+  {
+    // Do telhado da garagem, laça o beiral da casa vizinha e sobe o telhado até perto da chaminé.
+    name: 'roof',
+    start: { tx: 171, ty: 23, facing: 1 },
+    caption: 'UNTIL, AT LAST, THE ROOF NEXT DOOR.',
+    zoom: 1.2,
+    actions: [
+      { type: 'wait', sec: 0.5 },
+      { type: 'web', anchor: { x: 182 * T + 8, y: 23 * T - 1 }, move: { x: 1, y: -1 }, until: { attached: true }, maxSec: 5 },
+      { type: 'move', move: { x: 1, y: -1 }, until: { attached: 'floor', maxY: 22 * T }, maxSec: 4 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 186 * T }, maxSec: 4 },
+    ],
+    holdSec: 1.6,
+  },
+];

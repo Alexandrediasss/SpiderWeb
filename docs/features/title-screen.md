@@ -1,6 +1,6 @@
 # Spec: tela inicial (menu principal)
 
-Código: `src/scenes/TitleScreen.ts` (o menu e a confirmação do NEW GAME, em HTML), `src/scenes/LockedScreen.ts` (a tela de SCENES, por enquanto trancada), `src/scenes/AchievementsScreen.ts` (as conquistas, [achievements.md](achievements.md)), `src/systems/menu.ts` (andar no menu pulando o que está apagado, lógica pura), os elementos `#title` e `#locked` em `index.html` e os modos `title` e `extras` da `GameScene`.
+Código: `src/scenes/TitleScreen.ts` (o menu e a confirmação do NEW GAME, em HTML), `src/scenes/ScenesScreen.ts` (rever as cenas, [scenes.md](scenes.md)), `src/scenes/AchievementsScreen.ts` (as conquistas, [achievements.md](achievements.md)), `src/systems/menu.ts` (andar no menu pulando o que está apagado, lógica pura), os elementos `#title`, `#scenes` e `#achievements` em `index.html` e os modos `title` e `extras` da `GameScene`.
 
 Testes: `tests/menu.test.ts` e `tests/progress.test.ts`.
 
@@ -17,7 +17,7 @@ Testes: `tests/menu.test.ts` e `tests/progress.test.ts`.
 |---|---|---|
 | Escolher | `↑`/`↓` ou `W`/`S`, ou passar o mouse | D-pad ou analógico ↑/↓ |
 | Confirmar | `Enter`, `Espaço` ou clique | `A` ou `Start` |
-| Voltar (na confirmação e nas telas trancadas) | `Esc` ou `Backspace` | `B` |
+| Voltar (na confirmação, no SCENES e no ACHIEVEMENTS) | `Esc` ou `Backspace` | `B` |
 
 O item selecionado fica preenchido, com a setinha piscando. Item apagado (LOAD GAME sem jogo salvo) é pulado.
 
@@ -28,7 +28,7 @@ O item selecionado fica preenchido, com a setinha piscando. Item apagado (LOAD G
    - Ao confirmar: o progresso salvo é apagado e trocado por um jogo novo, a música some, a **gosma verde** cobre a tela ([transitions.md](transitions.md)) e começa a cutscene de abertura do ato 1 ([intro.md](intro.md)).
 2. **LOAD GAME:** carrega o jogo atual. A teia engata no botão e puxa o menu para a direita, trazendo a **seleção de atos** ([acts.md](acts.md)), já mostrando o ato mais adiantado que está liberado. Lá o BACK volta para cá.
    - Fica apagado se o navegador não tem nenhum jogo salvo (nunca começou um NEW GAME nem terminou um ato).
-3. **SCENES:** a teia puxa o menu e traz a tela de cenas, toda trancada: seis quadros de filme com cadeado e `???`, e o aviso `LOCKED`. Vai virar algo como o museu do *Sonic Generations* (rever cenas). Por enquanto só dá para voltar.
+3. **SCENES:** a teia puxa o menu e traz a tela de cenas, como o museu do *Sonic Generations*: as cutscenes e os resumos de cada ato, liberados ao serem vistos no jogo. Spec: [scenes.md](scenes.md).
 4. **ACHIEVEMENTS:** a teia puxa o menu e traz as conquistas de cada ato, acesas as já conseguidas, com a contagem (`2 / 4`). Só dá para voltar. Spec: [achievements.md](achievements.md).
 5. O item selecionado ao abrir: LOAD GAME se existe jogo salvo, senão NEW GAME.
 

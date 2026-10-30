@@ -19,13 +19,17 @@ Testes: `tests/achievements.test.ts`.
 | 1 | THE EXPLORER | Read a letter left by someone mysterious. | O explorador: leia uma carta deixada por alguém misterioso. | Ler a primeira carta (qualquer uma das três; no caminho natural é a da mesa da sala). |
 | 1 | LOVE ADMIRER | Read the love letter. | Apreciador do amor: leia a carta de amor. | Ler a terceira carta, a extra, no canto do sótão (`attic`). |
 | 1 | ROOF DIGGER | Leave the house through the roof. | Escavador de telhados: saia da casa pelo telhado. | Terminar o ato 1 (sair pelo buraco do telhado). |
+| 1 | RAT CONQUEROR | Kill all the rats. | Conquistador de ratos: mate todos os ratos. | Matar os quatro ratos do ato 1 na mesma jogada (morrer ou "Restart" traz todos de volta). |
 | 2 | WEBS THROUGH THE AIR | Shoot your webs across the poles. | Soltando teias pelos ares: solte teias pelos postes. | Terminar o ato 2 (entrar pela chaminé). |
+| 2 | HEAVY FOOT | Get stepped on by one of the sick. | Pé pesado: seja pisado por um doente. | Cair na rua no ato 2: libera no instante em que o pé do zumbi chega no chão (o tremor e o som da pisada). |
 
 ## Regras
 
 1. **Acontecimentos que liberam:**
    - `letterRead` (ato e id da carta): ao abrir uma carta;
-   - `actEnd` (ato): ao chegar no fim do ato (mesmo momento em que o progresso é salvo).
+   - `actEnd` (ato): ao chegar no fim do ato (mesmo momento em que o progresso é salvo);
+   - `allRatsKilled` (ato): quando morre o último rato vivo do ato 1 (não vale no resumo do SCENES);
+   - `stomped` (ato): na etapa `hold` da morte do ato 2, quando o pé do zumbi bate no chão.
 2. **Uma vez só:** conquista conseguida fica para sempre e não avisa de novo.
 3. **Salvo separado do jogo:** fica em `spiderweb.achievements`, separado do progresso. O **NEW GAME não apaga as conquistas** (ele só zera atos e cartas). Se o navegador bloquear o `localStorage`, as conquistas funcionam na jogada, só não ficam salvas. JSON estragado ou com ids desconhecidos é ignorado (não trava o jogo).
 4. **Aviso:**
@@ -35,11 +39,11 @@ Testes: `tests/achievements.test.ts`.
    - toca um sininho (`Sfx.achievement`, três notas subindo).
    - Aparece por cima de qualquer coisa (carta aberta, tela de fim do ato).
 5. **Tela do menu (ACHIEVEMENTS):**
-   - título `ACHIEVEMENTS` e a contagem `1 / 4`;
+   - título `ACHIEVEMENTS` e a contagem `1 / 6`;
    - um bloco por ato (`ACT 1 · AWAKENING`, `ACT 2 · ROOFTOPS`), com um cartão por conquista: ícone, nome e descrição;
    - conquistada: medalha dourada e texto claro; ainda não: medalha cinza com cadeado e texto apagado (o nome e a descrição aparecem mesmo assim, para o jogador saber o que fazer);
    - só tem o BACK: `Esc`, `Backspace`, `Enter`, `Espaço`, clique ou `B`/`A`/`Start` no controle. A transição é a teia que puxa ([transitions.md](transitions.md)).
-6. **SCENES** continua trancada.
+6. **SCENES** é a outra tela do menu: rever as cutscenes e os resumos dos atos ([scenes.md](scenes.md)).
 
 ## Como mexer
 

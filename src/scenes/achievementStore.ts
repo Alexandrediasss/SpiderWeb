@@ -7,11 +7,14 @@ const KEY = 'spiderweb.achievements';
 
 /** Cópia em memória, para não avisar de novo quando o localStorage está bloqueado. */
 let memory: string[] = [];
+/** A última gravação falhou (navegador sem espaço): vale a cópia em memória, mesmo sem nada salvo. */
+let writeFailed = false;
 
 export function loadAchievements(): string[] {
   try {
+    // Sem nada salvo (ou apagado no console) = nada liberado.
     const raw = localStorage.getItem(KEY);
-    if (raw !== null) memory = parseUnlocked(raw, ACHIEVEMENTS);
+    if (raw !== null || !writeFailed) memory = parseUnlocked(raw, ACHIEVEMENTS);
   } catch {
     // Sem localStorage: fica a cópia em memória.
   }
@@ -25,7 +28,9 @@ export function award(e: GameEvent): Achievement[] {
   memory = unlocked;
   try {
     localStorage.setItem(KEY, JSON.stringify(unlocked));
+    writeFailed = false;
   } catch {
+    writeFailed = true;
     // Só não fica salvo.
   }
   return ACHIEVEMENTS.filter((a) => fresh.includes(a.id));

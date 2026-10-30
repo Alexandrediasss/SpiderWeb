@@ -33,6 +33,7 @@ import { AchievementsScreen } from './AchievementsScreen';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
 import { ScenesScreen } from './ScenesScreen';
+import { placeBars, showCaption } from './cinema';
 import { type TitleAction, TitleScreen } from './TitleScreen';
 import { type WebPullOptions, fadeTo, hideChapter, playActTransition, showChapter, webPull } from './Transitions';
 import { hasSave, loadProgress, saveProgress, startNewSave } from './progressStore';
@@ -188,7 +189,7 @@ export class GameScene extends Phaser.Scene {
       this.pauseMenu.destroy();
       this.actsMenu.destroy();
       this.scenesScreen.destroy();
-      this.showCaption(null);
+      showCaption(null);
       hideChapter();
       this.achievementsScreen.destroy();
       this.actEnd.destroy();
@@ -524,7 +525,7 @@ export class GameScene extends Phaser.Scene {
     const pad = this.playerInput.padFrame;
     if (pad?.musicPressed) this.sound_.hub.toggleMute();
     if (pad && (pad.confirmPressed || pad.pausePressed || pad.trapPressed)) this.skipRecap();
-    this.placeRecapBars();
+    placeBars(cam, this.recapBars, RECAP.letterboxPx);
 
     const rec = this.recap;
     if (!rec) return;
@@ -547,7 +548,7 @@ export class GameScene extends Phaser.Scene {
     const fade = last ? RECAP.endFadeSec : RECAP.cutSec;
     if (left !== null && left <= fade && !this.recapCut) {
       this.recapCut = true;
-      this.showCaption(null);
+      showCaption(null);
       cam.fadeOut(fade * 1000, 0, 0, 0);
       if (last) this.sound_.music.stop(fade);
     }
@@ -564,12 +565,14 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     const b = this.spider.motor.body;
     this.spider.setDamageFx(0, PLAYER.invulnSec, false);
+    const look = shot.look ?? { x: 0, y: 0 };
     cam.setZoom(shot.zoom);
     cam.startFollow(b, true, VIEW.cameraLerp, VIEW.cameraLerp);
-    cam.centerOn(b.x, b.y);
+    cam.setFollowOffset(-look.x, -look.y);
+    cam.centerOn(b.x + look.x, b.y + look.y);
     cam.fadeIn(RECAP.cutSec * 1000, 0, 0, 0);
     this.recapCut = false;
-    this.showCaption(shot.caption ?? null);
+    showCaption(shot.caption ?? null);
   }
 
   /** Lendo a carta no resumo: a página aparece menor, por cima do plano, e some sozinha. */
@@ -586,22 +589,11 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  /** Faixas pretas de cinema: posição de tela, compensando o zoom (scrollFactor 0 também é ampliado). */
-  private placeRecapBars(): void {
-    const z = this.cameras.main.zoom;
-    const w = VIEW.width / z;
-    const h = RECAP.letterboxPx / z;
-    const x = VIEW.width / 2 - VIEW.width / 2 / z;
-    const top = VIEW.height / 2 - VIEW.height / 2 / z;
-    this.recapBars[0]?.setPosition(x, top).setSize(w, h);
-    this.recapBars[1]?.setPosition(x, top + VIEW.height / z - h).setSize(w, h);
-  }
-
   /** Pular o resumo (Enter/Esc/Espaço ou A/B/Start): escurece rápido e volta ao SCENES. */
   private skipRecap(): void {
     if (this.mode !== 'recap' || this.recapLeaving) return;
     this.recapLeaving = true;
-    this.showCaption(null);
+    showCaption(null);
     this.reader.hide();
     const cam = this.cameras.main;
     cam.fadeOut(RECAP.cutSec * 1000, 0, 0, 0);
@@ -612,18 +604,10 @@ export class GameScene extends Phaser.Scene {
   private leaveRecap(): void {
     this.recapLeaving = true;
     this.recap = null;
-    this.showCaption(null);
+    showCaption(null);
     this.reader.hide();
     void fadeTo(1, 0);
     this.scene.restart({ openScenes: 'act1-recap' } satisfies SceneData);
-  }
-
-  /** Legenda do resumo na faixa de baixo (null esconde). */
-  private showCaption(text: string | null): void {
-    const c = el('recap-caption');
-    if (!c) return;
-    if (text) c.textContent = text;
-    c.classList.toggle('show', text !== null);
   }
 
   /** Abre a carta (por id no console: `__scene.openLetter('table')`). O jogo pausa enquanto ela está aberta. */
