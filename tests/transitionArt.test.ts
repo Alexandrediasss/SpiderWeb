@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PixelCanvas } from '../src/art/PixelCanvas';
 import { drawGoo, drawWeb } from '../src/art/transitionArt';
+import { WEB_SPLAT, buildWebSplat } from '../src/art/uiArt';
+import { TRANSITION } from '../src/config';
 
 /** Fração dos pixels opacos e se todos são pretos. */
 function coverage(pc: PixelCanvas): { opaque: number; allBlack: boolean } {
@@ -37,4 +39,22 @@ it('a gosma cobre a tela toda antes de começar a apagar', () => {
   const pc = new PixelCanvas(160, 90);
   drawGoo(pc, 0.7, 11);
   expect(coverage(pc).opaque).toBe(1);
+});
+
+describe('teia que puxa as telas do menu', () => {
+  it('é rápida: bem menos que escurecer e clarear', () => {
+    const p = TRANSITION.pull;
+    const total = p.shootSec + p.hookSec + p.pullSec + p.enterLagSec;
+    expect(total).toBeLessThan(0.8);
+    expect(total).toBeLessThan((TRANSITION.fadeOutSec + TRANSITION.fadeHoldSec + TRANSITION.fadeInSec) / 2);
+  });
+
+  it('o respingo tem o tamanho certo, o centro cheio e as bordas transparentes', () => {
+    const pc = buildWebSplat();
+    expect([pc.width, pc.height]).toEqual([WEB_SPLAT.w, WEB_SPLAT.h]);
+    const alpha = (x: number, y: number) => pc.data[(y * pc.width + x) * 4 + 3];
+    expect(alpha(7, 7)).toBe(255);
+    expect(alpha(0, 0)).toBe(0);
+    expect(alpha(14, 14)).toBe(0);
+  });
 });

@@ -319,10 +319,15 @@ export const ACT_END = {
 
 /** Transições de tela. Spec: docs/features/transitions.md */
 export const TRANSITION = {
-  /** PLAY ↔ seleção de atos: escurece, fica preto, clareia (s). */
+  /** Escurecer e clarear (s): volta do fim do ato para a seleção de atos. */
   fadeOutSec: 0.7,
   fadeHoldSec: 0.2,
   fadeInSec: 0.8,
+  /**
+   * Menu principal ↔ LOAD GAME / SCENES / ACHIEVEMENTS: a teia sai da borda e engata no botão (`shoot`),
+   * dá um tranco (`hook`) e puxa a tela para o lado, trazendo a outra no lugar (`pull`) (s).
+   */
+  pull: { shootSec: 0.14, hookSec: 0.08, pullSec: 0.42, enterLagSec: 0.05 },
   /** Gosma verde (ato 1) e teia com vento (ato 2). */
   gooSec: 2.4,
   webSec: 2.6,
@@ -351,6 +356,11 @@ export const WIND = {
   /** Andando grudada: contra o vento a velocidade cai até walkMin; a favor sobe até walkMax (fatores). */
   walkMin: 0.3,
   walkMax: 1.5,
+  /**
+   * Parada no chão ou no teto, a rajada arrasta a aranha (ela continua grudada) até esta velocidade (px/s,
+   * com força 1). Para não ser levada, é preciso andar contra o vento, como no Celeste.
+   */
+  idleSlide: 55,
 };
 
 /** Detritos voando na rajada. Spec: docs/features/wind.md */
@@ -382,13 +392,22 @@ export const WIRE = {
 
 /** Ato 2: cutscenes, câmera e morte. Spec: docs/features/act2-rooftops.md */
 export const ACT2 = {
-  /** Cutscene de abertura (s). */
-  introFadeSec: 1.2,
-  introLookSec: 3.8,
-  introWindSec: 1.6,
+  /**
+   * Cutscene de abertura (s). Curta de propósito: com quase 10 s parecia que o jogo tinha travado
+   * (o jogador tentava andar e nada acontecia).
+   */
+  introFadeSec: 1,
+  introLookSec: 2.6,
+  introWindSec: 0.9,
   introShootSec: 0.5,
+  /** Na subida pela teia, começa a recolher o fio depois deste tempo (s). */
+  introReelAfterSec: 0.2,
   /** Tempo máximo da subida pela teia até grudar no braço do poste. */
   introSwingSec: 3.5,
+  /** Pular a cutscene: a tela escurece rápido, a aranha vai para o braço e a tela clareia já nela. */
+  skipFadeSec: 0.25,
+  /** O aviso "ENTER / START skip" aparece depois deste tempo (s). */
+  skipHintAfterSec: 0.8,
   /** A câmera olha um pouco abaixo da aranha (px), para a horda aparecer. */
   cameraLookDown: 60,
   /** Morte pisada: zoom, sombra crescendo, a pisada e o escurecer (s). */

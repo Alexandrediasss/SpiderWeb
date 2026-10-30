@@ -22,7 +22,7 @@ Testes: `tests/progress.test.ts` e `tests/actArt.test.ts`.
 
 ## Seleção de atos
 
-Fluxo: menu principal → LOAD GAME (a tela escurece e clareia já aqui, no ato mais adiantado liberado) → **seleção de atos** → transição do ato → o ato. As transições: [transitions.md](transitions.md).
+Fluxo: menu principal → LOAD GAME (a teia puxa o menu para o lado e traz esta tela, já no ato mais adiantado liberado) → **seleção de atos** → transição do ato → o ato. As transições: [transitions.md](transitions.md).
 
 1. **Layout (estilo Telltale):**
    - em cima, o nome do ato (`ACT 1: AWAKENING`) entre duas setas cor de pergaminho (`LB`/`RB`, ou `◀`/`▶` no teclado);

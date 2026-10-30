@@ -1,8 +1,10 @@
-// Transições de tela em HTML por cima do jogo: o escurecer (#fade) e a transição de cada ato (#transition).
+// Transições de tela em HTML por cima do jogo: o escurecer (#fade), a teia que puxa as telas do menu
+// (#web-pull) e a transição de cada ato (#transition).
 // Spec: docs/features/transitions.md
 import { TRANSITION } from '../config';
 import { PixelCanvas } from '../art/PixelCanvas';
 import { drawGoo, drawWeb } from '../art/transitionArt';
+import { buildWebSplat } from '../art/uiArt';
 import { getSound } from '../audio/sound';
 
 export type ActTransition = 'goo' | 'web';
@@ -24,12 +26,95 @@ export async function fadeTo(opacity: number, sec: number): Promise<void> {
   if (sec > 0) await wait(sec);
 }
 
-/** Escurece, troca o que está por baixo (`swap`) e clareia. */
-export async function fadeSwap(swap: () => void): Promise<void> {
-  await fadeTo(1, TRANSITION.fadeOutSec);
-  swap();
-  await wait(TRANSITION.fadeHoldSec);
-  await fadeTo(0, TRANSITION.fadeInSec);
+export interface WebPullOptions {
+  /** A tela que sai (puxada pela teia) e a que entra no lugar dela. */
+  from: HTMLElement | null;
+  to: HTMLElement | null;
+  /** Onde a teia engata: o botão escolhido (ou o BACK, voltando). */
+  hook: HTMLElement | null;
+  /** 1: a teia vem da direita e puxa tudo para a direita; -1: vem da esquerda e puxa para a esquerda. */
+  dir: 1 | -1;
+  /** Mostra a tela nova (ela já entra deslizando) e, no fim, esconde a antiga. */
+  showTo: () => void;
+  hideFrom: () => void;
+}
+
+let splatUrl: string | null = null;
+
+/**
+ * Transição do menu (menu principal ↔ LOAD GAME, SCENES, ACHIEVEMENTS): um fio de teia sai da borda,
+ * engata no botão escolhido, dá um tranco e puxa a tela para o lado, trazendo a outra no lugar.
+ * Bem mais rápida que escurecer e clarear (cerca de 0,7 s).
+ */
+export async function webPull(o: WebPullOptions): Promise<void> {
+  const layer = document.getElementById('web-pull');
+  const strand = layer?.querySelector<HTMLElement>('.strand');
+  const splat = layer?.querySelector<HTMLImageElement>('.splat');
+  if (!layer || !strand || !splat || !o.from || !o.to) {
+    o.showTo();
+    o.hideFrom();
+    return;
+  }
+  const { shootSec, hookSec, pullSec, enterLagSec } = TRANSITION.pull;
+  const { sfx } = getSound();
+  splatUrl ??= buildWebSplat().toCanvas().toDataURL();
+  splat.src = splatUrl;
+
+  // Onde a teia engata: a borda do botão virada para o lado de onde ela vem, na altura do meio dele.
+  const W = window.innerWidth;
+  const r = o.hook?.getBoundingClientRect();
+  const hookX = r && r.width > 0 ? (o.dir > 0 ? r.right : r.left) : W / 2;
+  const y = Math.round(r && r.height > 0 ? r.top + r.height / 2 : window.innerHeight / 2);
+  const edge = o.dir > 0 ? W : 0;
+  strand.style.left = `${Math.min(hookX, edge)}px`;
+  strand.style.width = `${Math.abs(edge - hookX)}px`;
+  strand.style.top = `${y - 1}px`;
+  strand.style.transformOrigin = o.dir > 0 ? 'right center' : 'left center';
+  splat.style.left = `${hookX}px`;
+  splat.style.top = `${y}px`;
+  splat.style.opacity = '0';
+  layer.classList.remove('hidden');
+
+  // 1. O fio sai da borda e vai até o botão.
+  sfx.webShot('rope');
+  const shoot = strand.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], {
+    duration: shootSec * 1000,
+    easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)',
+    fill: 'forwards',
+  });
+  await shoot.finished;
+
+  // 2. Engata: o respingo aparece e o botão dá um tranco para o lado da teia.
+  splat.style.opacity = '1';
+  if (o.hook) {
+    const jerk = `translateX(${o.dir * 6}px)`;
+    await o.hook.animate([{ transform: 'none' }, { transform: jerk }, { transform: 'none' }], hookSec * 1000).finished;
+  } else {
+    await wait(hookSec);
+  }
+
+  // 3. Puxa: a tela (com o fio grudado nela) sai para o lado e a nova entra pelo outro.
+  const off = (k: number) => `translateX(${k * 110}vw)`;
+  o.to.style.transform = off(-o.dir);
+  o.showTo();
+  sfx.whoosh();
+  const out: KeyframeAnimationOptions = { duration: pullSec * 1000, easing: 'cubic-bezier(0.55, 0, 0.85, 0.35)', fill: 'forwards' };
+  const anims = [
+    o.from.animate([{ transform: 'none' }, { transform: off(o.dir) }], out),
+    layer.animate([{ transform: 'none' }, { transform: off(o.dir) }], out),
+    o.to.animate([{ transform: off(-o.dir) }, { transform: 'none' }], {
+      duration: pullSec * 1000,
+      delay: enterLagSec * 1000,
+      easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)',
+      fill: 'forwards',
+    }),
+  ];
+  await Promise.all(anims.map((a) => a.finished));
+
+  o.hideFrom();
+  o.to.style.transform = '';
+  for (const a of [shoot, ...anims]) a.cancel();
+  layer.classList.add('hidden');
 }
 
 /**

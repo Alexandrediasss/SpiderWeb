@@ -23,7 +23,7 @@ src/
   art/               pixel art gerada por código (sem PNG): paleta, sprites (aranha, rato, corações, zumbis), tiles, cenário, rua, luz, cartas, arte dos atos, rua do ato 2, transições
   audio/             som gerado por código (sem MP3): música, chuva, trovão, passos, guinchos/chiados, gemidos, papel, vento, choque, pisada; `sound.ts` cria tudo uma vez
   entities/          objetos Phaser que desenham a lógica (Spider; Atmosphere = luz/chuva/raios; CombatView = ratos/teias; LetterSprites = cartas; Weather = chuva/vento do ato 2; Hazards = fios e detritos)
-  scenes/            BootScene (texturas), GameScene (menu, atos, ato 1), IntroScene e StreetScene (cutscenes), RooftopScene (ato 2), Transitions (escurecer e transição de ato), HUD e menus em HTML
+  scenes/            BootScene (texturas), GameScene (menu, atos, ato 1), IntroScene e StreetScene (cutscenes), RooftopScene (ato 2), Transitions (teia que puxa as telas do menu, escurecer e transição de ato), HUD e menus em HTML
 tests/               testes Vitest da lógica pura
 docs/                GDD + uma spec por feature
 ```
@@ -56,7 +56,7 @@ docs/                GDD + uma spec por feature
 - Buraco no telhado e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos; é o fim do ato 1): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
 - Cartas do pai (onde ficam, aviso READ, página com as patas, texto): [docs/features/letters.md](docs/features/letters.md)
 - Atos (seleção estilo Telltale, fim do ato, liberar ato, progresso salvo no navegador): [docs/features/acts.md](docs/features/acts.md)
-- Transições (escurecer entre as telas do menu, gosma verde do ato 1, teia e vento do ato 2): [docs/features/transitions.md](docs/features/transitions.md)
+- Transições (teia que puxa as telas do menu, gosma verde do ato 1, teia e vento do ato 2): [docs/features/transitions.md](docs/features/transitions.md)
 - Ato 2, ROOFTOPS (mapa da rua, cutscenes de abertura e da chaminé, checkpoints, pisada do zumbi): [docs/features/act2-rooftops.md](docs/features/act2-rooftops.md)
 - Ventania do ato 2 (rajadas como no Celeste, detritos, fios soltos com faísca): [docs/features/wind.md](docs/features/wind.md)
 - Ratos, vida, mordida, teias de ataque e de prender, sons de dano: [docs/features/combat.md](docs/features/combat.md)
@@ -87,3 +87,7 @@ docs/                GDD + uma spec por feature
 - **O Phaser reaproveita a mesma instância da cena** em `scene.start`/`restart`: os campos da classe não voltam ao valor inicial. Todo estado (modo, travas, contadores) precisa ser zerado no começo de `create()`. Foi assim que a trava `fading` da `GameScene` ficou ligada depois do ato 1 e a seleção de atos parou de responder.
 - O painel do navegador do app quase não roda quadros quando está em segundo plano. Para testar um caminho longo, rode os quadros na mão no console: `const g = __scene.game; let t = performance.now(); for (let i = 0; i < 60; i++) g.loop.step((t += 16.7))`.
 - Testes de HTML: confira o estilo calculado (`getComputedStyle(el).display`), não só a classe. Foi assim que o título "escondido" continuou aparecendo.
+- Botões de menu: meça o `getBoundingClientRect()` de todos com cada um selecionado (troque a classe `selected` no console). O tamanho tem que ser o mesmo; foi assim que o ACHIEVEMENTS alargava o menu.
+- Animações HTML (a teia que puxa o menu usa `element.animate`): com o painel do navegador escondido elas não andam. Tire screenshots para avançar, ou estique os tempos no console (`(await import('/src/config.ts')).TRANSITION.pull.pullSec = 4`) para ver os quadros do meio.
+- Cutscene que "trava": confira se aparece o aviso de pular e se pular passa por um escurecer. Teleportar a aranha com a câmera seguindo dá a impressão de bug.
+- Arte de tile sólido: o desenho precisa ir até a borda do tile (a colisão é o tile inteiro). Se a aranha parece flutuar perto de uma peça, é desenho mais fino que o tile (veja [docs/art-and-level.md](docs/art-and-level.md)).

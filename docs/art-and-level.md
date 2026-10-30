@@ -72,4 +72,5 @@ O mapa da casa é ASCII em `HOUSE_MAP` (o do ato 2 é `ROOFTOP_MAP`, com legenda
 - Fundo mais apagado que o primeiro plano, para a aranha e os móveis se destacarem.
 - **As cores da paleta são as "de dia":** o escuro da noite vem do mapa de luz, que multiplica tudo no jogo. A exceção é o lado de fora (céu, vidro), que já é pintado escuro porque a luz lá vale 1. A galeria mostra o cenário com e sem luz.
 - Sombra suave (AO) embaixo e ao lado de sólidos já é automática no baker.
+- **Tile sólido é desenhado até a borda.** A colisão é sempre o tile inteiro: se a peça for pintada mais fina (um braço de poste de 8 px num tile de 16), a aranha anda e pendura a alguns pixels dela, "flutuando". Peças finas de verdade viram treliça (bordas cheias, meio vazado) ou ficam como fundo (maiúscula, não colide). Peça grande precisa de apoio desenhado (pernas, postes), senão parece solta no ar.
 - Variação de textura com `hash(x, y, k)` (determinístico), nunca `Math.random`, para o cenário ficar igual a cada carregamento.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SPIDER, TILE, WEB } from '../src/config';
+import { ACT2, SPIDER, TILE, WEB, WIND } from '../src/config';
 import {
   CHECKPOINTS,
   CHIMNEY,
@@ -107,6 +107,41 @@ describe('checkpoints', () => {
   });
 });
 
+/** Função (e não comparação direta) porque o TS "estreita" `surface` para 'floor' depois da atribuição. */
+const attached = (m: SpiderMotor) => m.surface !== 'air';
+
+describe('abertura do ato 2', () => {
+  // Mesmo roteiro da RooftopScene (etapas shoot e swing): se a aranha não grudar a tempo, a cutscene
+  // termina colocando-a no braço do poste, o que parecia um teleporte.
+  it('a subida pela teia gruda no braço do poste 1 com folga, em qualquer taxa de quadros', () => {
+    const grid = LevelGrid.fromAscii(ROOFTOP_MAP, TILE, isRooftopSolid);
+    for (const hz of [30, 60, 144, 240]) {
+      const dt = 1 / hz;
+      const start = { x: (ROOFTOP_START.tx + 0.5) * TILE, y: (ROOFTOP_START.ty + 1) * TILE - SPIDER.half };
+      const m = new SpiderMotor(grid, start.x, start.y);
+      m.surface = 'floor';
+      m.update(1 / 60, input({ webPressed: true, webHeld: true, aim: FIRST_AIM }));
+      for (let t = 0; t < ACT2.introShootSec; t += dt) m.update(dt, input({ webHeld: true, aim: FIRST_AIM }));
+      let attachedAt = -1;
+      for (let t = 0; t < ACT2.introSwingSec && attachedAt < 0; t += dt) {
+        m.wind = 0.32 * WIND.gustAccel;
+        m.update(dt, input({ webHeld: true, move: { x: 0, y: t > ACT2.introReelAfterSec ? -1 : 0 }, aim: FIRST_AIM }));
+        m.wind = 0;
+        if (attached(m)) attachedAt = t;
+      }
+      expect(attachedAt, `${hz} Hz`).toBeGreaterThan(0);
+      expect(attachedAt, `${hz} Hz`).toBeLessThan(ACT2.introSwingSec - 0.8);
+      expect(m.surface).toBe('ceiling');
+      expect(Math.abs(m.body.x - FIRST_AIM.x)).toBeLessThan(TILE);
+    }
+  });
+
+  it('a cutscene inteira é curta', () => {
+    const total = ACT2.introFadeSec + ACT2.introLookSec + ACT2.introWindSec + ACT2.introShootSec + ACT2.introSwingSec;
+    expect(total).toBeLessThanOrEqual(8.5);
+  });
+});
+
 describe('arte do ato 2', () => {
   it('pinta o mapa inteiro rápido, com as três luminárias', () => {
     const t0 = performance.now();
@@ -119,6 +154,41 @@ describe('arte do ato 2', () => {
     const alpha = (x: number, y: number) => art.canvas.data[(y * art.canvas.width + x) * 4 + 3];
     expect(alpha(5, 5)).toBe(0);
     expect(alpha(100, STREET_ROW * TILE + 20)).toBe(255);
+  });
+
+  it('peça sólida é desenhada até a borda do tile: a aranha não fica flutuando longe dela', () => {
+    // A colisão é o tile inteiro; se o desenho for mais fino, a aranha anda/pendura no "nada".
+    const art = bakeRooftops();
+    const W = art.canvas.width;
+    const painted = (x: number, y: number) => art.canvas.data[(y * W + x) * 4 + 3] > 0;
+    const cols = ROOFTOP_MAP[0].length;
+    const solidAt = (tx: number, ty: number) => tx >= 0 && ty >= 0 && tx < cols && ty < ROOFTOP_MAP.length && isRooftopSolid(ROOFTOP_MAP[ty][tx]);
+    const thin: string[] = [];
+    ROOFTOP_MAP.forEach((row, ty) => {
+      for (let tx = 0; tx < cols; tx++) {
+        if (!isRooftopSolid(row[tx]) || rooftopTile(row[tx]).material === 'street') continue;
+        const faces: [boolean, (i: number) => [number, number]][] = [
+          [!solidAt(tx, ty - 1), (i) => [tx * TILE + i, ty * TILE]],
+          [!solidAt(tx, ty + 1), (i) => [tx * TILE + i, ty * TILE + TILE - 1]],
+          [!solidAt(tx - 1, ty), (i) => [tx * TILE, ty * TILE + i]],
+          [!solidAt(tx + 1, ty), (i) => [tx * TILE + TILE - 1, ty * TILE + i]],
+        ];
+        for (const [exposed, at] of faces) {
+          if (!exposed) continue;
+          let n = 0;
+          for (let i = 0; i < TILE; i++) if (painted(...at(i))) n++;
+          // Pontas arredondadas (galhos) podem perder alguns pixels; mais que isso é peça flutuando.
+          if (n < TILE * 0.6) thin.push(`${row[tx]} (${tx}, ${ty}): ${n}/16`);
+        }
+      }
+    });
+    expect(thin).toEqual([]);
+  });
+
+  it('o outdoor tem pernas até a passarela (não flutua)', () => {
+    const billboardBottom = ROOFTOP_MAP.length - 1 - [...ROOFTOP_MAP].reverse().findIndex((row) => row.includes('g'));
+    const catwalkRow = ROOFTOP_MAP.findIndex((row) => row.includes('y'));
+    for (let ty = billboardBottom + 1; ty < catwalkRow; ty++) expect(ROOFTOP_MAP[ty].slice(85, 101)).toContain('P');
   });
 
   it('um recorte tem o tamanho pedido', () => {

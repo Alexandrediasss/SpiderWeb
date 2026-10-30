@@ -73,7 +73,7 @@ export const ROOFTOP_MAP: string[] = [
   'rrrrrrrrr............................xxxxxxx....FFFFFFFFFFFFFFFF......................gggggggggggggg............u...............................................u.............................ccrrrrrrrr',
   'rrrrrrrrrr..............................u......FFFFFFFFFFFFFFFFFF.....................gggggggggggggg............u.............aaaaaaaaaaa.......................u.............................rrrrrrrrrr',
   'rrrrrrrrrrr.............................u......FFFFFFFFFFFFFFFFFF...........aaaaa.....gggggggggggggg............u.............p......tt.........................u............................rrrrrrrrrrr',
-  'rrrrrrrrrrrr............................u......FFFFFFFFFFFFFFFFFF...........L...p...............................u.............p......tt.............aaaaa.......u...........................rrrrrrrrrrrr',
+  'rrrrrrrrrrrr............................u......FFFFFFFFFFFFFFFFFF...........L...p.......P........P..............u.............p......tt.............aaaaa.......u...........................rrrrrrrrrrrr',
   'rrrrrrrrrrrrr..........aaaaa............u......FFFFbbbbkkFFFFFFFF...............p....yyyyyyyyyyyyyyyy...........u.............p......tt.............p...L.......u..........................rrrrrrrrrrrrr',
   'rrrrrrrrrrrrrr.........L...p............u......FFFFFFFFkkFFFFFFFF...............p.......p........p..............u.............p.....................p...........u.........................rrrrrrrrrrrrrr',
   'rrrrrrrrrrrrrrr............p............u......FFFFFFFFkkFFFFFFFF...............p.......p........p..............u.............p.....................p...........u........................rrrrrrrrrrrrrrr',

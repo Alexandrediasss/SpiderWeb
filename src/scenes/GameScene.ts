@@ -29,7 +29,7 @@ import { type LockedKind, LockedScreen } from './LockedScreen';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
 import { type TitleAction, TitleScreen } from './TitleScreen';
-import { fadeSwap, fadeTo, playActTransition } from './Transitions';
+import { type WebPullOptions, fadeTo, playActTransition, webPull } from './Transitions';
 import { hasSave, loadProgress, saveProgress, startNewSave } from './progressStore';
 
 /**
@@ -44,6 +44,9 @@ type Mode = 'title' | 'acts' | 'extras' | 'leaving' | 'emerge' | 'play' | 'pause
 
 /** Cartas lidas na jogada atual do ato: sobrevivem a morrer e a "Restart"; zeram ao escolher o ato. */
 const runLetters = new LetterLog();
+
+/** Elemento do HTML por id (telas do menu e botões onde a teia da transição engata). */
+const el = (id: string) => document.getElementById(id);
 
 /** Enquanto a tela escurece no buraco do telhado, a aranha continua subindo sozinha. */
 const CLIMB_OUT: SpiderInput = { ...emptyInput(), move: { x: 0, y: -1 } };
@@ -223,53 +226,71 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * LOAD GAME: a tela escurece e clareia já na seleção de atos, no ato mais adiantado (a música continua).
-   * `fromBlack`: a tela já está preta (voltando do fim do ato), só clareia.
+   * LOAD GAME: a teia puxa o menu para a direita e traz a seleção de atos, no ato mais adiantado (a
+   * música continua). `fromBlack`: a tela já está preta (voltando do fim do ato), só clareia.
    */
   private openActs(fromBlack = false): void {
     this.mode = 'acts';
     const show = () => {
       const progress = loadProgress();
-      this.title.hide();
       this.actsMenu.show(progress, currentActIndex(progress, ACTS));
     };
     if (fromBlack) {
+      this.title.hide();
       show();
       void fadeTo(0, TRANSITION.fadeInSec);
       return;
     }
-    void this.withFade(show);
+    void this.withPull({ from: el('title'), to: el('acts'), hook: this.title.selectedButton, dir: 1, showTo: show, hideFrom: () => this.title.hide() });
   }
 
-  /** SCENES e ACHIEVEMENTS: por enquanto, telas trancadas. */
+  /** SCENES e ACHIEVEMENTS: por enquanto, telas trancadas (a teia puxa o menu e traz a tela). */
   private openExtras(kind: LockedKind): void {
     this.mode = 'extras';
-    void this.withFade(() => {
-      this.title.hide();
-      this.locked.show(kind);
+    void this.withPull({
+      from: el('title'),
+      to: el('locked'),
+      hook: this.title.selectedButton,
+      dir: 1,
+      showTo: () => this.locked.show(kind),
+      hideFrom: () => this.title.hide(),
     });
   }
 
+  /** Voltar: a teia vem da esquerda, engata no BACK e puxa a tela para a esquerda, trazendo o menu. */
   private closeExtras(): void {
-    void this.withFade(() => {
-      this.locked.hide();
-      this.title.reopen();
-      this.mode = 'title';
+    void this.withPull({
+      from: el('locked'),
+      to: el('title'),
+      hook: el('locked-back'),
+      dir: -1,
+      showTo: () => this.title.reopen(),
+      hideFrom: () => {
+        this.locked.hide();
+        this.mode = 'title';
+      },
     });
   }
 
   private backToTitle(): void {
-    void this.withFade(() => {
-      this.actsMenu.hide();
-      this.title.reopen();
-      this.mode = 'title';
+    void this.withPull({
+      from: el('acts'),
+      to: el('title'),
+      hook: el('acts-back'),
+      dir: -1,
+      showTo: () => this.title.reopen(),
+      hideFrom: () => {
+        this.actsMenu.hide();
+        this.mode = 'title';
+      },
     });
   }
 
-  private async withFade(swap: () => void): Promise<void> {
+  /** Uma transição de menu por vez: teclas e botões no meio dela são ignorados. */
+  private async withPull(o: WebPullOptions): Promise<void> {
     if (this.fading) return;
     this.fading = true;
-    await fadeSwap(swap);
+    await webPull(o);
     this.fading = false;
   }
 

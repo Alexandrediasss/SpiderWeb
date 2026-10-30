@@ -124,15 +124,23 @@
         display: flex;
         gap: 2vw;
       }
+      /*
+       * Selecionado ou não, o botão tem o mesmo tamanho: o ▶ fica posicionado por cima (fora do fluxo do
+       * texto), num espaço já reservado pelo padding da esquerda. Antes ele entrava no texto e, no maior
+       * botão (ACHIEVEMENTS), passava da largura mínima e alargava o menu inteiro; a fonte reserva do ▶
+       * também deixava o selecionado mais alto.
+       */
       .menu-button {
+        position: relative;
         font: inherit;
         font-size: clamp(11px, 1.8vw, 19px);
+        line-height: 1.2;
         letter-spacing: 0.15em;
         min-width: 15em;
         color: #e8e4f0;
         background: rgba(10, 10, 18, 0.55);
         border: 3px solid #5d5a78;
-        padding: 0.8em 1.4em 0.7em;
+        padding: 0.8em 2.2em 0.7em;
         cursor: pointer;
         box-shadow: 0 4px 0 #14121c;
       }
@@ -144,8 +152,14 @@
         background: #e8e4f0;
         border-color: #e8e4f0;
       }
-      .menu-button.selected::before {
-        content: '▶ ';
+      .menu-button.selected::before,
+      #pause button.selected::before {
+        content: '▶';
+        position: absolute;
+        left: 0.7em;
+        top: 50%;
+        transform: translateY(-50%);
+        line-height: 1;
         animation: blink 1.1s steps(2, start) infinite;
       }
       .menu-button:disabled {
@@ -262,13 +276,17 @@
         color: #e8e4f0;
         text-shadow: 0 3px 0 #000;
       }
-      #intro-skip {
+      #intro-skip,
+      #skip-hint {
         position: fixed;
         right: 20px;
         bottom: 16px;
         font-size: 9px;
         color: #e8e4f0;
         opacity: 0.45;
+      }
+      #skip-hint.hidden {
+        display: none;
       }
 
       /* ---------- menu de pausa ---------- */
@@ -293,15 +311,18 @@
         color: #e8e4f0;
         text-shadow: 0 5px 0 #14121c;
       }
+      /* Mesmo cuidado do menu principal: o ▶ do selecionado não muda o tamanho do botão. */
       #pause button {
+        position: relative;
         font: inherit;
         font-size: clamp(11px, 1.8vw, 18px);
+        line-height: 1.2;
         letter-spacing: 0.12em;
         min-width: 15em;
         color: #e8e4f0;
         background: rgba(10, 10, 18, 0.55);
         border: 3px solid #5d5a78;
-        padding: 0.8em 1.2em 0.7em;
+        padding: 0.8em 2.2em 0.7em;
         cursor: pointer;
         box-shadow: 0 4px 0 #14121c;
       }
@@ -309,9 +330,6 @@
         color: #14121c;
         background: #e8e4f0;
         border-color: #e8e4f0;
-      }
-      #pause button.selected::before {
-        content: '▶ ';
       }
       /* ---------- teclas certas para o dispositivo (body.pad = controle) ---------- */
       body.pad .kb,
@@ -637,6 +655,29 @@
         pointer-events: none;
       }
 
+      /* ---------- transição do menu: o fio de teia que puxa a tela ---------- */
+      #web-pull {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+      #web-pull.hidden {
+        display: none;
+      }
+      #web-pull .strand {
+        position: absolute;
+        height: 2px;
+        background: #e8e4f0;
+        box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+      }
+      #web-pull .splat {
+        position: absolute;
+        width: 45px;
+        height: 45px;
+        image-rendering: pixelated;
+        transform: translate(-50%, -50%);
+      }
+
       /* ---------- ato 2: cartão do capítulo e aviso de checkpoint ---------- */
       #chapter {
         position: fixed;
@@ -795,7 +836,9 @@ START  pause   SELECT  mute</div>
     </div>
     <div id="chapter"><p class="chapter-act"></p><h2 class="chapter-name"></h2></div>
     <div id="toast"></div>
+    <div id="skip-hint" class="hidden">ENTER / START  skip</div>
     <canvas id="transition" class="hidden"></canvas>
+    <div id="web-pull" class="hidden"><div class="strand"></div><img class="splat" alt="" /></div>
     <div id="fade"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

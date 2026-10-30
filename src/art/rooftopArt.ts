@@ -199,28 +199,35 @@ const chimney: Painter = (px, py, c) => {
   return MATERIAL_PAINTERS.brick?.(px, py, c) ?? PAL.brick.base[0];
 };
 
-/** Poste de metal: 12 px de largura, brilho de um lado, sombra do outro, anéis a cada 48 px. */
+// Regra das peças sólidas: o desenho ocupa o tile inteiro (16×16), porque a colisão é o tile inteiro.
+// Peça desenhada mais fina que o tile deixa a aranha "flutuando" longe dela (em cima, embaixo ou do lado).
+// Treliças podem ter buracos no meio, mas as bordas (onde a aranha encosta) são cheias. O teste
+// `tests/rooftopArt.test.ts` confere.
+
+/** Poste de metal: o tile inteiro de largura, brilho de um lado, sombra do outro, anéis a cada 48 px. */
 const pole: Painter = (px, py, c) => {
-  if (px < 2 || px > 13) return null;
-  const top = c.at(0, -1) !== 'p' && c.at(0, -1) !== 'a';
-  if (top && py < 2 && (px < 4 || px > 11)) return null;
-  if (px === 2 || px === 13) return A.metalDark;
+  if (px === 0 || px === 15) return A.metalDark;
   if (wy(py, c) % 48 < 2) return A.metalDark;
-  if (px <= 4) return A.metalLight;
-  if (px >= 11) return shadeColor(A.metal, 0.75);
+  if (px <= 3) return A.metalLight;
+  if (px >= 12) return shadeColor(A.metal, 0.75);
   return A.metal;
 };
 
-/** Braço de metal: barra de 10 px com parafusos. */
+/** Braço de metal: treliça com banzo em cima e embaixo (onde a aranha anda) e diagonais no meio. */
 const arm: Painter = (px, py, c) => {
-  if (py < 3 || py > 12) return null;
-  const solidLeft = c.at(-1, 0) === 'a' || c.at(-1, 0) === 'p';
-  const solidRight = c.at(1, 0) === 'a' || c.at(1, 0) === 'p';
-  if ((!solidLeft && px < 1) || (!solidRight && px > 14)) return null;
-  if (py === 3) return A.metalLight;
-  if (py === 12) return A.metalDark;
-  if (py === 7 && wx(px, c) % 8 === 4) return A.metalLight;
-  return py < 6 ? mixColor(A.metal, A.metalLight, 0.4) : A.metal;
+  const x = wx(px, c);
+  const endLeft = c.at(-1, 0) !== 'a' && c.at(-1, 0) !== 'p';
+  const endRight = c.at(1, 0) !== 'a' && c.at(1, 0) !== 'p';
+  if (py === 0) return A.metalLight;
+  if (py === 15) return A.metalDark;
+  if (py <= 3) return py === 1 ? mixColor(A.metal, A.metalLight, 0.4) : A.metal;
+  if (py >= 12) return shadeColor(A.metal, 0.8);
+  // Ponta fechada por uma barra vertical.
+  if ((endLeft && px <= 1) || (endRight && px >= 14)) return A.metal;
+  // Diagonais em X a cada 16 px (o meio é vazado).
+  const k = ((x % 16) + 16) % 16;
+  if (Math.abs(k - (py - 4) * 2) <= 1 || Math.abs(15 - k - (py - 4) * 2) <= 1) return shadeColor(A.metal, 0.9);
+  return null;
 };
 
 /** Luminária (fundo): cúpula escura e o vidro aceso embaixo. */
@@ -236,31 +243,27 @@ const lamp: Painter = (px, py) => {
   return null;
 };
 
-/** Poste de madeira, com os degraus de metal alternados. */
+/** Poste de madeira (o tile inteiro de largura), com os degraus de metal alternados nas bordas. */
 const wood: Painter = (px, py, c) => {
   const y = wy(py, c);
   const step = y % 24 < 2;
-  if (step && (Math.floor(y / 24) % 2 === 0 ? px < 2 : px > 13)) return A.metalLight;
-  if (px < 2 || px > 13) return null;
-  if (px === 2 || px === 13) return A.woodDark;
-  if (px === 3) return A.woodLight;
+  if (step && (Math.floor(y / 24) % 2 === 0 ? px <= 1 : px >= 14)) return A.metalLight;
+  if (px === 0 || px === 15) return A.woodDark;
+  if (px <= 2) return A.woodLight;
   if (px % 4 === 1 && hash(px, Math.floor(y / 6), 7) < 0.5) return shadeColor(A.wood, 0.85);
   return A.wood;
 };
 
-/** Cruzeta de madeira, com isoladores de vidro verde no segundo tile de cada ponta. */
+/** Cruzeta de madeira (viga cheia), com isoladores de vidro verde na face, no segundo tile de cada ponta. */
 const crossbar: Painter = (px, py, c) => {
   const insulator = (c.at(-1, 0) === 'x' && c.at(-2, 0) !== 'x') || (c.at(1, 0) === 'x' && c.at(2, 0) !== 'x');
-  if (py < 4) {
-    if (!insulator || px < 6 || px > 9) return null;
-    return py === 0 || px === 6 || px === 9 ? shadeColor(A.insulator, 0.6) : A.insulator;
+  if (insulator && py >= 1 && py <= 6 && px >= 5 && px <= 10) {
+    return py === 1 || px === 5 || px === 10 ? shadeColor(A.insulator, 0.6) : A.insulator;
   }
-  if (py > 11) return null;
   const endL = c.at(-1, 0) !== 'x';
   const endR = c.at(1, 0) !== 'x';
-  if ((endL && px < 1) || (endR && px > 14)) return null;
-  if (py === 4) return A.woodLight;
-  if (py === 11) return A.woodDark;
+  if (py === 0) return A.woodLight;
+  if (py === 15 || (endL && px === 0) || (endR && px === 15)) return A.woodDark;
   return wx(px, c) % 9 === 0 ? shadeColor(A.wood, 0.85) : A.wood;
 };
 
@@ -273,14 +276,14 @@ const trunk: Painter = (px, py, c) => {
   return A.bark;
 };
 
+/** Galho grosso (o tile inteiro de altura); só a ponta solta afina um pouco. */
 const branch: Painter = (px, py, c) => {
   const open = (dx: number) => c.at(dx, 0) !== 'b' && c.at(dx, 0) !== 'k';
-  // Ponta afinando.
-  if (open(-1) && px < 5 && (py < 5 || py > 10)) return null;
-  if (open(1) && px > 10 && (py < 5 || py > 10)) return null;
-  if (py < 3 || py > 12) return null;
-  if (py === 3) return A.barkLight;
-  if (py === 12) return A.barkDark;
+  // Ponta arredondada: só os cantinhos somem.
+  if (open(-1) && px < 3 && (py < 3 - px || py > 12 + px)) return null;
+  if (open(1) && px > 12 && (py < px - 12 || py > 27 - px)) return null;
+  if (py === 0) return A.barkLight;
+  if (py === 15) return A.barkDark;
   return hash(wx(px, c), py, 9) < 0.15 ? A.barkDark : A.bark;
 };
 
@@ -331,22 +334,30 @@ const billboard: Painter = (px, py, c) => {
   return col;
 };
 
-/** Passarela de grade embaixo do outdoor. */
+/** Passarela embaixo do outdoor: piso de grade em cima, treliça embaixo (banzo de baixo cheio). */
 const catwalk: Painter = (px, py, c) => {
   const x = wx(px, c);
+  const endL = c.at(-1, 0) !== 'y';
+  const endR = c.at(1, 0) !== 'y';
   if (py < 2) return A.grate;
-  if (py < 6) return (x + py) % 3 === 0 ? A.grateDark : A.grate;
-  if (py < 12 && x % 32 < 2) return A.grateDark;
+  if (py < 5) return (x + py) % 3 === 0 ? A.grateDark : A.grate;
+  if (py >= 13) return py === 15 ? A.grateDark : A.grate;
+  if ((endL && px <= 1) || (endR && px >= 14)) return A.grateDark;
+  const k = ((x % 16) + 16) % 16;
+  if (Math.abs(k - (py - 5) * 2) <= 1 || Math.abs(15 - k - (py - 5) * 2) <= 1) return A.grateDark;
   return null;
 };
 
-/** Teto do ponto de ônibus. */
+/** Teto do ponto de ônibus: chapa em cima e a faixa da fachada embaixo, o tile inteiro de altura. */
 const shelter: Painter = (px, py, c) => {
-  if (py > 6) return null;
-  if ((c.at(-1, 0) !== 's' && px < 1) || (c.at(1, 0) !== 's' && px > 14)) return null;
+  const endL = c.at(-1, 0) !== 's';
+  const endR = c.at(1, 0) !== 's';
   if (py === 0) return mixColor(A.shelter, 0xffffff, 0.3);
-  if (py === 6) return A.shelterDark;
-  return A.shelter;
+  if (py === 15 || (endL && px === 0) || (endR && px === 15)) return A.shelterDark;
+  if (py <= 6) return A.shelter;
+  if (py === 7) return A.shelterDark;
+  // Faixa da fachada com rebites.
+  return wx(px, c) % 12 === 6 && py === 11 ? mixColor(A.shelter, 0xffffff, 0.2) : shadeColor(A.shelter, 0.82);
 };
 
 const post: Painter = (px) => (px >= 6 && px <= 9 ? (px === 6 ? A.metalLight : A.metal) : null);
@@ -362,8 +373,7 @@ const glass: Painter = (px, py, c) => {
 const signal: Painter = (px, py, c) => {
   const u = runLeft(c) * TILE + px;
   const v = runUp(c) * TILE + py;
-  if (u < 3 || u > 28) return null;
-  if (u === 3 || u === 28 || v === 0 || v === 47) return A.signalDark;
+  if (u <= 1 || u >= 30 || v === 0 || v === 47) return A.signalDark;
   for (const [cy, lit] of [
     [8, true],
     [24, false],

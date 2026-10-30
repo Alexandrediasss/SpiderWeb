@@ -26,9 +26,9 @@ O item selecionado fica preenchido, com a setinha piscando. Item apagado (LOAD G
 1. **NEW GAME:** começa um jogo novo do zero.
    - Se já existe progresso salvo (algum ato terminado ou carta achada), pergunta antes: `START A NEW GAME?` / `YOUR SAVED PROGRESS WILL BE LOST.` com `YES` e `NO` (o NO começa selecionado, e `Esc`/`B` é NO).
    - Ao confirmar: o progresso salvo é apagado e trocado por um jogo novo, a música some, a **gosma verde** cobre a tela ([transitions.md](transitions.md)) e começa a cutscene de abertura do ato 1 ([intro.md](intro.md)).
-2. **LOAD GAME:** carrega o jogo atual. A tela escurece e clareia na **seleção de atos** ([acts.md](acts.md)), já mostrando o ato mais adiantado que está liberado. Lá o BACK volta para cá.
+2. **LOAD GAME:** carrega o jogo atual. A teia engata no botão e puxa o menu para a direita, trazendo a **seleção de atos** ([acts.md](acts.md)), já mostrando o ato mais adiantado que está liberado. Lá o BACK volta para cá.
    - Fica apagado se o navegador não tem nenhum jogo salvo (nunca começou um NEW GAME nem terminou um ato).
-3. **SCENES:** a tela escurece e abre a tela de cenas, toda trancada: seis quadros de filme com cadeado e `???`, e o aviso `LOCKED`. Vai virar algo como o museu do *Sonic Generations* (rever cenas). Por enquanto só dá para voltar.
+3. **SCENES:** a teia puxa o menu e traz a tela de cenas, toda trancada: seis quadros de filme com cadeado e `???`, e o aviso `LOCKED`. Vai virar algo como o museu do *Sonic Generations* (rever cenas). Por enquanto só dá para voltar.
 4. **ACHIEVEMENTS:** igual, com oito conquistas trancadas (cadeado, `???` e `LOCKED`). Só dá para voltar.
 5. O item selecionado ao abrir: LOAD GAME se existe jogo salvo, senão NEW GAME.
 
@@ -44,6 +44,7 @@ O item selecionado fica preenchido, com a setinha piscando. Item apagado (LOAD G
 ## Casos de borda
 
 - **CSS:** o "escondido" do título precisa ser `#title.hidden` e não só `.hidden`, porque `#title { display: flex }` ganha de uma classe sozinha. Um bug antigo vinha disso: o título voltava por cima do jogo depois de morrer.
+- **Botões do mesmo tamanho:** todos os botões do menu têm a mesma largura e altura, selecionados ou não. O `▶` do selecionado fica `position: absolute`, num espaço que o padding da esquerda já reserva. Antes ele entrava no texto: no ACHIEVEMENTS (o maior) passava da largura mínima e alargava o menu inteiro, e a fonte reserva do `▶` deixava o selecionado mais alto. O menu de pausa usa a mesma regra.
 - **NEW GAME direto do menu:** o menu continua embaixo da gosma e só é escondido quando a transição termina (antes da cutscene começar).
 - **Áudio bloqueado:** o navegador só libera o som depois de um clique ou tecla na página. Se o jogo abrir sem nenhum gesto, a música começa no primeiro clique ou tecla. O controle não conta como gesto no Chrome.
 - **`localStorage` bloqueado** (aba anônima, por exemplo): LOAD GAME fica apagado e NEW GAME funciona normalmente, só não salva.

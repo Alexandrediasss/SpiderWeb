@@ -82,7 +82,7 @@ Na parede, apertar *em direção* à parede sobe e apertar *para fora* desce. Ao
 - **Pular.** Impulso para fora da superfície. No ar há gravidade e controle leve; ao encostar em qualquer superfície, a aranha gruda.
 - **Teia.** Raio até 240 px (alcança o teto a partir do chão). Se acertar algo, vira um pêndulo; dá para subir até o ponto e grudar lá. Spec: [features/web-swing.md](features/web-swing.md)
 - **Cartas.** Três folhas escritas pelo pai (duas da história e uma extra). Spec: [features/letters.md](features/letters.md)
-- **Ventania (ato 2).** Como na subida final do Celeste: de tempos em tempos vem uma rajada que empurra a aranha no ar e na teia; grudada ela aguenta. Na rajada voam detritos, e fios soltos dão choque. Spec: [features/wind.md](features/wind.md)
+- **Ventania (ato 2).** Como na subida final do Celeste: de tempos em tempos vem uma rajada que empurra a aranha no ar e na teia. Grudada ela não solta, mas parada é arrastada para trás: para ficar no lugar, tem que andar contra o vento. Na rajada voam detritos, e fios soltos dão choque. Spec: [features/wind.md](features/wind.md)
 - **Vida e ratos.** 3 corações. Cada mordida tira 1. Ratos patrulham embaixo da mesa da sala, embaixo da mesa da cozinha, em cima da cama e no sótão, e têm 3 de vida. Teia de ataque tira 1; teia que prende os segura por 5 s. Spec: [features/combat.md](features/combat.md)
 
 ## Mundo: a casa

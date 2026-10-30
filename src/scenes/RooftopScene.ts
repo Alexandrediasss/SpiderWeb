@@ -48,7 +48,8 @@ import { loadProgress, saveProgress } from './progressStore';
  * intro: cutscene de abertura | play: jogando | paused: menu de pausa | dying: caiu na rua (o pé pisa) |
  * ending: cutscene da chaminé | actEnd: tela de fim do ato.
  */
-type Mode = 'intro' | 'play' | 'paused' | 'dying' | 'ending' | 'actEnd';
+/** skipping: pulou a cutscene de abertura e a tela está escurecendo para a aranha ir para o braço do poste. */
+type Mode = 'intro' | 'skipping' | 'play' | 'paused' | 'dying' | 'ending' | 'actEnd';
 
 interface Act2Data {
   /** true = começa pela cutscene de abertura (vindo da seleção de atos). */
@@ -120,6 +121,7 @@ export class RooftopScene extends Phaser.Scene {
   private debug = false;
   private readonly chapter = document.getElementById('chapter');
   private readonly toast = document.getElementById('toast');
+  private readonly skipHint = document.getElementById('skip-hint');
 
   constructor() {
     super('act2');
@@ -212,6 +214,7 @@ export class RooftopScene extends Phaser.Scene {
       this.hud.showHelp(false);
       this.hud.showDebug(false);
       this.chapter?.classList.remove('show');
+      this.showSkipHint(false);
       this.anims.resumeAll();
       sound.storm.setOutside(false);
       sound.wind.setStrength(0, 0.5);
@@ -264,6 +267,7 @@ export class RooftopScene extends Phaser.Scene {
     this.tl = null;
     this.graceLeft = TITLE.inputGraceSec;
     this.wind.script(null);
+    this.showSkipHint(false);
     this.setBars(false);
     this.reticle.setVisible(true);
     this.hud.applyHelpPreference();
@@ -293,11 +297,34 @@ export class RooftopScene extends Phaser.Scene {
     const b = this.spider.motor.body;
     this.cameras.main.centerOn(b.x + 90, b.y);
     this.cameras.main.fadeIn(ACT2.introFadeSec * 1000, 0, 0, 0);
+    // Deixa claro que é cutscene (e que dá para pular): sem isso parecia que o jogo tinha travado.
+    this.showSkipHint(false);
+    this.time.delayedCall(ACT2.skipHintAfterSec * 1000, () => {
+      if (this.mode === 'intro') this.showSkipHint(true);
+    });
   }
 
-  /** Pular a cutscene de abertura: a aranha já aparece grudada embaixo do braço do poste 1. */
+  /**
+   * Pular a cutscene de abertura (ou ela acabou sem a aranha grudar): a tela escurece rápido, a aranha vai
+   * para baixo do braço do poste 1 e a tela clareia com a câmera já nela. Sem o escurecer, a aranha
+   * "teleportava" do telhado para o poste e a câmera deslizava atrás dela.
+   */
   private skipIntro(): void {
     if (this.mode !== 'intro') return;
+    this.mode = 'skipping';
+    this.chapter?.classList.remove('show');
+    this.showSkipHint(false);
+    const cam = this.cameras.main;
+    cam.fadeOut(ACT2.skipFadeSec * 1000, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      if (this.mode !== 'skipping') return;
+      this.placeOnFirstArm();
+      this.startPlay(true);
+    });
+  }
+
+  /** A aranha grudada embaixo do braço do poste de luz 1 (onde a cutscene termina). */
+  private placeOnFirstArm(): void {
     const m = this.spider.motor;
     m.rope = null;
     m.body.x = FIRST_AIM.x;
@@ -305,8 +332,13 @@ export class RooftopScene extends Phaser.Scene {
     m.body.vx = 0;
     m.body.vy = 0;
     m.surface = 'ceiling';
-    this.chapter?.classList.remove('show');
-    this.startPlay();
+    // O sprite já começa virado (de cabeça para baixo), sem girar na frente do jogador.
+    this.spider.update(0, emptyInput());
+    this.spider.snapAngle();
+  }
+
+  private showSkipHint(on: boolean): void {
+    this.skipHint?.classList.toggle('hidden', !on);
   }
 
   private togglePause(): void {
@@ -422,7 +454,8 @@ export class RooftopScene extends Phaser.Scene {
       if (pad?.confirmPressed || pad?.pausePressed) this.actEnd.confirm();
       return;
     }
-    if (this.mode === 'intro' && (pad?.confirmPressed || pad?.pausePressed)) this.skipIntro();
+    // Na cutscene, quem aperta pular ou teia quer jogar: pula (com o escurecer rápido).
+    if (this.mode === 'intro' && (pad?.confirmPressed || pad?.pausePressed || input.jumpPressed || input.webPressed)) this.skipIntro();
     if (this.mode === 'play' && pad?.pausePressed) {
       this.togglePause();
       return;
@@ -631,7 +664,7 @@ export class RooftopScene extends Phaser.Scene {
         break;
       case 'swing':
         m.wind = this.wind.accel;
-        this.spider.update(dt, { ...emptyInput(), webHeld: true, move: { x: 0, y: local > 0.35 ? -1 : 0 }, aim: FIRST_AIM });
+        this.spider.update(dt, { ...emptyInput(), webHeld: true, move: { x: 0, y: local > ACT2.introReelAfterSec ? -1 : 0 }, aim: FIRST_AIM });
         m.wind = 0;
         if (m.surface !== 'air') this.startPlay();
         break;

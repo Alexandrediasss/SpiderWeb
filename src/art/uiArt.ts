@@ -33,3 +33,30 @@ export function buildLockIcon(): PixelCanvas {
   drawLock(pc, LOCK_ICON.w / 2, 13);
   return pc;
 }
+
+/** Tamanho do respingo de teia onde o fio engata no botão (transição do menu). */
+export const WEB_SPLAT = { w: 15, h: 15 } as const;
+
+/**
+ * Respingo de teia: fios saindo do centro em 8 direções e um anel torto ligando as pontas,
+ * como a teia grudando no botão. Spec: docs/features/transitions.md
+ */
+export function buildWebSplat(): PixelCanvas {
+  const { w, h } = WEB_SPLAT;
+  const pc = new PixelCanvas(w, h);
+  const c = PAL.decor.web;
+  const cx = 7;
+  const cy = 7;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + 0.2;
+    const r = i % 2 ? 5 : 7;
+    pc.line(cx, cy, cx + Math.cos(a) * r, cy + Math.sin(a) * r, c, i % 2 ? 0.7 : 0.95);
+  }
+  for (let i = 0; i < 8; i++) {
+    const a0 = (i / 8) * Math.PI * 2 + 0.2;
+    const a1 = ((i + 1) / 8) * Math.PI * 2 + 0.2;
+    pc.line(cx + Math.cos(a0) * 3.5, cy + Math.sin(a0) * 3.5, cx + Math.cos(a1) * 3.5, cy + Math.sin(a1) * 3.5, c, 0.6);
+  }
+  pc.rect(cx - 1, cy - 1, 3, 3, c);
+  return pc;
+}
