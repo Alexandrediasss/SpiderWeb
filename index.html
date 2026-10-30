@@ -176,70 +176,189 @@
         }
       }
 
-      /* ---------- telas trancadas do menu (SCENES, ACHIEVEMENTS) ---------- */
-      #locked {
+      /* ---------- cenas (SCENES do menu, como o museu do Sonic Generations) ---------- */
+      #scenes {
         position: fixed;
         inset: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 3vh;
+        gap: 2vh;
         background: radial-gradient(ellipse at center, rgba(8, 9, 18, 0.6) 30%, rgba(4, 4, 9, 0.95) 100%);
         color: #e8e4f0;
       }
-      #locked.hidden {
+      #scenes.hidden {
         display: none;
       }
-      #locked h2 {
+      #scenes h2 {
         margin: 0;
         font-size: clamp(16px, 3.2vw, 36px);
         font-weight: normal;
         letter-spacing: 0.12em;
         text-shadow: 0 4px 0 #000;
       }
-      #locked-grid {
+      #scenes-count {
+        margin: 0;
+        font-size: clamp(9px, 1.3vw, 15px);
+        letter-spacing: 0.2em;
+        color: #f6d36b;
+      }
+      #scenes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2.2vh;
+      }
+      #scenes-list h3 {
+        margin: 0 0 1.1vh;
+        font-size: clamp(9px, 1.25vw, 14px);
+        font-weight: normal;
+        letter-spacing: 0.14em;
+        color: #c9b48a;
+      }
+      .scene-row {
         display: grid;
-        gap: 1.6vw;
-        max-width: 88vw;
+        grid-template-columns: repeat(3, min(25vw, 30vh));
+        gap: 1.4vw;
       }
-      #locked-grid.scenes {
-        grid-template-columns: repeat(3, min(24vw, 34vh));
+      .scene-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7em;
+        padding: 0;
+        font: inherit;
+        text-align: left;
+        color: inherit;
+        background: none;
+        border: none;
+        cursor: pointer;
       }
-      #locked-grid.achievements {
-        grid-template-columns: repeat(2, min(36vw, 54vh));
-        gap: 1.2vh 1.6vw;
+      .scene-card.locked {
+        cursor: default;
       }
-      .locked-slot {
+      /* Um quadro de filme: borda, furinhos em cima e embaixo. */
+      .scene-frame {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1em;
-        font-size: clamp(8px, 1.1vw, 13px);
-        color: #6f6a88;
-        background: rgba(17, 12, 11, 0.85);
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #0c0a10;
         border: 3px solid #3a2a22;
         box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+        transition:
+          transform 0.12s,
+          border-color 0.12s;
       }
-      /* Cena: um quadro de filme (furinhos em cima e embaixo). */
-      #locked-grid.scenes .locked-slot {
-        flex-direction: column;
-        aspect-ratio: 16 / 9;
-        border-style: dashed solid;
+      .scene-frame::before,
+      .scene-frame::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 5%;
+        background: repeating-linear-gradient(90deg, transparent 0 7px, rgba(232, 228, 240, 0.22) 7px 11px);
+        pointer-events: none;
       }
-      #locked-grid.achievements .locked-slot {
-        justify-content: flex-start;
-        padding: 0.9em 1.2em;
+      .scene-frame::before {
+        top: 3%;
       }
-      .locked-slot img {
-        width: clamp(20px, 3vw, 40px);
+      .scene-frame::after {
+        bottom: 3%;
+      }
+      .scene-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
         image-rendering: pixelated;
       }
-      #locked-text {
-        margin: 0;
-        font-size: clamp(9px, 1.3vw, 15px);
-        letter-spacing: 0.3em;
+      .scene-card.locked .scene-frame {
+        border-style: dashed;
+      }
+      .scene-card.locked .scene-frame img {
+        width: clamp(18px, 2.6vw, 34px);
+        height: auto;
+      }
+      .scene-card.selected .scene-frame {
+        border-color: #f6d36b;
+        transform: translateY(-3px);
+      }
+      .scene-card.locked.selected .scene-frame {
+        border-color: #8f6b2a;
+      }
+      .scene-frame .play {
+        position: absolute;
+        font-size: clamp(14px, 2.2vw, 26px);
         color: #f6d36b;
+        text-shadow: 0 3px 0 #000;
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .scene-card.selected .scene-frame .play {
+        opacity: 1;
+      }
+      .scene-frame .badge {
+        position: absolute;
+        top: 10%;
+        left: 4%;
+        padding: 0.35em 0.5em;
+        font-size: clamp(6px, 0.7vw, 9px);
+        letter-spacing: 0.12em;
+        color: #14121c;
+        background: #c9b48a;
+      }
+      .scene-name {
+        margin: 0;
+        font-size: clamp(8px, 1.05vw, 13px);
+        letter-spacing: 0.08em;
+        color: #f6d36b;
+      }
+      .scene-desc {
+        margin: 0;
+        min-height: 3.2em;
+        font-size: clamp(7px, 0.8vw, 10px);
+        line-height: 1.6;
+        color: #b9b5cc;
+      }
+      .scene-card.locked .scene-name,
+      .scene-card.locked .scene-desc {
+        color: #6f6a88;
+      }
+      #scenes-watch.disabled {
+        opacity: 0.35;
+      }
+      /* ---------- resumo do ato (cena do SCENES): legenda na faixa de baixo ---------- */
+      #recap-caption {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 3.2vh;
+        margin: 0;
+        font-size: clamp(9px, 1.5vw, 17px);
+        letter-spacing: 0.1em;
+        text-align: center;
+        color: #e8e4f0;
+        text-shadow: 0 3px 0 #000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+      #recap-caption.show {
+        opacity: 1;
+      }
+      /* A carta no resumo: só um relance, menor, sem o aviso de fechar. */
+      #letter.glimpse {
+        background: rgba(4, 4, 9, 0.5);
+        cursor: default;
+        pointer-events: none;
+      }
+      #letter.glimpse .letter-page {
+        height: min(62vh, calc((100vw - 32px) * 170 / 132));
+        bottom: 8vh;
+      }
+      #letter.glimpse .letter-hint {
+        display: none;
       }
       /* ---------- conquistas (ACHIEVEMENTS do menu) ---------- */
       #achievements {
@@ -360,7 +479,7 @@
         color: #f6d36b;
       }
 
-      #locked .acts-buttons button,
+      #scenes .acts-buttons button,
       #achievements .acts-buttons button {
         font: inherit;
         font-size: clamp(9px, 1.2vw, 14px);
@@ -904,12 +1023,13 @@ START  pause   SELECT  mute</div>
         </div>
       </div>
     </div>
-    <div id="locked" class="hidden">
-      <h2 id="locked-title"></h2>
-      <div id="locked-grid"></div>
-      <p id="locked-text">LOCKED</p>
+    <div id="scenes" class="hidden">
+      <h2>SCENES</h2>
+      <p id="scenes-count"></p>
+      <div id="scenes-list"></div>
       <div class="acts-buttons">
-        <button id="locked-back" type="button"><span class="btn b pad">B</span><span class="key kb">ESC</span>BACK</button>
+        <button id="scenes-watch" type="button"><span class="btn a pad">A</span><span class="key kb">ENTER</span>WATCH</button>
+        <button id="scenes-back" type="button"><span class="btn b pad">B</span><span class="key kb">ESC</span>BACK</button>
       </div>
     </div>
     <div id="achievements" class="hidden">
@@ -964,6 +1084,7 @@ START  pause   SELECT  mute</div>
     </div>
     <div id="chapter"><p class="chapter-act"></p><h2 class="chapter-name"></h2></div>
     <div id="toast"></div>
+    <p id="recap-caption"></p>
     <div id="skip-hint" class="hidden">ENTER / START  skip</div>
     <canvas id="transition" class="hidden"></canvas>
     <div id="web-pull" class="hidden"><div class="strand"></div><img class="splat" alt="" /></div>

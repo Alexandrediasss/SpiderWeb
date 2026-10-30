@@ -432,3 +432,24 @@ export const ACT2 = {
     { u: 4, count: 24, speed: [11, 16], voice: 1, steps: 0.5 },
   ],
 } as const;
+
+/** SCENES do menu: assistir de novo as cutscenes e os resumos dos atos. Spec: docs/features/scenes.md */
+export const RECAP = {
+  /** O resumo roda em passos fixos (s): sempre igual, em qualquer taxa de quadros, e igual aos testes. */
+  stepSec: 1 / 60,
+  /** No máximo tantos passos por quadro (aba em segundo plano não vira um salto enorme). */
+  maxStepsPerFrame: 4,
+  /** Semente fixa dos ratos (o resumo é sempre o mesmo). */
+  seed: 1,
+  /** Corte entre planos: escurece e clareia (s). */
+  cutSec: 0.3,
+  /** Cartão do começo (ACT N / nome da cena) antes do primeiro plano e o escurecer do fim (s). */
+  titleSec: 2.4,
+  endFadeSec: 1.2,
+  /** Faixas pretas de cinema (px da tela de 480×270). */
+  letterboxPx: 24,
+  /** A página da carta aparece por cima do plano, menor (fração da altura da tela). */
+  letterGlimpse: 0.62,
+  /** Entrar numa cena a partir do SCENES: escurecer (s). */
+  enterFadeSec: 0.5,
+};

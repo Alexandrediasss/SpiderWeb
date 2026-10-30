@@ -1,7 +1,7 @@
 // Cena principal: tela inicial, seleção de atos, jogo, cartas, pausa, morte e fim do ato.
 // Cenário, atmosfera, aranha, ratos, câmera, mira, som e debug.
 import Phaser from 'phaser';
-import { GAMEPAD, INTRO, LETTER, LIGHT, PLAYER, SHOTS, STREET, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
+import { GAMEPAD, INTRO, LETTER, LIGHT, PLAYER, RECAP, SHOTS, STREET, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
 import { getLevelArt } from '../art/levelArt';
 import { TEX } from '../art/textures';
 import { type Sound, getSound } from '../audio/sound';
@@ -12,12 +12,15 @@ import { Spider } from '../entities/Spider';
 import { type Act, ACTS } from '../level/acts';
 import { RATS, ROOF_HOLE, SPAWN } from '../level/houseMap';
 import { type Letter, LETTERS } from '../level/letters';
+import { ACT1_RECAP } from '../level/recaps';
+import { SCENES, type SceneId } from '../level/scenes';
 import type { LevelGrid } from '../physics/LevelGrid';
 import type { Vec2 } from '../physics/surfaces';
 import { Combat, type CombatEvent, aimAtTarget } from '../systems/combat';
 import { type SpiderInput, emptyInput } from '../systems/input';
 import { LetterLog, letterCenter, nearbyLetter } from '../systems/letters';
 import { currentActIndex, hasProgress, recordActEnd } from '../systems/progress';
+import { RecapRun } from '../systems/recap';
 import { inRoofHole } from '../systems/roofHole';
 import { raycastWeb } from '../systems/webRope';
 import { ActEnd } from './ActEnd';
@@ -27,22 +30,27 @@ import { Hud } from './Hud';
 import { LetterReader } from './LetterReader';
 import { achieve } from './AchievementToast';
 import { AchievementsScreen } from './AchievementsScreen';
-import { type LockedKind, LockedScreen } from './LockedScreen';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
+import { ScenesScreen } from './ScenesScreen';
 import { type TitleAction, TitleScreen } from './TitleScreen';
-import { type WebPullOptions, fadeTo, playActTransition, webPull } from './Transitions';
+import { type WebPullOptions, fadeTo, hideChapter, playActTransition, showChapter, webPull } from './Transitions';
 import { hasSave, loadProgress, saveProgress, startNewSave } from './progressStore';
+import { markSceneSeen } from './sceneStore';
 
 /**
- * title: tela inicial (menu) | acts: seleção de atos | extras: tela trancada (SCENES, ACHIEVEMENTS) |
- * leaving: escurecendo para a cutscene |
+ * title: tela inicial (menu) | acts: seleção de atos | extras: SCENES ou ACHIEVEMENTS |
+ * leaving: escurecendo para a cutscene (ou para uma cena do SCENES) |
  * emerge: aranha saindo do buraco | play: jogando | paused: menu de pausa | reading: lendo uma carta |
  * dying: tela escurecendo depois de morrer |
  * exiting: entrou no buraco do telhado, escurecendo para a cutscene da rua (depois a cena dorme) |
- * actEnd: tela de fim do ato (depois da cutscene da rua).
+ * actEnd: tela de fim do ato (depois da cutscene da rua) |
+ * recap: o resumo do ato 1, assistido pelo SCENES (a aranha anda sozinha; dá para pular).
  */
-type Mode = 'title' | 'acts' | 'extras' | 'leaving' | 'emerge' | 'play' | 'paused' | 'reading' | 'dying' | 'exiting' | 'actEnd';
+type Mode = 'title' | 'acts' | 'extras' | 'leaving' | 'emerge' | 'play' | 'paused' | 'reading' | 'dying' | 'exiting' | 'actEnd' | 'recap';
+
+/** Telas do menu que abrem com a teia (além do LOAD GAME). */
+type Extras = 'scenes' | 'achievements';
 
 /** Cartas lidas na jogada atual do ato: sobrevivem a morrer e a "Restart"; zeram ao escolher o ato. */
 const runLetters = new LetterLog();
@@ -56,12 +64,15 @@ const CLIMB_OUT: SpiderInput = { ...emptyInput(), move: { x: 0, y: -1 } };
 /**
  * Dados para `scene.start`/`restart`: `skipTitle` vai direto ao jogo (morte, Restart);
  * `emerge` (vindo da cutscene) faz a aranha sair do buraco de rato antes de liberar o controle;
- * `openActs` (depois do fim do ato) abre direto na seleção de atos.
+ * `openActs` (depois do fim do ato) abre direto na seleção de atos; `openScenes` (voltando de uma cena
+ * assistida pelo SCENES) abre o SCENES com ela escolhida; `recap` roda o resumo do ato 1.
  */
 interface SceneData {
   skipTitle?: boolean;
   emerge?: boolean;
   openActs?: boolean;
+  openScenes?: SceneId;
+  recap?: boolean;
 }
 
 /** O ato que esta cena joga (por enquanto só existe a casa do ato 1). */
@@ -81,10 +92,10 @@ export class GameScene extends Phaser.Scene {
   private title!: TitleScreen;
   private pauseMenu!: PauseMenu;
   private actsMenu!: ActsMenu;
-  private locked!: LockedScreen;
+  private scenesScreen!: ScenesScreen;
   private achievementsScreen!: AchievementsScreen;
   /** Qual tela do menu está aberta no modo 'extras' (para o BACK voltar da certa). */
-  private extras: LockedKind = 'scenes';
+  private extras: Extras = 'scenes';
   private actEnd!: ActEnd;
   private letters!: LetterSprites;
   private reader!: LetterReader;
@@ -99,6 +110,15 @@ export class GameScene extends Phaser.Scene {
   private debug = false;
   /** Uma transição de tela está em andamento (ignora outro PLAY/BACK/escolha no meio). */
   private fading = false;
+  /** Resumo do ato 1 (modo 'recap'): quem pilota a aranha, as cartas "lidas" nele e as faixas de cinema. */
+  private recap: RecapRun | null = null;
+  private recapLetters = new LetterLog();
+  private recapBars: Phaser.GameObjects.Rectangle[] = [];
+  /** Cartão do começo: segundos até o primeiro plano. */
+  private recapWait = 0;
+  /** Já escureceu para o corte deste plano / está saindo do resumo. */
+  private recapCut = false;
+  private recapLeaving = false;
 
   constructor() {
     super('game');
@@ -111,6 +131,11 @@ export class GameScene extends Phaser.Scene {
     this.graceLeft = 0;
     this.fading = false;
     this.extras = 'scenes';
+    this.recap = null;
+    this.recapLetters = new LetterLog();
+    this.recapBars = [];
+    this.recapCut = false;
+    this.recapLeaving = false;
     const art = getLevelArt();
     this.grid = art.grid;
     const seed = (Date.now() & 0x7fffffff) || 1;
@@ -124,9 +149,10 @@ export class GameScene extends Phaser.Scene {
     const spawnX = (SPAWN.tx + 0.5) * TILE;
     const spawnY = (SPAWN.ty + 0.5) * TILE;
     this.spider = new Spider(this, this.grid, spawnX, spawnY, () => {
-      if (this.mode === 'play') footsteps.step(this.spider.motor.running);
+      if (this.mode === 'play' || this.mode === 'recap') footsteps.step(this.spider.motor.running);
     });
-    this.combat = new Combat(this.grid, RATS, seed);
+    // O resumo é sempre o mesmo: os ratos usam a semente fixa (igual aos testes).
+    this.combat = new Combat(this.grid, RATS, data.recap ? RECAP.seed : seed);
     this.combatView = new CombatView(this, this.combat);
     this.playerInput = new PlayerInput(this, this.grid);
     this.reticle = this.add.image(0, 0, TEX.reticle).setDepth(10).setVisible(false);
@@ -136,10 +162,13 @@ export class GameScene extends Phaser.Scene {
     this.hearts.setVisible(false);
     this.letters = new LetterSprites(this, LETTERS);
     this.reader = new LetterReader(() => this.closeLetter());
-    this.title = new TitleScreen((a) => this.onTitleAction(a), !data.skipTitle && !data.openActs);
+    this.title = new TitleScreen((a) => this.onTitleAction(a), !data.skipTitle && !data.openActs && !data.openScenes && !data.recap);
     this.title.setEnabled('load', hasSave());
     this.title.focus(hasSave() ? 'load' : 'new');
-    this.locked = new LockedScreen(() => this.closeExtras());
+    this.scenesScreen = new ScenesScreen(
+      (id) => void this.playScene(id),
+      () => this.closeExtras(),
+    );
     this.achievementsScreen = new AchievementsScreen(() => this.closeExtras());
     this.pauseMenu = new PauseMenu((a) => this.onPauseAction(a));
     this.actsMenu = new ActsMenu(
@@ -158,7 +187,9 @@ export class GameScene extends Phaser.Scene {
       this.title.destroy();
       this.pauseMenu.destroy();
       this.actsMenu.destroy();
-      this.locked.destroy();
+      this.scenesScreen.destroy();
+      this.showCaption(null);
+      hideChapter();
       this.achievementsScreen.destroy();
       this.actEnd.destroy();
       this.reader.destroy();
@@ -170,7 +201,9 @@ export class GameScene extends Phaser.Scene {
     cam.setBounds(0, 0, this.grid.widthPx, this.grid.heightPx);
     cam.setRoundPixels(true);
 
-    if (data.skipTitle) {
+    if (data.recap) {
+      this.startRecap();
+    } else if (data.skipTitle) {
       this.startPlay();
       if (data.emerge) this.beginEmerge();
     } else {
@@ -178,6 +211,7 @@ export class GameScene extends Phaser.Scene {
       this.hud.showHelp(false);
       this.sound_.music.start();
       if (data.openActs) this.openActs(true);
+      else if (data.openScenes) this.openScenes(data.openScenes);
     }
 
     const kb = this.input.keyboard;
@@ -192,7 +226,11 @@ export class GameScene extends Phaser.Scene {
     kb?.on('keydown-M', () => this.sound_.hub.toggleMute());
     kb?.on('keydown-ESC', () => this.togglePause());
     kb?.on('keydown-P', () => this.togglePause());
-    kb?.on('keydown-ENTER', () => this.closeLetter());
+    kb?.on('keydown-ENTER', () => {
+      this.closeLetter();
+      this.skipRecap();
+    });
+    kb?.on('keydown-SPACE', () => this.skipRecap());
 
     if (import.meta.env.DEV) {
       Object.assign(window, {
@@ -252,37 +290,72 @@ export class GameScene extends Phaser.Scene {
     void this.withPull({ from: el('title'), to: el('acts'), hook: this.title.selectedButton, dir: 1, showTo: show, hideFrom: () => this.title.hide() });
   }
 
-  /** ACHIEVEMENTS (as conquistas) ou SCENES (ainda trancada): a teia puxa o menu e traz a tela. */
-  private openExtras(kind: LockedKind): void {
+  /** SCENES (as cutscenes vistas e os resumos) ou ACHIEVEMENTS (as conquistas): a teia puxa o menu e traz a tela. */
+  private openExtras(kind: Extras): void {
     if (this.fading) return;
     this.mode = 'extras';
     this.extras = kind;
-    const achievements = kind === 'achievements';
     void this.withPull({
       from: el('title'),
-      to: el(achievements ? 'achievements' : 'locked'),
+      to: el(kind),
       hook: this.title.selectedButton,
       dir: 1,
-      showTo: () => (achievements ? this.achievementsScreen.show() : this.locked.show(kind)),
+      showTo: () => (kind === 'achievements' ? this.achievementsScreen.show() : this.scenesScreen.show()),
       hideFrom: () => this.title.hide(),
     });
   }
 
   /** Voltar: a teia vem da esquerda, engata no BACK e puxa a tela para a esquerda, trazendo o menu. */
   private closeExtras(): void {
-    const achievements = this.extras === 'achievements';
+    const kind = this.extras;
     void this.withPull({
-      from: el(achievements ? 'achievements' : 'locked'),
+      from: el(kind),
       to: el('title'),
-      hook: el(achievements ? 'achievements-back' : 'locked-back'),
+      hook: el(`${kind}-back`),
       dir: -1,
       showTo: () => this.title.reopen(),
       hideFrom: () => {
-        if (achievements) this.achievementsScreen.hide();
-        else this.locked.hide();
+        if (kind === 'achievements') this.achievementsScreen.hide();
+        else this.scenesScreen.hide();
         this.mode = 'title';
       },
     });
+  }
+
+  /** Voltando de uma cena assistida pelo SCENES: a tela está preta; abre o SCENES nela e clareia. */
+  private openScenes(focus: SceneId): void {
+    this.mode = 'extras';
+    this.extras = 'scenes';
+    this.title.hide();
+    this.scenesScreen.show(focus);
+    void fadeTo(0, TRANSITION.fadeInSec);
+  }
+
+  /**
+   * Assistir uma cena do SCENES: escurece e abre a cutscene (ou o resumo) em modo "replay"; no fim, ou
+   * pulando, ela volta para cá com `openScenes`. A música continua só nos resumos.
+   */
+  private async playScene(id: SceneId): Promise<void> {
+    if (this.fading) return;
+    this.fading = true;
+    this.mode = 'leaving';
+    if (SCENES.find((s) => s.id === id)?.kind !== 'recap') this.sound_.music.stop();
+    await fadeTo(1, RECAP.enterFadeSec);
+    this.scenesScreen.hide();
+    this.title.hide();
+    switch (id) {
+      case 'act1-intro':
+        this.scene.start('intro', { replay: true });
+        break;
+      case 'act1-recap':
+        this.scene.restart({ recap: true } satisfies SceneData);
+        break;
+      case 'act1-street':
+        this.scene.start('street', { replay: true });
+        break;
+      default:
+        this.scene.start('act2', { replay: id });
+    }
   }
 
   private backToTitle(): void {
@@ -350,7 +423,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private togglePause(): void {
-    if (this.mode === 'play') this.pauseGame();
+    if (this.mode === 'recap') this.skipRecap();
+    else if (this.mode === 'play') this.pauseGame();
     else if (this.mode === 'paused') this.resumeGame();
     else if (this.mode === 'reading') this.closeLetter();
   }
@@ -406,6 +480,8 @@ export class GameScene extends Phaser.Scene {
     this.reader.hidePrompt();
     saveProgress(recordActEnd(loadProgress(), ACT.id, runLetters.ids));
     achieve({ type: 'actEnd', act: ACT.id });
+    // Terminar o ato libera o resumo dele no SCENES.
+    markSceneSeen('act1-recap');
     const show = () => this.actEnd.show(ACT, runLetters.count(ACT.letters), ACTS[ACTS.indexOf(ACT) + 1]);
     if (fromStreet) {
       show();
@@ -414,6 +490,140 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.fadeOut(600, 0, 0, 0);
     cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, show);
+  }
+
+  // ---------- resumo do ato 1 (SCENES) ----------
+
+  /**
+   * O resumo: cartão "ACT 1 / THE HOUSE" no preto e depois os planos do roteiro (src/level/recaps.ts), com
+   * faixas de cinema, legenda e a música do menu. A aranha anda sozinha (invencível); os ratos são de verdade.
+   */
+  private startRecap(): void {
+    this.mode = 'recap';
+    this.hud.showHelp(false);
+    this.sound_.music.start();
+    const motor = this.spider.motor;
+    this.recap = new RecapRun(ACT1_RECAP, { motor, combat: this.combat, stepSpider: (dt, input) => this.spider.update(dt, input) }, TILE);
+    const bar = () => this.add.rectangle(0, 0, VIEW.width, RECAP.letterboxPx, 0x000000).setOrigin(0, 0).setScrollFactor(0).setDepth(30);
+    this.recapBars = [bar(), bar()];
+    const cam = this.cameras.main;
+    // Preto da câmera por baixo do cartão; o preto do HTML (de quem abriu a cena) sai.
+    cam.fadeOut(1, 0, 0, 0);
+    void fadeTo(0, 0);
+    this.recapWait = RECAP.titleSec;
+    const scene = SCENES.find((s) => s.id === 'act1-recap');
+    showChapter(`ACT ${ACT.number}`, scene?.name ?? ACT.name);
+  }
+
+  /** Um quadro do resumo: cartão, diretor em passos fixos, cortes, legenda, cartas e sons. */
+  private updateRecap(dt: number, time: number): void {
+    const cam = this.cameras.main;
+    for (const thunder of this.atmosphere.update(dt, cam.worldView)) this.sound_.storm.thunder(thunder);
+    const light = (x: number, y: number) => this.atmosphere.lightAt(x, y);
+    this.playerInput.read(this.spider.motor.body);
+    const pad = this.playerInput.padFrame;
+    if (pad?.musicPressed) this.sound_.hub.toggleMute();
+    if (pad && (pad.confirmPressed || pad.pausePressed || pad.trapPressed)) this.skipRecap();
+    this.placeRecapBars();
+
+    const rec = this.recap;
+    if (!rec) return;
+    if (this.recapWait > 0) {
+      this.recapWait -= dt;
+      this.combatView.update(dt, time, light);
+      return;
+    }
+    const out = rec.advance(dt);
+    if (out.webShots > 0) this.sound_.sfx.webShot('rope');
+    this.handleCombatEvents(out.combat);
+    for (const e of out.events) {
+      if (e.type === 'shot') this.cutTo(e.index);
+      else if (e.type === 'read') this.glimpseLetter(e.letter, e.sec);
+      else this.leaveRecap();
+    }
+    // Fim do plano: escurece para o corte (no último, mais devagar, e a música vai junto).
+    const left = rec.director.holdLeft;
+    const last = rec.director.shot === ACT1_RECAP.length - 1;
+    const fade = last ? RECAP.endFadeSec : RECAP.cutSec;
+    if (left !== null && left <= fade && !this.recapCut) {
+      this.recapCut = true;
+      this.showCaption(null);
+      cam.fadeOut(fade * 1000, 0, 0, 0);
+      if (last) this.sound_.music.stop(fade);
+    }
+    const m = this.spider.motor;
+    this.spider.setLight(light(m.body.x, m.body.y), LIGHT.spiderMinLight);
+    this.spider.setDamageFx(0, PLAYER.invulnSec, false);
+    this.combatView.update(dt, time, light);
+    this.letters.update(time, this.recapLetters, light);
+  }
+
+  /** Corte para o plano `index`: a aranha já está no começo dele; câmera, zoom, legenda e clareia. */
+  private cutTo(index: number): void {
+    const shot = ACT1_RECAP[index];
+    const cam = this.cameras.main;
+    const b = this.spider.motor.body;
+    this.spider.setDamageFx(0, PLAYER.invulnSec, false);
+    cam.setZoom(shot.zoom);
+    cam.startFollow(b, true, VIEW.cameraLerp, VIEW.cameraLerp);
+    cam.centerOn(b.x, b.y);
+    cam.fadeIn(RECAP.cutSec * 1000, 0, 0, 0);
+    this.recapCut = false;
+    this.showCaption(shot.caption ?? null);
+  }
+
+  /** Lendo a carta no resumo: a página aparece menor, por cima do plano, e some sozinha. */
+  private glimpseLetter(id: string, sec: number): void {
+    const letter = LETTERS.find((l) => l.id === id);
+    if (!letter) return;
+    this.recapLetters.markRead(letter.id);
+    this.reader.show(letter, true);
+    this.sound_.sfx.paper();
+    this.time.delayedCall(Math.max(0, sec - 0.35) * 1000, () => {
+      if (this.mode !== 'recap') return;
+      this.reader.hide();
+      this.sound_.sfx.paper();
+    });
+  }
+
+  /** Faixas pretas de cinema: posição de tela, compensando o zoom (scrollFactor 0 também é ampliado). */
+  private placeRecapBars(): void {
+    const z = this.cameras.main.zoom;
+    const w = VIEW.width / z;
+    const h = RECAP.letterboxPx / z;
+    const x = VIEW.width / 2 - VIEW.width / 2 / z;
+    const top = VIEW.height / 2 - VIEW.height / 2 / z;
+    this.recapBars[0]?.setPosition(x, top).setSize(w, h);
+    this.recapBars[1]?.setPosition(x, top + VIEW.height / z - h).setSize(w, h);
+  }
+
+  /** Pular o resumo (Enter/Esc/Espaço ou A/B/Start): escurece rápido e volta ao SCENES. */
+  private skipRecap(): void {
+    if (this.mode !== 'recap' || this.recapLeaving) return;
+    this.recapLeaving = true;
+    this.showCaption(null);
+    this.reader.hide();
+    const cam = this.cameras.main;
+    cam.fadeOut(RECAP.cutSec * 1000, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.leaveRecap());
+  }
+
+  /** Fim do resumo: com a tela preta, volta ao SCENES com ele escolhido. */
+  private leaveRecap(): void {
+    this.recapLeaving = true;
+    this.recap = null;
+    this.showCaption(null);
+    this.reader.hide();
+    void fadeTo(1, 0);
+    this.scene.restart({ openScenes: 'act1-recap' } satisfies SceneData);
+  }
+
+  /** Legenda do resumo na faixa de baixo (null esconde). */
+  private showCaption(text: string | null): void {
+    const c = el('recap-caption');
+    if (!c) return;
+    if (text) c.textContent = text;
+    c.classList.toggle('show', text !== null);
   }
 
   /** Abre a carta (por id no console: `__scene.openLetter('table')`). O jogo pausa enquanto ela está aberta. */
@@ -460,6 +670,10 @@ export class GameScene extends Phaser.Scene {
     const m = this.spider.motor;
 
     document.body.classList.toggle('pad', pi.device === 'gamepad');
+    if (this.mode === 'recap') {
+      this.updateRecap(dt, time);
+      return;
+    }
     if (this.mode === 'paused') {
       pi.read(m.body);
       this.handlePausedPad();
@@ -593,6 +807,8 @@ export class GameScene extends Phaser.Scene {
           break;
         case 'ratDied':
           sfx.ratSqueak('death');
+          // Os ratos só voltam ao morrer ou reiniciar: matar todos numa jogada dá a conquista.
+          if (this.mode !== 'recap' && this.combat.rats.every((r) => !r.alive)) achieve({ type: 'allRatsKilled', act: ACT.id });
           break;
         case 'ratTrapped':
           break;
@@ -637,10 +853,13 @@ export class GameScene extends Phaser.Scene {
       return false;
     }
     if (this.mode === 'extras') {
-      if (f.trapPressed || f.confirmPressed || f.pausePressed) {
-        if (this.extras === 'achievements') this.achievementsScreen.back();
-        else this.locked.back();
+      if (this.extras === 'achievements') {
+        if (f.trapPressed || f.confirmPressed || f.pausePressed) this.achievementsScreen.back();
+        return false;
       }
+      if (f.navX !== 0 || f.navY !== 0) this.scenesScreen.move(f.navX, f.navY);
+      if (f.confirmPressed || f.pausePressed) this.scenesScreen.confirm();
+      else if (f.trapPressed) this.scenesScreen.back();
       return false;
     }
     if (this.mode === 'acts') {

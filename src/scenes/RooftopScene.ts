@@ -590,6 +590,7 @@ export class RooftopScene extends Phaser.Scene {
         this.spider.sprite.setVisible(false);
         cam.shake(220, 0.02);
         sfx.stomp();
+        achieve({ type: 'stomped', act: ACT.id });
         this.playerInput.rumble({ durationMs: 300, strong: 1, weak: 0.8 });
         break;
       case 'fade':

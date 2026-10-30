@@ -144,6 +144,37 @@ const GLYPHS: Record<AchievementIcon, (pc: PixelCanvas) => void> = {
     pc.rect(9, 11, 5, 4, M.inner);
     pc.set(11, 12, M.web);
   },
+  // Rato branco de perfil, com o olho vermelho (todos os ratos derrotados).
+  rat: (pc) => {
+    const R = PAL.rat;
+    for (let y = 0; y < 24; y++) {
+      for (let x = 0; x < 24; x++) {
+        const head = ((x - 11) / 6.5) ** 2 + ((y - 13) / 4.5) ** 2 <= 1;
+        const snout = x >= 15 && x <= 20 && Math.abs(y - 14) <= (20 - x) * 0.55;
+        if (head || snout) pc.set(x, y, y > 15 ? R.furShade : R.fur);
+      }
+    }
+    pc.rect(8, 6, 4, 4, R.pink);
+    pc.set(8, 6, R.pinkDark);
+    pc.rect(14, 11, 2, 2, R.eye);
+    pc.set(20, 14, R.pinkDark);
+    pc.line(17, 16, 21, 17, R.furDark);
+  },
+  // Tênis sujo de zumbi (a pisada).
+  foot: (pc) => {
+    const Z = PAL.medal;
+    for (let y = 7; y <= 17; y++) {
+      for (let x = 4; x <= 20; x++) {
+        const ankle = x <= 10 && y >= 7;
+        const toe = x > 10 && y >= 11 + Math.max(0, (x - 17) * 0.5);
+        if (!ankle && !toe) continue;
+        pc.set(x, y, y >= 15 ? Z.paper : (x + y) % 5 === 0 ? Z.lockedRim : Z.roof);
+      }
+    }
+    pc.rect(4, 17, 17, 1, Z.paperDark);
+    pc.line(11, 12, 15, 12, Z.web);
+    pc.line(11, 14, 14, 13, Z.web);
+  },
   // Teia: fios saindo do canto e dois anéis.
   web: (pc) => {
     const M = PAL.medal;

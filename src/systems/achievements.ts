@@ -1,10 +1,15 @@
 // Conquistas: quais um acontecimento libera, o que já foi conseguido (lido de JSON com validação) e o
 // agrupamento por ato para a tela do menu. Lógica pura (quem grava é src/scenes/achievementStore.ts).
+// As funções de lista (ler, liberar, agrupar) servem também para as cenas já vistas (systems/scenes.ts).
 // Spec: docs/features/achievements.md
 import type { Achievement } from '../level/achievements';
 
 /** Acontecimentos do jogo que podem liberar conquistas. */
-export type GameEvent = { type: 'letterRead'; act: string; letter: string } | { type: 'actEnd'; act: string };
+export type GameEvent =
+  | { type: 'letterRead'; act: string; letter: string }
+  | { type: 'actEnd'; act: string }
+  | { type: 'allRatsKilled'; act: string }
+  | { type: 'stomped'; act: string };
 
 /** As conquistas da lista que este acontecimento libera (já tendo ou não). */
 export function triggeredBy(list: Achievement[], e: GameEvent): Achievement[] {
@@ -17,8 +22,8 @@ export function triggeredBy(list: Achievement[], e: GameEvent): Achievement[] {
 }
 
 /**
- * Junta as conquistas novas às já conseguidas. `fresh` são só as que ainda não existiam (para avisar
- * uma vez só). Não muda o original.
+ * Junta os ids novos aos que já existiam. `fresh` são só os que ainda não existiam (para avisar uma vez
+ * só). Não muda o original.
  */
 export function unlock(have: string[], ids: string[]): { unlocked: string[]; fresh: string[] } {
   const fresh = [...new Set(ids)].filter((id) => !have.includes(id));
@@ -26,7 +31,7 @@ export function unlock(have: string[], ids: string[]): { unlocked: string[]; fre
 }
 
 /** Lê o JSON salvo: uma lista de ids conhecidos. Qualquer coisa estranha vira lista vazia. */
-export function parseUnlocked(json: string | null, known: Achievement[]): string[] {
+export function parseUnlocked(json: string | null, known: { id: string }[]): string[] {
   if (!json) return [];
   let raw: unknown;
   try {
@@ -39,21 +44,21 @@ export function parseUnlocked(json: string | null, known: Achievement[]): string
   return [...new Set(raw.filter((v): v is string => typeof v === 'string' && ids.has(v)))];
 }
 
-export interface ActAchievements {
+export interface ActGroup<T> {
   act: string;
-  items: { achievement: Achievement; unlocked: boolean }[];
+  items: { item: T; unlocked: boolean }[];
 }
 
-/** Agrupa por ato, na ordem da lista, marcando as já conseguidas. */
-export function byAct(list: Achievement[], have: string[]): ActAchievements[] {
-  const groups: ActAchievements[] = [];
+/** Agrupa por ato, na ordem da lista, marcando os já conseguidos (conquistas) ou vistos (cenas). */
+export function byAct<T extends { id: string; act: string }>(list: T[], have: string[]): ActGroup<T>[] {
+  const groups: ActGroup<T>[] = [];
   for (const a of list) {
     let g = groups.find((x) => x.act === a.act);
     if (!g) {
       g = { act: a.act, items: [] };
       groups.push(g);
     }
-    g.items.push({ achievement: a, unlocked: have.includes(a.id) });
+    g.items.push({ item: a, unlocked: have.includes(a.id) });
   }
   return groups;
 }

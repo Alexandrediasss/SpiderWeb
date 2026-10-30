@@ -4,12 +4,18 @@
 //   Ato 1: "O explorador - Leia uma carta deixada por alguém misterioso."
 //          "Apreciador do amor - Leia a carta de amor."
 //          "Escavador de telhados - Saia da casa pelo telhado."
+//          "Conquistador de ratos - Mate todos os ratos."
 //   Ato 2: "Soltando teias pelos ares - Solte teias pelos postes."
+//          "Pé pesado - Seja pisado por um doente." (nas cartas do pai, os zumbis são "the sick")
 
-export type AchievementIcon = 'letter' | 'heart' | 'roof' | 'web';
+export type AchievementIcon = 'letter' | 'heart' | 'roof' | 'rat' | 'web' | 'foot';
 
 /** O que libera a conquista. `letter` vazio = qualquer carta do ato. */
-export type AchievementTrigger = { type: 'letterRead'; act: string; letter?: string } | { type: 'actEnd'; act: string };
+export type AchievementTrigger =
+  | { type: 'letterRead'; act: string; letter?: string }
+  | { type: 'actEnd'; act: string }
+  | { type: 'allRatsKilled'; act: string }
+  | { type: 'stomped'; act: string };
 
 export interface Achievement {
   id: string;
@@ -46,11 +52,27 @@ export const ACHIEVEMENTS: Achievement[] = [
     trigger: { type: 'actEnd', act: 'act1' },
   },
   {
+    id: 'rats',
+    act: 'act1',
+    name: 'RAT CONQUEROR',
+    description: 'Kill all the rats.',
+    icon: 'rat',
+    trigger: { type: 'allRatsKilled', act: 'act1' },
+  },
+  {
     id: 'poles',
     act: 'act2',
     name: 'WEBS THROUGH THE AIR',
     description: 'Shoot your webs across the poles.',
     icon: 'web',
     trigger: { type: 'actEnd', act: 'act2' },
+  },
+  {
+    id: 'stomped',
+    act: 'act2',
+    name: 'HEAVY FOOT',
+    description: 'Get stepped on by one of the sick.',
+    icon: 'foot',
+    trigger: { type: 'stomped', act: 'act2' },
   },
 ];

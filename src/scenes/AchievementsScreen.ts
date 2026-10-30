@@ -51,7 +51,7 @@ export class AchievementsScreen {
         const grid = document.createElement('div');
         grid.className = 'ach-grid';
         grid.append(
-          ...group.items.map(({ achievement: a, unlocked }) => {
+          ...group.items.map(({ item: a, unlocked }) => {
             const card = document.createElement('div');
             card.className = unlocked ? 'ach-card' : 'ach-card locked';
             const img = document.createElement('img');

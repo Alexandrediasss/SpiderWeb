@@ -168,3 +168,20 @@ export function playActTransition(kind: ActTransition): Promise<void> {
     requestAnimationFrame(frame);
   });
 }
+
+/** Cartão de capítulo no meio da tela (#chapter): "ACT 2" e o nome embaixo; some sozinho (animação do CSS). */
+export function showChapter(act: string, name: string): void {
+  const el = document.getElementById('chapter');
+  if (!el) return;
+  const a = el.querySelector('.chapter-act');
+  const n = el.querySelector('.chapter-name');
+  if (a) a.textContent = act;
+  if (n) n.textContent = name;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+export function hideChapter(): void {
+  document.getElementById('chapter')?.classList.remove('show');
+}

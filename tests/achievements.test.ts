@@ -8,9 +8,9 @@ import { ACHIEVEMENT_ICON, buildAchievementIcon } from '../src/art/uiArt';
 const ids = (list: { id: string }[]) => list.map((a) => a.id);
 
 describe('lista de conquistas', () => {
-  it('três no ato 1 e uma no ato 2, com ids únicos', () => {
-    expect(ACHIEVEMENTS.filter((a) => a.act === 'act1').length).toBe(3);
-    expect(ACHIEVEMENTS.filter((a) => a.act === 'act2').length).toBe(1);
+  it('quatro no ato 1 e duas no ato 2, com ids únicos', () => {
+    expect(ACHIEVEMENTS.filter((a) => a.act === 'act1').length).toBe(4);
+    expect(ACHIEVEMENTS.filter((a) => a.act === 'act2').length).toBe(2);
     expect(new Set(ids(ACHIEVEMENTS)).size).toBe(ACHIEVEMENTS.length);
   });
 
@@ -39,6 +39,12 @@ describe('o que libera cada conquista', () => {
     expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act2' }))).toEqual(['poles']);
     expect(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act3' })).toEqual([]);
   });
+
+  it('matar todos os ratos do ato 1 dá RAT CONQUEROR; ser pisada no ato 2 dá HEAVY FOOT', () => {
+    expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'allRatsKilled', act: 'act1' }))).toEqual(['rats']);
+    expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'stomped', act: 'act2' }))).toEqual(['stomped']);
+    expect(triggeredBy(ACHIEVEMENTS, { type: 'stomped', act: 'act1' })).toEqual([]);
+  });
 });
 
 describe('conseguir e salvar', () => {
@@ -59,10 +65,11 @@ describe('conseguir e salvar', () => {
   it('agrupa por ato, na ordem, marcando as conseguidas', () => {
     const groups = byAct(ACHIEVEMENTS, ['love', 'poles']);
     expect(groups.map((g) => g.act)).toEqual(['act1', 'act2']);
-    expect(groups[0].items.map((i) => [i.achievement.id, i.unlocked])).toEqual([
+    expect(groups[0].items.map((i) => [i.item.id, i.unlocked])).toEqual([
       ['explorer', false],
       ['love', true],
       ['roof', false],
+      ['rats', false],
     ]);
     expect(groups[1].items[0].unlocked).toBe(true);
   });
