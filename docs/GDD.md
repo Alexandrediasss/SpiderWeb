@@ -26,27 +26,30 @@ O jogo é em **inglês** (textos da interface). Código também em inglês; come
 ## Fluxo
 
 1. **Tela inicial:** "SPIDER WEB" e o menu principal por cima do sótão com chuva: **NEW GAME** (jogo novo, pergunta antes de apagar o salvo), **LOAD GAME** (abre a seleção de atos no ato atual), **SCENES** (rever as cutscenes já vistas e o resumo de cada ato terminado, como no museu do *Sonic Generations*; spec: [features/scenes.md](features/scenes.md)) e **ACHIEVEMENTS** (as conquistas de cada ato; spec: [features/achievements.md](features/achievements.md)). A música toca aqui. Spec: [features/title-screen.md](features/title-screen.md)
-2. **Seleção de atos:** estilo Telltale: o nome do ato entre setas (`LB`/`RB`), a arte do ato numa moldura gasta e `SELECT`/`BACK`. O ato 2 aparece bloqueado (COMING SOON). Spec: [features/acts.md](features/acts.md)
+2. **Seleção de atos:** estilo Telltale: o nome do ato entre setas (`LB`/`RB`), a arte do ato numa moldura gasta e `SELECT`/`BACK`. O ato 2 aparece apagado (`FINISH ACT 1 TO UNLOCK`) até terminar o ato 1; o ato 3 aparece com cadeado (`COMING SOON`). Spec: [features/acts.md](features/acts.md)
 3. **Cutscene de abertura:** na tela preta, o texto conta que os insetos sempre estiveram aqui e sobreviveram aos predadores gigantes. Uma luz revela a aranha desacordada, de barriga para cima, coberta por um líquido verde mutante. Ela acorda, desvira e sai da escuridão por um buraco de rato. Pode ser pulada. Spec: [features/intro.md](features/intro.md)
 4. **Jogo:** a aranha sai do buraco de rato na sala e o controle é liberado. No jogo, só os sons da casa: passos, chuva, trovões e os ratos.
-5. **Cartas:** perto de uma folha aparece `READ`; ela abre em tela cheia, segurada pelas patas da aranha, e o jogo pausa. Spec: [features/letters.md](features/letters.md)
-6. **Buraco no telhado (fim do ato 1):** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
-7. **Fim do ato:** "END OF ACT 1 / AWAKENING", as cartas achadas (ex.: 2/3) e o próximo ato. Depois, volta para a seleção de atos. O progresso fica salvo no navegador. Spec: [features/acts.md](features/acts.md)
-8. **Ato 2, ROOFTOPS** (liberado depois do ato 1): transição de teia e vento; a cutscene continua de onde o ato 1 parou (a aranha na calha, olhando a horda, o vento começando) e devolve o controle ali: o primeiro balanço é do jogador. Na fase, só balanço, ventania e obstáculos; cair na rua é ser pisada por um zumbi e voltar no último checkpoint. Termina entrando pela chaminé. Spec: [features/act2-rooftops.md](features/act2-rooftops.md)
-9. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
-10. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
+5. **Cartas:** perto de uma folha aparece `READ`; ela abre em tela cheia, segurada pelas patas da aranha, e o jogo pausa. As cartas são longas e têm páginas. Spec: [features/letters.md](features/letters.md)
+6. **O buraco abre:** o buraco no telhado do sótão começa tapado com tábuas. Ao fechar a segunda carta obrigatória (mesa e cama), uma cutscene curta mostra a chuva arrebentando as tábuas, e o caminho para fora se abre. Assim ninguém termina o ato sem ler a história. Spec: [features/street-cutscene.md](features/street-cutscene.md)
+7. **Buraco no telhado (fim do ato 1):** passar pelo buraco no telhado do sótão escurece a tela e mostra a **cutscene da rua**: a aranha sai no telhado, a câmera corta para a rua e sobe das pernas até as cabeças de uma horda de zumbis passando na chuva. Pode ser pulada. Spec: [features/street-cutscene.md](features/street-cutscene.md)
+8. **Fim do ato:** "END OF ACT 1 / AWAKENING", as cartas achadas (ex.: 2/3) e o próximo ato. Depois, volta para a seleção de atos. O progresso fica salvo no navegador. Spec: [features/acts.md](features/acts.md)
+9. **Ato 2, ROOFTOPS** (liberado depois do ato 1): transição de teia e vento; a cutscene continua de onde o ato 1 parou (a aranha na calha, olhando a horda, o vento começando) e devolve o controle ali: o primeiro balanço é do jogador. Na fase, só balanço, ventania e obstáculos; cair na rua é ser pisada por um zumbi e voltar no último checkpoint. Termina entrando pela chaminé. Spec: [features/act2-rooftops.md](features/act2-rooftops.md)
+10. **Pausa:** `Esc`/`Start` abre o menu com Resume, Restart e Main Menu. Spec: [features/pause-menu.md](features/pause-menu.md)
+11. **Morte:** com a vida zerada a tela escurece e a aranha volta ao início da fase, na frente do buraco (sem tela inicial nem cutscene). Spec: [features/combat.md](features/combat.md)
 
-## História (rascunho)
+## História
 
-Os insetos sempre estiveram aqui e sobreviveram a predadores gigantes. A protagonista acorda dentro da parede de uma casa, coberta por um líquido verde **mutante** que pingou de um cano. Ainda vai ser desenvolvida: o que é o líquido, o que ele fez com ela e o que ela busca na casa.
+**O texto da história, revisado, fica em [story.md](story.md)** (por enquanto, o ato 1 completo, com as cartas na íntegra). Aqui vai só o resumo.
+
+Os insetos sempre estiveram aqui e sobreviveram a predadores gigantes. A protagonista acorda dentro da parede de uma casa, coberta por um líquido verde **mutante** que pingou de um cano. Ainda vai ser desenvolvida: o que é o líquido, o que ele fez com ela e o que ela busca.
 
 **As cartas do pai** (ato 1):
 
-1. **Dia 14** (mesa da sala): há duas semanas começou a invasão dos "doentes", gente que morre e volta matando. Ele se trancou em casa com a esposa e a filha; a comida está acabando e eles bebem água da chuva. A filha tem asma, e ele vai ter que sair para buscar remédio.
-2. **Dia 21** (cama): a comida acabou e eles estão com sede. Ele abriu um buraco no sótão para fugir, mas tem medo do que viu lá em cima. Vão sair pelos telhados, de casa em casa.
-3. **Extra** (canto do sótão): ele e a esposa, Jean Marry, estavam perto do divórcio; cuidar da filha e se proteger os uniu mais do que nunca.
+1. **Dia 14** (mesa da sala): duas semanas depois do incidente, os "doentes" (gente que morre e volta matando) dominaram tudo. O irmão dele, **Olise**, foi morto e devorado na frente dele, e hoje anda como doente na rua de cima. A esposa vive assustada e às vezes agressiva; a comida está acabando, e ele sobe ao sótão todo dia para planejar a fuga.
+2. **Dia 21** (cama): a filha tem asma e o remédio está no fim; deve haver mais na loja de conveniência da rua de cima. A comida acabou e eles bebem água da chuva filtrada. O plano: sair no início da tarde, quando os doentes se juntam na rua de baixo atrás do cachorro dos vizinhos. A esposa, desesperada, chegou a dar um tapa nele. Ele abriu um buraco no telhado: vão sair à noite, por cima, pelos lugares altos.
+3. **Dia 15, extra** (canto do sótão): ele e a esposa, **Lonnie**, estavam perto do divórcio; desde o fim do mundo estão juntos o tempo todo. "EU TE AMO, LONNIE!"
 
-O buraco no telhado que a aranha usa para sair é o que o pai abriu. Fica para depois: a família conseguiu fugir? A filha achou o remédio?
+O buraco no telhado que a aranha usa para sair é o que o pai abriu (e tapou com tábuas, até a chuva arrebentá-las). Fica para depois: a família conseguiu chegar à loja? A filha achou o remédio?
 
 Lá fora o mundo acabou: uma horda de zumbis anda pela rua do bairro (americano, de classe média) debaixo da tempestade. Os zumbis misturam o do Minecraft (corpo em blocos, braços esticados) com o de Plants vs. Zombies (roupa do dia a dia, olhos grandes e desiguais, boca aberta). Fica para depois decidir se o líquido mutante tem a ver com isso.
 
@@ -91,7 +94,7 @@ Um corte lateral da casa (estilo casa de bonecas), com 80×44 tiles de 16 px:
 
 | Andar | Cômodos | Destaques |
 |---|---|---|
-| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto; buraco no telhado (chuva entrando, poça embaixo) que leva à cutscene da rua; a carta extra no canto direito |
+| Sótão | Sótão com telhado em escada | Caixas, baú, teias velhas, duas luminárias; alçapão para o quarto; buraco no telhado tapado com tábuas, que a chuva arrebenta depois das duas cartas (aí a chuva entra e ele leva à cutscene da rua); a carta extra no canto direito |
 | Andar de cima | Quarto, Banheiro | Cama (dá para passar embaixo) com a carta do dia 21, armário, prateleira; banheira, vaso, pia |
 | Térreo | Sala, Cozinha | Estante, sofá, mesa com cadeiras e a carta do dia 14; balcão, armários suspensos, geladeira |
 
@@ -110,7 +113,7 @@ Os andares da casa se ligam por buracos no piso (banheiro↔cozinha) e pelo alç
 
 ## Som
 
-- **Música:** piano solo, calmo e misterioso: uma valsa lenta em Ré menor, como um tema clássico de filme de Drácula. Gerada por código, em loop de cerca de 1min30. **Toca só na tela inicial.** Spec: [features/music.md](features/music.md)
+- **Música:** piano solo, calmo e misterioso: uma valsa lenta em Ré menor, como um tema clássico de filme de Drácula. Gerada por código, em loop de cerca de 1min30. **Toca só no menu** (tela inicial, seleção de atos, SCENES, ACHIEVEMENTS) **e nos resumos dos atos do SCENES**; nunca durante o jogo nem nas cutscenes. Spec: [features/music.md](features/music.md)
 - **No jogo:** passinhos da aranha, chuva abafada e trovões de vez em quando (24 a 55 s entre raios). Tudo sintetizado. Spec: [features/atmosphere.md](features/atmosphere.md)
 - **Combate:** cada dano tem som, como nos mobs do Minecraft: guinchos dos ratos, chiado da aranha, "fiuu" das teias. Spec: [features/combat.md](features/combat.md)
 - **Ato 2:** o vento sobe e desce com a rajada (ruído com assobio), choque dos fios, estalinhos das faíscas, a pisada (baque + estalo + respingo) e os gemidos da horda ficando mais altos quanto mais perto da rua. Spec: [features/wind.md](features/wind.md)

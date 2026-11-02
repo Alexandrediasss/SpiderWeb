@@ -19,6 +19,8 @@ interface Drop {
 }
 
 export class Atmosphere {
+  /** A chuva entra pelo buraco do telhado? (falso enquanto as tábuas tapam o buraco) */
+  leaking = true;
   readonly storm: Storm;
   private readonly lightImg: Phaser.GameObjects.Image;
   private readonly flashImg: Phaser.GameObjects.Image;
@@ -80,9 +82,9 @@ export class Atmosphere {
     return this.art.outside[y * this.W + x] === 1;
   }
 
-  /** Pixel dentro de casa por onde a chuva entra (embaixo do buraco no telhado)? */
+  /** Pixel dentro de casa por onde a chuva entra (embaixo do buraco no telhado, se ele estiver aberto)? */
   private inLeak(x: number, y: number): boolean {
-    return this.art.leaks.some((r) => x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1);
+    return this.leaking && this.art.leaks.some((r) => x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1);
   }
 
   private addDust(x: number, y: number): void {

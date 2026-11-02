@@ -1,7 +1,7 @@
 # Spider Web
 
 Jogo 2D em pixel art onde você é uma aranha explorando uma casa numa noite de tempestade: anda em paredes e tetos, corre e se balança com teias. A casa está escura, iluminada pelas luminárias; lá fora chove e de vez em quando cai um raio. Ratos patrulham partes da casa e mordem (3 de vida); a aranha se defende com teias de ataque e de prender. Pela casa há cartas do pai da família contando a invasão dos zumbis. Fluxo: menu principal (NEW GAME, LOAD GAME, SCENES para rever as cutscenes já vistas e o resumo cinematográfico de cada ato terminado, e ACHIEVEMENTS com as conquistas de cada ato) → seleção de atos (estilo Telltale) → cutscene de abertura → jogo. O ato 1 termina no buraco do telhado do sótão: cutscene da rua (a horda de zumbis) → "END OF ACT 1" → seleção de atos. O ato 2 (liberado depois do 1) é a travessia da rua por cima dos postes, na ventania (como no Celeste), até a chaminé da casa vizinha; cair na rua é ser pisada por um zumbi. Cada ato tem a sua transição (gosma verde, teia e vento).
-Visão de design completa: [docs/GDD.md](docs/GDD.md).
+Visão de design completa: [docs/GDD.md](docs/GDD.md). A história, em texto corrido (ato 1 completo, cartas na íntegra): [docs/story.md](docs/story.md).
 
 ## Stack e comandos
 
@@ -55,15 +55,15 @@ docs/                GDD + uma spec por feature
 - Conquistas (lista, quando libera, aviso na tela, tela do menu, salvo separado do jogo): [docs/features/achievements.md](docs/features/achievements.md)
 - SCENES (rever cutscenes vistas no jogo, como no *Sonic Generations*; resumo cinematográfico de cada ato terminado, com a aranha pilotada por um roteiro e testado com a física de verdade): [docs/features/scenes.md](docs/features/scenes.md)
 - Cutscene de abertura (texto, despertar no líquido mutante, buraco de rato, como editar): [docs/features/intro.md](docs/features/intro.md)
-- Buraco no telhado e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos; é o fim do ato 1): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
-- Cartas do pai (onde ficam, aviso READ, página com as patas, texto): [docs/features/letters.md](docs/features/letters.md)
+- Buraco no telhado (tapado com tábuas até ler as duas cartas, cutscene da chuva arrebentando) e cutscene da rua (horda de zumbis, câmera subindo das pernas às cabeças, gemidos; é o fim do ato 1): [docs/features/street-cutscene.md](docs/features/street-cutscene.md)
+- Cartas do pai (onde ficam, aviso READ, página com as patas, páginas, texto): [docs/features/letters.md](docs/features/letters.md)
 - Atos (seleção estilo Telltale, fim do ato, liberar ato, progresso salvo no navegador): [docs/features/acts.md](docs/features/acts.md)
 - Transições (teia que puxa as telas do menu, gosma verde do ato 1, teia e vento do ato 2): [docs/features/transitions.md](docs/features/transitions.md)
 - Ato 2, ROOFTOPS (mapa da rua, cutscenes de abertura e da chaminé, checkpoints, pisada do zumbi): [docs/features/act2-rooftops.md](docs/features/act2-rooftops.md)
 - Ventania do ato 2 (rajadas como no Celeste, detritos, fios soltos com faísca): [docs/features/wind.md](docs/features/wind.md)
 - Ratos, vida, mordida, teias de ataque e de prender, sons de dano: [docs/features/combat.md](docs/features/combat.md)
 - Menu de pausa (Resume, Restart, Main Menu; reinício da cena): [docs/features/pause-menu.md](docs/features/pause-menu.md)
-- Música (partitura, piano sintetizado, loop; só na tela inicial): [docs/features/music.md](docs/features/music.md)
+- Música (partitura, piano sintetizado, loop; só no menu e nos resumos do SCENES): [docs/features/music.md](docs/features/music.md)
 - Controle/gamepad (mapa de botões, zona morta, mira estável e assistida, vibração): [docs/features/gamepad.md](docs/features/gamepad.md)
 
 ## Debug
@@ -75,7 +75,7 @@ docs/                GDD + uma spec por feature
   - `window.__storm` (o `Storm`: `__storm.strike(true)` faz cair um raio perto agora);
   - `window.__music` (o `MusicPlayer`) e `window.__audio` (o `AudioHub`);
   - `__scene.goToStreet()` começa a cutscene da rua na hora; durante ela, `window.__street` é a `StreetScene`;
-  - `__scene.openLetter('table')` (ou `'bed'`, `'attic'`) abre uma carta; `__scene.endAct()` mostra o fim do ato;
+  - `__scene.openLetter('table')` (ou `'bed'`, `'attic'`) abre uma carta; `__scene.endAct()` mostra o fim do ato; `__scene.startHoleBreak()` roda a cutscene das tábuas do buraco arrebentando (`__scene.holeOpen` diz se o buraco está aberto);
   - `__spider.placeAt(x, y)` teleporta a aranha (px do mundo; ela cai e gruda no que estiver embaixo);
   - `localStorage.removeItem('spiderweb.achievements')` zera as conquistas (ficam separadas do jogo salvo; o NEW GAME não apaga); `(await import('/src/scenes/AchievementToast.ts')).achieve({ type: 'actEnd', act: 'act1' })` libera uma na hora;
   - `localStorage.removeItem('spiderweb.scenes')` tranca de novo as cenas do SCENES (também separadas do jogo salvo); `localStorage.setItem('spiderweb.scenes', '["act1-intro","act1-recap","act1-street","act2-intro","act2-recap","act2-ending"]')` libera todas. `__scene.scene.restart({ openScenes: 'act1-recap' })` abre o SCENES direto e `__scene.scene.restart({ recap: true })` roda o resumo do ato 1 (`__scene.recap.director` mostra o plano e a ação; mais em [docs/features/scenes.md](docs/features/scenes.md));

@@ -248,6 +248,50 @@ export class Sfx {
     });
   }
 
+  /** Tábua encharcada rangendo: tom grave e áspero que oscila, num passa-banda de madeira. */
+  creak(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const v = this.vary();
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(75 * v, t);
+    osc.frequency.linearRampToValueAtTime(110 * v, t + 0.35);
+    osc.frequency.linearRampToValueAtTime(65 * v, t + 0.7);
+    const chop = ctx.createGain();
+    chop.gain.value = 0.5;
+    const lfo = ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.value = 23;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.5;
+    lfo.connect(depth).connect(chop.gain);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 650;
+    band.Q.value = 2.5;
+    osc.connect(band).connect(chop).connect(this.envelope(t, SFX.shotVolume * 0.6, 0.08, 0.75)).connect(this.destination);
+    for (const o of [osc, lfo]) {
+      o.start(t);
+      o.stop(t + 0.8);
+    }
+  }
+
+  /** Tábuas arrebentando: estalo seco, baque e as tábuas batendo no chão logo depois. */
+  boardsBreak(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.shotVolume;
+    const crack = this.noiseSource(t, 0.15);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 2400;
+    band.Q.value = 0.9;
+    crack.connect(band).connect(this.envelope(t, vol, 0.002, 0.13)).connect(this.destination);
+    this.click(t, 170, 55, 0.25, vol * 0.8);
+    for (let i = 0; i < 4; i++) this.click(t + 0.55 + i * 0.09 * this.vary(), 320 * this.vary(), 140, 0.07, vol * 0.45);
+  }
+
   // ---------- peças ----------
 
   /** Variação determinística de ±6% no tom, para os sons não serem idênticos. */

@@ -40,7 +40,7 @@ O ato 2 (lá fora) usa o mesmo `Storm`, mas desenha a chuva, os raios e o clarã
 
 ## Som
 
-- **Sem música no jogo.** A música só toca na tela inicial (veja `title-screen.md`).
+- **Sem música no jogo.** A música só toca no menu e nos resumos do SCENES (veja `music.md`).
 - **Passos:** a cada pata que toca o chão (quadros `walk0` e `walk2` da animação), um "tic" curtinho com leve variação. Correndo, os passos ficam mais rápidos e um pouco mais fortes.
 - **Chuva:** ruído contínuo e abafado por um passa-baixa (a chuva bate lá fora), com volume baixo (`SFX.rainVolume`). Na cutscene da rua, `setOutside(true)` abre o filtro e sobe o volume (`SFX.rainOutsideVolume`).
 - **Trovão:** ronco que "rola" por alguns segundos, com duas camadas no mesmo envelope:

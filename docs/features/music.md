@@ -3,7 +3,10 @@
 Código: `src/audio/score.ts` (partitura, lógica pura), `src/audio/PianoSynth.ts` (piano sintetizado), `src/audio/MusicPlayer.ts` (agendador em loop).
 Testes: `tests/score.test.ts`.
 
-**Onde toca:** só na tela inicial (`title-screen.md`). Ela continua na seleção de atos e nas telas do menu, e some em `MUSIC.fadeOutSec` quando um ato começa. Durante o jogo não há música, só chuva, trovões e passos (`atmosphere.md`).
+**Onde toca:**
+- No menu: tela inicial (`title-screen.md`), seleção de atos, SCENES e ACHIEVEMENTS. Some em `MUSIC.fadeOutSec` quando um ato começa.
+- Nos **resumos dos atos** do SCENES (`scenes.md`): continua tocando durante o resumo e some junto com o escurecer do último plano.
+- **Não toca** durante o jogo (só chuva, trovões e passos, `atmosphere.md`) nem nas cutscenes, mesmo assistidas pelo SCENES.
 
 ## Clima
 

@@ -16,11 +16,28 @@ Testes: `tests/horde.test.ts`, `tests/roofHole.test.ts` e `tests/zombieArt.test.
 ## O buraco no telhado
 
 1. Fica no lado esquerdo do telhado do sótão: 2×2 tiles (`ROOF_HOLE`), com `~` no mapa, ou seja, céu.
-2. **Dá para ver de dentro:** a chuva aparece no buraco e uma parte dela cai para dentro, até a poça no chão do sótão. No relâmpago, a luz também entra pelo buraco, como numa janela.
-3. **Gatilho:** quando o centro da aranha entra no retângulo do buraco, a tela escurece em `STREET.exitFadeSec`. Nesse meio-tempo a aranha sobe sozinha (input "para cima"), sem pulo nem teias, e não dá para pausar.
-4. **Fim do ato:** a cena do jogo **dorme** durante a cutscene (`scene.sleep`/`wake`). Quando a cutscene acaba (ou é pulada), ela acorda a cena do jogo, que continua com a tela preta e mostra o "END OF ACT 1" ([acts.md](acts.md)). A aranha não volta mais para o sótão.
-5. Dá para pular.
-6. **SCENES:** começar a cutscene libera "THE HORDE" no SCENES. Assistida de lá (`replay`), a cena do jogo não está dormindo: no fim ou pulando ela volta para o SCENES, sem fim do ato ([scenes.md](scenes.md)).
+2. **Começa fechado:** o pai pregou tábuas por dentro para a chuva não entrar. Enquanto as duas cartas obrigatórias (mesa e cama, [letters.md](letters.md)) não foram lidas, os tiles do buraco são sólidos (`LevelGrid.setSolid`) e as tábuas (`buildHolePlanks` em `src/art/holeArt.ts`) aparecem por cima. A aranha anda nelas como num pedaço de telhado e a chuva não entra no sótão.
+   - Antes ele ficava sempre aberto: quem passasse direto pelo buraco terminava o ato sem ler a história e podia ficar perdido.
+3. **A cutscene do buraco quebrando** (`GameScene`, modo `holeBreak`), logo depois de fechar a segunda carta obrigatória:
+
+   | Etapa | O que acontece |
+   |---|---|
+   | `out` | A tela escurece (`HOLE_BREAK.fadeSec`). |
+   | `creak` | Corte para o sótão, com faixas de cinema e a câmera aproximada no buraco. As tábuas encharcadas rangem e tremem cada vez mais, pingando água. |
+   | `break` | Cai um raio perto, e as tábuas arrebentam: caem girando no chão do sótão, com estalo de madeira. A chuva passa a entrar pelo buraco. |
+   | `look` | A câmera fica no buraco aberto, com a chuva caindo dentro. |
+   | `back` | Escurece e volta para a aranha, onde ela estava. O controle volta. |
+
+   - Pular: `Enter`, `Esc` ou `Espaço`, `A` ou `Start`. Escurece rápido e volta já com o buraco aberto.
+   - Os ratos param durante a cutscene (ler a carta da cama com o rato perto não é armadilha).
+   - O buraco aberto vale para o ato inteiro: morrer ou "Restart" não fecham de novo. Começar o ato 1 de novo (NEW GAME ou seleção de atos) fecha.
+   - No resumo do ato 1 (SCENES), o buraco já está aberto.
+   - Tempos e zoom: `HOLE_BREAK` em `config.ts`.
+4. **Aberto, dá para ver de dentro:** a chuva aparece no buraco e uma parte dela cai para dentro, até a poça no chão do sótão. No relâmpago, a luz também entra pelo buraco, como numa janela.
+5. **Gatilho:** com o buraco aberto, quando o centro da aranha entra no retângulo do buraco, a tela escurece em `STREET.exitFadeSec`. Nesse meio-tempo a aranha sobe sozinha (input "para cima"), sem pulo nem teias, e não dá para pausar.
+6. **Fim do ato:** a cena do jogo **dorme** durante a cutscene (`scene.sleep`/`wake`). Quando a cutscene acaba (ou é pulada), ela acorda a cena do jogo, que continua com a tela preta e mostra o "END OF ACT 1" ([acts.md](acts.md)). A aranha não volta mais para o sótão.
+7. Dá para pular.
+8. **SCENES:** começar a cutscene libera "THE HORDE" no SCENES. Assistida de lá (`replay`), a cena do jogo não está dormindo: no fim ou pulando ela volta para o SCENES, sem fim do ato ([scenes.md](scenes.md)).
 
 ## Roteiro (cerca de 27 s)
 

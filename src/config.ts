@@ -317,6 +317,32 @@ export const LETTER = {
   /** Brilho de "tem algo aqui" enquanto a carta não foi lida: a cada quantos segundos e quanto dura. */
   glintEverySec: 2.4,
   glintSec: 0.4,
+  /**
+   * Quanto texto cabe numa página do papel (caracteres), quanto conta cada parágrafo (o espaço entre eles)
+   * e o cabeçalho ("Day 14") da primeira página. Se o texto vazar do papel no navegador, diminua `pageChars`.
+   */
+  pageChars: 760,
+  paragraphCost: 30,
+  headingCost: 60,
+};
+
+/** A cutscene das tábuas do buraco no telhado arrebentando. Spec: docs/features/street-cutscene.md */
+export const HOLE_BREAK = {
+  /** Escurecer na ida e na volta (s). */
+  fadeSec: 0.45,
+  /** As tábuas rangendo e tremendo, o tempo até arrebentar, olhando o buraco aberto (s). */
+  creakSec: 2.2,
+  breakSec: 1.1,
+  lookSec: 1.5,
+  /** Gravidade das tábuas soltas (px/s²) e quanto elas giram caindo (graus/s). */
+  fallGravity: 900,
+  fallSpinDeg: 420,
+  /** Zoom da câmera no buraco. */
+  zoom: 1.4,
+  /** Abaixo do centro do buraco (px), para aparecer o céu, o buraco e o chão do sótão. */
+  lookDownPx: 54,
+  /** Pular só depois disso (s): a tecla que fechou a carta não pula a cutscene. */
+  skipAfterSec: 0.4,
 };
 
 /** Tela de fim do ato. Spec: docs/features/acts.md */

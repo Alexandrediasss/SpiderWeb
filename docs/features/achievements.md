@@ -34,7 +34,7 @@ Testes: `tests/achievements.test.ts`.
 3. **Salvo separado do jogo:** fica em `spiderweb.achievements`, separado do progresso. O **NEW GAME não apaga as conquistas** (ele só zera atos e cartas). Se o navegador bloquear o `localStorage`, as conquistas funcionam na jogada, só não ficam salvas. JSON estragado ou com ids desconhecidos é ignorado (não trava o jogo).
 4. **Aviso:**
    - no topo, no centro: o ícone, `ACHIEVEMENT UNLOCKED` pequeno e o nome;
-   - entra deslizando, fica `ACHIEVEMENTS.toastSec` e sai;
+   - entra deslizando, fica `ACHIEVEMENT.toastSec` e sai;
    - se duas forem conseguidas juntas, aparecem uma depois da outra;
    - toca um sininho (`Sfx.achievement`, três notas subindo).
    - Aparece por cima de qualquer coisa (carta aberta, tela de fim do ato).
@@ -49,5 +49,5 @@ Testes: `tests/achievements.test.ts`.
 
 - **Nova conquista:** adicione em `ACHIEVEMENTS` (`src/level/achievements.ts`) com o gatilho. Se precisar de um acontecimento novo, crie o tipo em `GameEvent` (`systems/achievements.ts`) e dispare `award(...)` na cena.
 - **Novo ícone:** um caso em `buildAchievementIcon` (`uiArt.ts`).
-- **Tempo do aviso:** `ACHIEVEMENTS` em `config.ts`.
+- **Tempo do aviso:** `ACHIEVEMENT` em `config.ts` (no singular).
 - **Zerar (dev):** `localStorage.removeItem('spiderweb.achievements')` no console.

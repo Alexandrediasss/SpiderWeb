@@ -6,7 +6,7 @@ import { LETTERS } from '../src/level/letters';
 import { isSolidChar } from '../src/level/legend';
 import { LevelGrid } from '../src/physics/LevelGrid';
 import { SpiderMotor } from '../src/systems/SpiderMotor';
-import { LetterLog, letterCenter, nearbyLetter } from '../src/systems/letters';
+import { LetterLog, letterCenter, nearbyLetter, paginateLetter, requiredLettersRead } from '../src/systems/letters';
 import { DT, input } from './helpers';
 
 const grid = LevelGrid.fromAscii(HOUSE_MAP, TILE, isSolidChar);
@@ -72,5 +72,45 @@ describe('LetterLog', () => {
     expect(log.ids.sort()).toEqual(['attic', 'table']);
     log.clear();
     expect(log.count(['table'])).toBe(0);
+  });
+});
+
+describe('páginas das cartas', () => {
+  const pages = (text: string) => paginateLetter(text, LETTER.pageChars, LETTER.paragraphCost, LETTER.headingCost);
+  const cost = (page: string[], first: boolean) =>
+    page.reduce((s, p) => s + p.length + LETTER.paragraphCost, first ? LETTER.headingCost : 0);
+
+  it.each(LETTERS)('"$id": nenhuma página passa do papel e nenhuma palavra se perde', (l) => {
+    const ps = pages(l.text);
+    ps.forEach((p, i) => {
+      expect(p.length).toBeGreaterThan(0);
+      expect(cost(p, i === 0)).toBeLessThanOrEqual(LETTER.pageChars);
+    });
+    const words = (t: string) => t.split(/\s+/).filter(Boolean);
+    expect(words(ps.flat().join(' '))).toEqual(words(l.text));
+  });
+
+  it('as cartas longas viram mais de uma página; texto curto fica numa só', () => {
+    expect(pages(LETTERS[0].text).length).toBeGreaterThan(1);
+    expect(pages('Short letter.\n\nVery short.')).toEqual([['Short letter.', 'Very short.']]);
+  });
+
+  it('um parágrafo maior que a página é quebrado entre frases', () => {
+    const long = Array.from({ length: 30 }, (_, i) => `Sentence number ${i} is here.`).join(' ');
+    const ps = pages(long);
+    expect(ps.length).toBeGreaterThan(1);
+    for (const p of ps.flat()) expect(p).toMatch(/\.$/);
+  });
+});
+
+describe('cartas obrigatórias', () => {
+  it('só as duas obrigatórias abrem o buraco; a extra não conta', () => {
+    const log = new LetterLog();
+    log.markRead('attic');
+    log.markRead('table');
+    expect(requiredLettersRead(LETTERS, log)).toBe(false);
+    log.markRead('bed');
+    expect(requiredLettersRead(LETTERS, log)).toBe(true);
+    expect(LETTERS.filter((l) => !l.extra).map((l) => l.id).sort()).toEqual(['bed', 'table']);
   });
 });
