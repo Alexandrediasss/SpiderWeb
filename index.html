@@ -944,9 +944,12 @@
       }
       #chapter h2 {
         margin: 0;
-        font-size: clamp(22px, 5vw, 56px);
+        /* --chars: letras do nome (no mínimo 16, posto por showChapter): nome longo diminui para caber numa linha. */
+        font-size: clamp(16px, min(5vw, 89.6vw / var(--chars, 16) / 1.12), 56px);
         font-weight: normal;
         letter-spacing: 0.12em;
+        text-align: center;
+        white-space: nowrap;
       }
       @keyframes chapter {
         0% {

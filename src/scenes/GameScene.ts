@@ -406,8 +406,13 @@ export class GameScene extends Phaser.Scene {
       case 'act1-street':
         this.scene.start('street', { replay: true });
         break;
-      default:
+      case 'act2-intro':
+      case 'act2-recap':
+      case 'act2-ending':
         this.scene.start('act2', { replay: id });
+        break;
+      default:
+        this.scene.start('act3', { replay: id });
     }
   }
 

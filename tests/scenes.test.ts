@@ -5,7 +5,7 @@ import { byAct, parseUnlocked, unlock } from '../src/systems/achievements';
 
 describe('cenas do SCENES', () => {
   it('três por ato, na ordem da história: abertura, resumo, final', () => {
-    for (const act of ['act1', 'act2']) {
+    for (const act of ['act1', 'act2', 'act3']) {
       expect(SCENES.filter((s) => s.act === act).map((s) => s.kind)).toEqual(['cutscene', 'recap', 'cutscene']);
     }
     expect(new Set(SCENES.map((s) => s.id)).size).toBe(SCENES.length);
@@ -27,8 +27,9 @@ describe('cenas do SCENES', () => {
 
   it('agrupa por ato marcando as vistas', () => {
     const groups = byAct(SCENES, ['act1-intro', 'act1-street']);
-    expect(groups.map((g) => g.act)).toEqual(['act1', 'act2']);
+    expect(groups.map((g) => g.act)).toEqual(['act1', 'act2', 'act3']);
     expect(groups[0].items.map((i) => i.unlocked)).toEqual([true, false, true]);
     expect(groups[1].items.every((i) => !i.unlocked)).toBe(true);
+    expect(groups[2].items.every((i) => !i.unlocked)).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-// Roteiro dos resumos de cada ato (cenas "THE HOUSE" e "ACROSS THE STREET" do SCENES): os planos, onde a
+// Roteiro dos resumos de cada ato (cenas "THE HOUSE", "ACROSS THE STREET" e "THE HOUSE NEXT DOOR" do SCENES): os planos, onde a
 // aranha começa, o que ela faz e a legenda. Posições em px do mundo (1 tile = 16 px) ou tiles.
 // Os testes (tests/recap.test.ts) rodam cada plano com a física de verdade e exigem que toda ação chegue
 // no objetivo: ao mexer no mapa, rode `npm test`. Spec: docs/features/scenes.md
@@ -186,5 +186,121 @@ export const ACT2_RECAP: RecapShot[] = [
       { type: 'move', move: { x: 1, y: 0 }, until: { minX: 186 * T }, maxSec: 4 },
     ],
     holdSec: 1.6,
+  },
+];
+
+/**
+ * Ato 3, a casa vizinha (na ordem da história): o sótão escuro, a carta do Dia 22, a descida, a gosma, a
+ * cama (Dia 35), o armário (Dia 40) e a cozinha, com o doente e o lustre. Os testes rodam junto a gosma, o
+ * doente e o lustre (no mesmo passo fixo) e exigem que a gosma nunca encoste na Mary.
+ */
+export const ACT3_RECAP: RecapShot[] = [
+  {
+    // Sai da chaminé e anda pelo sótão escuro, por cima da caixa.
+    name: 'attic',
+    start: { tx: 62, ty: 11, facing: -1 },
+    caption: 'THE HOUSE NEXT DOOR HAD NO POWER.',
+    zoom: 1.5,
+    look: { x: -40, y: -45 },
+    actions: [
+      { type: 'wait', sec: 0.8 },
+      { type: 'move', move: { x: -1, y: 0 }, until: { attached: 'floor', maxX: 50 * T }, maxSec: 6 },
+    ],
+    holdSec: 0.6,
+  },
+  {
+    // Sobe na caixa e lê a carta do Dia 22.
+    name: 'day22',
+    start: { tx: 50, ty: 11, facing: -1 },
+    caption: 'IN THE ATTIC, MARY FOUND A LETTER.',
+    zoom: 1.6,
+    look: { x: 0, y: -30 },
+    actions: [
+      { type: 'wait', sec: 0.3 },
+      { type: 'move', move: { x: -1, y: 0 }, until: { attached: 'floor', maxY: 9 * T }, maxSec: 4 },
+      { type: 'move', move: { x: -1, y: 0 }, until: { maxX: 45 * T + 12 }, maxSec: 3 },
+      { type: 'read', letter: 'day22', sec: 2.8 },
+    ],
+    holdSec: 0.5,
+  },
+  {
+    // Pelo buraco do sótão, até o chão do quarto.
+    name: 'descent',
+    start: { tx: 9, ty: 11, facing: -1 },
+    caption: 'SHE KEPT WALKING THROUGH THE DARK.',
+    zoom: 1.2,
+    look: { x: 20, y: 30 },
+    actions: [
+      { type: 'wait', sec: 0.4 },
+      { type: 'move', move: { x: -1, y: 0 }, until: { attached: 'ceiling', minY: 14 * T }, maxSec: 4 },
+      { type: 'jump', move: { x: 0, y: 0 }, until: { attached: 'floor' }, maxSec: 3 },
+    ],
+    holdSec: 0.8,
+  },
+  {
+    // No quarto: pula a poça de gosma entre as goteiras.
+    name: 'goo',
+    start: { tx: 21, ty: 26, facing: 1 },
+    caption: 'GREEN LIQUID SEEPED FROM THE FLOOR.',
+    zoom: 1.5,
+    look: { x: 20, y: -60 },
+    actions: [
+      { type: 'wait', sec: 0.5 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 24 * T + 8 }, maxSec: 3 },
+      { type: 'jump', move: { x: 1, y: 0 }, until: { attached: 'floor', minX: 29 * T }, maxSec: 3 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 35 * T }, maxSec: 3 },
+    ],
+    holdSec: 0.6,
+  },
+  {
+    // Do criado-mudo, pula na cama e lê a carta do Dia 35.
+    name: 'bed',
+    start: { tx: 19, ty: 23, facing: -1 },
+    caption: 'THE LETTERS MADE HER SAD AND SCARED.',
+    zoom: 1.6,
+    look: { x: 0, y: -30 },
+    actions: [
+      { type: 'wait', sec: 0.3 },
+      { type: 'jump', move: { x: -1, y: 0 }, until: { attached: 'floor' }, maxSec: 2 },
+      { type: 'move', move: { x: -1, y: 0 }, until: { maxX: 12 * T + 12 }, maxSec: 3 },
+      { type: 'read', letter: 'day35', sec: 2.8 },
+    ],
+    holdSec: 0.5,
+  },
+  {
+    // No corredor, mata o rato e entra no armário: a carta do Dia 40.
+    name: 'wardrobe',
+    start: { tx: 56, ty: 26, facing: -1 },
+    caption: 'THE LAST LETTER HAD BLOOD ON IT.',
+    zoom: 1.5,
+    look: { x: 0, y: -55 },
+    actions: [
+      { type: 'wait', sec: 0.3 },
+      { type: 'shoot', kind: 'attack', rat: 1, everySec: 0.4, maxSec: 6 },
+      { type: 'move', move: { x: 1, y: 0 }, until: { minX: 61 * T + 4 }, maxSec: 4 },
+      { type: 'read', letter: 'day40', sec: 3 },
+    ],
+    holdSec: 0.6,
+  },
+  {
+    // Na cozinha: de cima da geladeira acerta o doente, sobe ao teto, anda até o lustre, espera o doente
+    // parar embaixo e corta a corda.
+    name: 'kitchen',
+    start: { tx: 32, ty: 32, facing: -1 },
+    caption: 'IN THE KITCHEN, ONE OF THE SICK.',
+    zoom: 1,
+    // A cozinha inteira, do teto (a Mary) ao chão (o doente).
+    look: { x: -40, y: 100 },
+    actions: [
+      { type: 'wait', sec: 0.6 },
+      { type: 'web', anchor: { x: 31 * T + 8, y: 29 * T - 1 }, move: { x: 0, y: -1 }, until: { attached: 'ceiling' }, maxSec: 3 },
+      { type: 'move', move: { x: -1, y: -1 }, until: { maxX: 24 * T }, maxSec: 4 },
+      { type: 'shoot', kind: 'attack', cue: 'sick', everySec: 0.5, maxSec: 4 },
+      { type: 'move', move: { x: -1, y: -1 }, until: { maxX: 12 * T + 8 }, maxSec: 6 },
+      { type: 'await', cue: 'sickUnder', maxSec: 8 },
+      { type: 'shoot', kind: 'attack', cue: 'rope', everySec: 0.4, maxSec: 3 },
+      { type: 'await', cue: 'sickDead', maxSec: 3 },
+    ],
+    holdSec: 2.4,
   },
 ];

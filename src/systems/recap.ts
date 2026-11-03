@@ -31,8 +31,13 @@ export type RecapAction =
    * seja uma teia sem `anchor`.
    */
   | { type: 'web'; anchor?: Vec2; move: Vec2; until: Goal; maxSec: number }
-  /** Atira no rato até ele morrer (ataque) ou ficar preso (prender), um tiro a cada `everySec`. */
-  | { type: 'shoot'; kind: ShotKind; rat: number; everySec: number; maxSec: number }
+  /**
+   * Atira, um tiro a cada `everySec`: no rato `rat` até ele morrer (ataque) ou ficar preso (prender), ou na
+   * marca `cue` até ela dizer que acabou.
+   */
+  | { type: 'shoot'; kind: ShotKind; rat?: number; cue?: string; everySec: number; maxSec: number }
+  /** Parada, esperando a marca `cue` dizer que acabou. */
+  | { type: 'await'; cue: string; maxSec: number }
   /** Lê a carta (a cena mostra a página) e fica parada. */
   | { type: 'read'; letter: string; sec: number };
 
@@ -57,13 +62,21 @@ export interface RecapShot {
   holdSec: number;
 }
 
-/** O que o diretor precisa saber da aranha e dos ratos neste quadro. */
+/** Uma marca do mundo que o roteiro mira (`shoot`) ou espera (`await`): onde está e se já acabou. */
+export interface RecapCue {
+  x: number;
+  y: number;
+  done: boolean;
+}
+
+/** O que o diretor precisa saber da aranha, dos ratos e das marcas neste quadro. */
 export interface RecapView {
   x: number;
   y: number;
   surface: Surface;
   hasRope: boolean;
   rats: { x: number; y: number; alive: boolean; trapped: boolean }[];
+  cues: Record<string, RecapCue>;
 }
 
 export type RecapEvent =
@@ -87,10 +100,11 @@ export function shotStart(shot: RecapShot, tile: number, half: number): Vec2 {
   return { x: (shot.start.tx + 0.5) * tile, y: (shot.start.ty + 1) * tile - half };
 }
 
-/** O que o diretor vê: a aranha (SpiderMotor) e os ratos (Rat). */
+/** O que o diretor vê: a aranha (SpiderMotor), os ratos (Rat) e as marcas. */
 export function recapView(
   m: { body: Vec2; surface: Surface; rope: unknown },
   rats: { body: Vec2; alive: boolean; state: string }[],
+  cues: Record<string, RecapCue> = {},
 ): RecapView {
   return {
     x: m.body.x,
@@ -98,6 +112,7 @@ export function recapView(
     surface: m.surface,
     hasRope: m.rope !== null,
     rats: rats.map((r) => ({ x: r.body.x, y: r.body.y, alive: r.alive, trapped: r.state === 'trapped' })),
+    cues,
   };
 }
 
@@ -175,10 +190,12 @@ export class RecapDirector {
         if (!finished) Object.assign(input, { move: act.move, webHeld: true, aim: act.anchor ?? input.aim });
         break;
       case 'shoot': {
-        const rat = v.rats[act.rat];
-        finished = !rat || !rat.alive || (act.kind === 'trap' && rat.trapped);
-        if (finished || !rat) break;
-        input.aim = { x: rat.x, y: rat.y };
+        const rat = act.rat === undefined ? undefined : v.rats[act.rat];
+        const cue = act.cue === undefined ? undefined : v.cues[act.cue];
+        const target = rat ?? cue;
+        finished = rat ? !rat.alive || (act.kind === 'trap' && rat.trapped) : !cue || cue.done;
+        if (finished || !target) break;
+        input.aim = { x: target.x, y: target.y };
         if (fresh || this.actionTime - this.lastFire >= act.everySec) {
           this.lastFire = this.actionTime;
           if (act.kind === 'attack') input.attackPressed = true;
@@ -186,6 +203,9 @@ export class RecapDirector {
         }
         break;
       }
+      case 'await':
+        finished = v.cues[act.cue]?.done ?? true;
+        break;
       case 'read':
         if (fresh) events.push({ type: 'read', letter: act.letter, sec: act.sec });
         finished = this.actionTime >= act.sec;
@@ -231,6 +251,13 @@ export interface RecapActors {
   /** Anda a aranha um passo (na cena, também atualiza o sprite). */
   stepSpider: (dt: number, input: SpiderInput) => void;
   combat: Combat | null;
+  /**
+   * O resto do mundo que anda no mesmo passo fixo, depois das teias e dos ratos (ato 3: a gosma, o doente e
+   * o lustre), com o que o combate fez neste passo. Assim o resultado é o mesmo da cena e do teste.
+   */
+  stepWorld?: (dt: number, combat: CombatEvent[]) => void;
+  /** As marcas que o roteiro mira ou espera (ato 3: o doente, a corda do lustre). */
+  cues?: () => Record<string, RecapCue>;
 }
 
 /**
@@ -262,7 +289,7 @@ export class RecapRun {
 
   private step(dt: number, out: RecapOut): void {
     const { motor, combat } = this.a;
-    const { input, events } = this.director.step(dt, recapView(motor, combat?.rats ?? []));
+    const { input, events } = this.director.step(dt, recapView(motor, combat?.rats ?? [], this.a.cues?.()));
     for (const e of events) {
       if (e.type !== 'shot') continue;
       const shot = this.director.shots[e.index];
@@ -276,11 +303,15 @@ export class RecapRun {
     motor.wind = wind ? wind.dir * wind.strength * WIND.gustAccel : 0;
     this.a.stepSpider(dt, input);
     motor.wind = 0;
-    if (!combat) return;
-    // Invencível: os ratos dão o bote, mas a mordida não tira vida nem empurra.
-    combat.health.invulnLeft = Number.POSITIVE_INFINITY;
-    if (input.attackPressed) out.combat.push(...combat.fire('attack', motor.body, unitTo(motor.body, input.aim)));
-    if (input.trapPressed) out.combat.push(...combat.fire('trap', motor.body, unitTo(motor.body, input.aim)));
-    out.combat.push(...combat.update(dt, motor));
+    const fired: CombatEvent[] = [];
+    if (combat) {
+      // Invencível: os ratos dão o bote, mas a mordida não tira vida nem empurra.
+      combat.health.invulnLeft = Number.POSITIVE_INFINITY;
+      if (input.attackPressed) fired.push(...combat.fire('attack', motor.body, unitTo(motor.body, input.aim)));
+      if (input.trapPressed) fired.push(...combat.fire('trap', motor.body, unitTo(motor.body, input.aim)));
+      fired.push(...combat.update(dt, motor));
+      out.combat.push(...fired);
+    }
+    this.a.stepWorld?.(dt, fired);
   }
 }

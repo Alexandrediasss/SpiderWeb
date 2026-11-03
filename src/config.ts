@@ -559,6 +559,10 @@ export const CHANDELIER = {
   /** Balanço parado (graus e velocidade). */
   swayDeg: 3,
   swaySpeed: 1.3,
+  /** Empurrão na Mary se cair em cima dela (px/s). */
+  knockback: { x: 160, y: 120 },
+  /** Resumo do ato 3: "embaixo do lustre" deixa esta folga (px) para a queda acertar o doente com certeza. */
+  underMarginPx: 4,
 };
 
 /** Falas da Mary (caixa de diálogo). Spec: docs/features/dialogue.md */
@@ -591,6 +595,8 @@ export const ACT3 = {
   endLookSec: 1.8,
   endFadeSec: 1.2,
   endZoom: 1.5,
+  /** A janela pelo SCENES: a Mary anda sozinha da bancada até o vão; tempo máximo (s) antes de forçar o fim. */
+  endApproachMaxSec: 4,
   /** Gemido abafado vindo de baixo, no 1º andar (s, mín–máx). */
   moanGapSec: [5, 10] as const,
 };

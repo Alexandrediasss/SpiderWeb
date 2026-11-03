@@ -182,6 +182,8 @@ export function showChapter(act: string, name: string): void {
   const n = el.querySelector('.chapter-name');
   if (a) a.textContent = act;
   if (n) n.textContent = name;
+  // Nome longo ("THE HOUSE NEXT DOOR") diminui a letra para caber numa linha (#chapter h2 no index.html).
+  el.style.setProperty('--chars', String(Math.max(16, name.length)));
   el.classList.remove('show');
   void el.offsetWidth;
   el.classList.add('show');

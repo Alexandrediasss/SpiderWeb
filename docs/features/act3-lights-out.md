@@ -5,13 +5,13 @@ Continua de onde o ato 2 parou: a aranha entrou pela chaminé da casa vizinha. E
 Código:
 - `src/level/neighborHouse.ts`: o mapa ASCII (mesma legenda da casa do ato 1), cômodos, decorações, ratos, gosma, goteiras, checkpoints, o doente, o lustre e a janela de saída.
 - `src/level/letters.ts`: as cartas do ato 3 (`ACT3_LETTERS`). `src/level/dialogues.ts`: as falas da Mary.
-- `src/systems/sick.ts`: o doente da cozinha. `src/systems/chandelier.ts`: o lustre e a corda. Lógica pura.
+- `src/systems/sick.ts`: o doente da cozinha. `src/systems/chandelier.ts`: o lustre e a corda. `src/systems/kitchen.ts`: os dois juntos (as teias que acertam, os tapas, a queda em cima do doente ou da Mary), usado pelo jogo e pelo resumo do ato no SCENES. Lógica pura.
 - `src/systems/goo.ts` e `src/systems/poison.ts`: gosma e veneno ([goo-poison.md](goo-poison.md)). `src/systems/dialogue.ts`: as falas ([dialogue.md](dialogue.md)).
 - `src/art/neighborArt.ts`: o cenário (papéis de parede, decorações, a luz sem energia). `src/art/sickArt.ts`: o doente e o lustre.
 - `src/entities/GooView.ts`, `src/entities/SickView.ts`: desenham a gosma, o doente e o lustre.
-- `src/scenes/NeighborScene.ts`: a cena (cutscene de chegada, jogo, cartas, falas, veneno, morte, checkpoints, a briga, o fim e a pausa).
+- `src/scenes/NeighborScene.ts`: a cena (cutscene de chegada, jogo, cartas, falas, veneno, morte, checkpoints, a briga, o fim e a pausa) e as três cenas do SCENES (`replay`).
 
-Testes: `tests/neighborHouse.test.ts`, `tests/sick.test.ts`, `tests/goo.test.ts`, `tests/dialogue.test.ts`.
+Testes: `tests/neighborHouse.test.ts`, `tests/sick.test.ts`, `tests/kitchen.test.ts`, `tests/goo.test.ts`, `tests/dialogue.test.ts` e, no SCENES, `tests/recap.test.ts`.
 
 ## O mapa
 
@@ -89,6 +89,20 @@ Um doente sem uma das mãos e com o corpo todo cortado. A história deixa subent
 
 `Esc`/`Start` abre o mesmo menu dos outros atos: RESUME, RESTART (volta para o sótão, sem a cutscene e sem a primeira fala; as cartas lidas continuam) e MAIN MENU. Não dá para pausar nas cutscenes, nas falas nem durante a morte.
 
+## No SCENES
+
+As três cenas do ato 3 ([scenes.md](scenes.md)):
+
+| Cena | O que é | Libera quando |
+|---|---|---|
+| MARY | a chegada pela chaminé, com a primeira fala | a cutscene começa no jogo |
+| THE HOUSE NEXT DOOR | o resumo do ato: a Mary pilotada por um roteiro (`ACT3_RECAP` em `src/level/recaps.ts`) | termina o ato 3 |
+| THE WINDOW | o fim saindo pela janela | a cutscene começa no jogo (a Mary entra no vão) |
+
+- **MARY:** igual ao jogo, e a fala aparece sempre (mesmo se a Mary já falou na jogada) e não conta como dita. `Enter`/`Esc`/`Espaço` ou `A`/`B`/`Start` na queda voltam ao SCENES; na fala, `Enter`/`Espaço`/`F` ou `A`/`Y` passam a linha e `Esc` ou `B`/`Start` saem. Depois da última linha, escurece e volta.
+- **THE HOUSE NEXT DOOR:** sótão, carta do Dia 22, a descida pelo buraco, a gosma do quarto, a cama (Dia 35), o rato do corredor e o armário (Dia 40), e a cozinha: a Mary acerta o doente de cima da geladeira, sobe ao teto, anda até o lustre, espera ele parar embaixo e corta a corda. Os ratos, o doente e o lustre usam a semente fixa (`RECAP.seed`); a gosma e a cozinha andam no passo fixo do resumo, e o teste confere que a gosma nunca encosta nela. Não dá conquista.
+- **THE WINDOW:** a Mary começa na bancada perto da janela (`ACT3_ENDING_START`), anda sozinha para a esquerda, sobe a parede e entra no vão (no máximo `ACT3.endApproachMaxSec`); aí roda a mesma cutscene do fim. Termina no preto e volta ao SCENES, sem a tela "END OF ACT 3" e sem salvar nada.
+
 ## Conquistas
 
 | Nome | Descrição | Como consegue |
@@ -101,4 +115,5 @@ Um doente sem uma das mãos e com o corpo todo cortado. A história deixa subent
 
 - **Mapa:** `NEIGHBOR_MAP` em `src/level/neighborHouse.ts`. Se mudar algo de lugar, confira as posições de gosma, goteiras, cartas, checkpoints, do doente, do lustre e da janela: o `tests/neighborHouse.test.ts` confere quase tudo.
 - **Números:** `ACT3`, `SICK` e `CHANDELIER` em `config.ts`.
-- **Dev:** `__scene3` é a cena; `__scene3.respawn()`, `__scene3.checkpoint = 2`, `__scene3.startEnding()`, `__scene3.poison.apply()`; `__sick` é o doente (`__sick.hp = 1`); `__spider.placeAt(x, y)` funciona igual.
+- **Mexeu no mapa, na gosma, no doente ou no lustre:** rode `npm test`; o roteiro do resumo (`ACT3_RECAP`) pode precisar de ajuste ([scenes.md](scenes.md)).
+- **Dev:** `__scene3` é a cena; `__scene3.respawn()`, `__scene3.checkpoint = 2`, `__scene3.startEnding()`, `__scene3.poison.apply()`; `__sick` é o doente (`__sick.hp = 1`); `__spider.placeAt(x, y)` funciona igual. As cenas do SCENES: `__scene.game.scene.stop('game'); __scene.game.scene.start('act3', { replay: 'act3-recap' })` (ou `'act3-intro'`, `'act3-ending'`).

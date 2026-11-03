@@ -2,7 +2,16 @@
 // resumo de cada ato. Uma cena só aparece depois de vista no jogo (o resumo, depois de terminar o ato).
 // O jogo é em inglês. Spec: docs/features/scenes.md
 
-export type SceneId = 'act1-intro' | 'act1-recap' | 'act1-street' | 'act2-intro' | 'act2-recap' | 'act2-ending';
+export type SceneId =
+  | 'act1-intro'
+  | 'act1-recap'
+  | 'act1-street'
+  | 'act2-intro'
+  | 'act2-recap'
+  | 'act2-ending'
+  | 'act3-intro'
+  | 'act3-recap'
+  | 'act3-ending';
 
 export interface SceneDef {
   id: SceneId;
@@ -55,6 +64,27 @@ export const SCENES: SceneDef[] = [
     act: 'act2',
     name: 'THE CHIMNEY',
     description: 'The house next door has a way in.',
+    kind: 'cutscene',
+  },
+  {
+    id: 'act3-intro',
+    act: 'act3',
+    name: 'MARY',
+    description: 'Down the chimney, the spider finds her voice and her name.',
+    kind: 'cutscene',
+  },
+  {
+    id: 'act3-recap',
+    act: 'act3',
+    name: 'THE HOUSE NEXT DOOR',
+    description: 'No power, green goo and the last letters.',
+    kind: 'recap',
+  },
+  {
+    id: 'act3-ending',
+    act: 'act3',
+    name: 'THE WINDOW',
+    description: 'Out the broken kitchen window, into the rain.',
     kind: 'cutscene',
   },
 ];

@@ -1,9 +1,10 @@
 // Ato 3, LIGHTS OUT: a casa vizinha, sem energia. A chegada pela chaminé (a Mary descobre que fala), as
 // cartas, as falas, a gosma e o veneno, os ratos, o doente da cozinha e o lustre, os checkpoints, a morte, o
-// fim saindo pela janela quebrada e a pausa.
-// Spec: docs/features/act3-lights-out.md (gosma e veneno: goo-poison.md; falas: dialogue.md)
+// fim saindo pela janela quebrada e a pausa. Pelo SCENES (`replay`): a chegada, o resumo do ato ou a janela, e
+// depois volta para o menu.
+// Spec: docs/features/act3-lights-out.md (gosma e veneno: goo-poison.md; falas: dialogue.md; SCENES: scenes.md)
 import Phaser from 'phaser';
-import { ACT3, GAMEPAD, LETTER, LIGHT, PLAYER, POISON, SHOTS, SICK, SPIDER, TILE, TITLE, VIEW, WEB } from '../config';
+import { ACT3, CHANDELIER, GAMEPAD, LETTER, LIGHT, PLAYER, POISON, RECAP, SHOTS, SICK, SPIDER, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
 import { PAL } from '../art/palette';
 import { getNeighborArt } from '../art/neighborArt';
 import { SICK_FRAME, SICK_POSES, buildChandelier, buildSickDead, buildSickSheets } from '../art/sickArt';
@@ -21,6 +22,7 @@ import { DIALOGUES, type DialogueId } from '../level/dialogues';
 import { ACT3_LETTERS, type Letter } from '../level/letters';
 import {
   ACT3_CHECKPOINTS,
+  ACT3_ENDING_START,
   ACT3_WINDOW,
   CHANDELIER_DEF,
   CHIMNEY_BREACH,
@@ -32,19 +34,23 @@ import {
   UPSTAIRS,
   WATER_DRIPS,
 } from '../level/neighborHouse';
+import { ACT3_RECAP } from '../level/recaps';
+import { SCENES, type SceneId } from '../level/scenes';
 import type { LevelGrid } from '../physics/LevelGrid';
 import type { Vec2 } from '../physics/surfaces';
 import { Chandelier } from '../systems/chandelier';
 import { inZone, nextCheckpoint, spawnPoint } from '../systems/checkpoints';
-import { Combat, type CombatEvent, type ShotTarget, aimAtTarget } from '../systems/combat';
+import { Combat, type CombatEvent, aimAtTarget } from '../systems/combat';
 import { Timeline } from '../systems/cutscene';
 import { GooField } from '../systems/goo';
 import { type SpiderInput, emptyInput } from '../systems/input';
+import { Kitchen, type KitchenEvent, kitchenCues } from '../systems/kitchen';
 import { LetterLog, letterCenter, nearbyLetter } from '../systems/letters';
 import { Poison } from '../systems/poison';
 import { recordActEnd } from '../systems/progress';
+import { RecapRun } from '../systems/recap';
 import { inRoofHole } from '../systems/roofHole';
-import { Sick, bodyBox, boxesOverlap } from '../systems/sick';
+import { Sick } from '../systems/sick';
 import { makeRng } from '../systems/storm';
 import { raycastWeb } from '../systems/webRope';
 import { ActEnd } from './ActEnd';
@@ -55,20 +61,24 @@ import { Hud } from './Hud';
 import { LetterReader } from './LetterReader';
 import { type PauseAction, PauseMenu } from './PauseMenu';
 import { PlayerInput } from './PlayerInput';
-import { placeBars } from './cinema';
+import { placeBars, showCaption } from './cinema';
 import { fadeTo, hideChapter, showChapter } from './Transitions';
 import { loadProgress, saveProgress } from './progressStore';
+import { markSceneSeen } from './sceneStore';
 
 /**
  * intro: a chegada pela chaminé | skipping: pulou a chegada (a tela escurece) | talking: a Mary falando |
  * play: jogando | paused | reading: lendo uma carta | dying: morreu (vira e escurece) | ending: saindo pela
- * janela | actEnd: tela de fim do ato.
+ * janela | actEnd: tela de fim do ato | recap: o resumo do ato (pelo SCENES) | approach: a janela pelo SCENES,
+ * a Mary andando sozinha da bancada até o vão.
  */
-type Mode = 'intro' | 'skipping' | 'talking' | 'play' | 'paused' | 'reading' | 'dying' | 'ending' | 'actEnd';
+type Mode = 'intro' | 'skipping' | 'talking' | 'play' | 'paused' | 'reading' | 'dying' | 'ending' | 'actEnd' | 'recap' | 'approach';
 
 interface Act3Data {
   /** true = começa pela cutscene de chegada (vindo da seleção de atos). */
   intro?: boolean;
+  /** Assistindo pelo SCENES: a chegada, o resumo do ato ou a janela; no fim volta para o menu. */
+  replay?: SceneId;
 }
 
 const ACT = ACTS[2];
@@ -122,12 +132,11 @@ export class NeighborScene extends Phaser.Scene {
   private goo!: GooField;
   private water!: GooField;
   private gooView!: GooView;
-  /** O doente da cozinha e o lustre (públicos para o console). */
+  /** O doente da cozinha e o lustre (públicos para o console), e a lógica dos dois juntos. */
   sick!: Sick;
   chandelier!: Chandelier;
+  private kitchen!: Kitchen;
   private sickView!: SickView;
-  private sickTarget!: ShotTarget;
-  private ropeTarget!: ShotTarget;
   /** O veneno da gosma (público para o console: `__scene3.poison.apply()`). */
   poison = new Poison();
   private playerInput!: PlayerInput;
@@ -166,6 +175,13 @@ export class NeighborScene extends Phaser.Scene {
   private soot: { x: number; y: number; vx: number; vy: number; life: number }[] = [];
   private sootGfx!: Phaser.GameObjects.Graphics;
   private rng: () => number = Math.random;
+  /** Assistindo pelo SCENES (null = jogando). */
+  private replay: SceneId | null = null;
+  /** Resumo do ato (modo 'recap'): quem pilota a Mary, o cartão do começo, o corte do plano e as cartas "lidas". */
+  private recap: RecapRun | null = null;
+  private recapWait = 0;
+  private recapCut = false;
+  private recapLetters = new LetterLog();
   private debug = false;
   private readonly toast = document.getElementById('toast');
   private readonly skipHint = document.getElementById('skip-hint');
@@ -192,6 +208,13 @@ export class NeighborScene extends Phaser.Scene {
     this.soot = [];
     this.barH = { h: 0 };
     this.poisonPips = [];
+    this.replay = data.replay ?? null;
+    this.recap = null;
+    this.recapWait = 0;
+    this.recapCut = false;
+    this.recapLetters = new LetterLog();
+    // O resumo é sempre igual: ratos e doente com a semente fixa (como nos testes).
+    const recap = this.replay === 'act3-recap';
     const seed = (Date.now() & 0x7fffffff) || 1;
     this.rng = makeRng(seed + 99);
     this.moanLeft = this.between(ACT3.moanGapSec);
@@ -208,8 +231,9 @@ export class NeighborScene extends Phaser.Scene {
     this.goo = new GooField(GOO.drips, GOO.jets, GOO.pools);
     this.water = new GooField(WATER_DRIPS, []);
     this.gooView = new GooView(this, this.goo, this.water);
-    this.sick = new Sick(SICK_DEF, seed + 5);
+    this.sick = new Sick(SICK_DEF, recap ? RECAP.seed : seed + 5);
     this.chandelier = new Chandelier(CHANDELIER_DEF);
+    this.kitchen = new Kitchen(this.sick, this.chandelier);
     this.sickView = new SickView(this, this.sick, this.chandelier, {
       body: T3.sick,
       eyes: T3.sickEyes,
@@ -222,13 +246,11 @@ export class NeighborScene extends Phaser.Scene {
     const sound = this.sound_;
     const start = spawnPoint(ACT3_CHECKPOINTS[0], TILE, SPIDER.half);
     this.spider = new Spider(this, this.grid, start.x, start.y, () => {
-      if (this.mode === 'play') sound.footsteps.step(this.spider.motor.running);
+      if (this.mode === 'play' || this.mode === 'recap' || this.mode === 'approach') sound.footsteps.step(this.spider.motor.running);
     });
     this.spider.motor.surface = 'floor';
-    this.combat = new Combat(this.grid, NEIGHBOR_RATS, seed);
-    this.sickTarget = { hitTest: (x, y) => this.sick.hits(x, y) };
-    this.ropeTarget = { hitTest: (x, y) => this.chandelier.hitsRope(x, y) };
-    this.combat.targets = [this.sickTarget, this.ropeTarget];
+    this.combat = new Combat(this.grid, NEIGHBOR_RATS, recap ? RECAP.seed : seed);
+    this.combat.targets = this.kitchen.targets;
     this.combatView = new CombatView(this, this.combat);
     this.sootGfx = this.add.graphics().setDepth(9.5);
 
@@ -270,7 +292,12 @@ export class NeighborScene extends Phaser.Scene {
     sound.zombies.setDistance(1, 0.5);
 
     const kb = this.input.keyboard;
-    kb?.on('keydown-ESC', () => (this.mode === 'reading' ? this.closeLetter() : this.mode === 'intro' ? this.skipIntro() : this.togglePause()));
+    kb?.on('keydown-ESC', () => {
+      if (this.mode === 'reading') this.closeLetter();
+      else if (this.mode === 'intro') this.skipIntro();
+      else if (this.replay) this.exitReplay();
+      else this.togglePause();
+    });
     kb?.on('keydown-P', () => this.togglePause());
     kb?.on('keydown-M', () => sound.hub.toggleMute());
     kb?.on('keydown-H', () => {
@@ -286,6 +313,7 @@ export class NeighborScene extends Phaser.Scene {
         if (this.mode === 'intro') this.skipIntro();
         else if (this.mode === 'talking') this.advanceDialogue();
         else if (this.mode === 'reading' && key === 'keydown-ENTER') this.advanceLetter();
+        else if (this.replay && this.mode !== 'skipping') this.exitReplay();
       });
     }
 
@@ -297,12 +325,15 @@ export class NeighborScene extends Phaser.Scene {
       this.hud.showHelp(false);
       this.hud.showDebug(false);
       hideChapter();
+      showCaption(null);
       this.showSkipHint(false);
       this.showPoison(false);
       this.anims.resumeAll();
     });
 
-    if (data.intro) this.startIntro();
+    if (this.replay === 'act3-recap') this.startRecap();
+    else if (this.replay === 'act3-ending') this.replayEnding();
+    else if (data.intro || this.replay === 'act3-intro') this.startIntro();
     else this.startPlay(true);
 
     if (import.meta.env.DEV) {
@@ -344,6 +375,8 @@ export class NeighborScene extends Phaser.Scene {
 
   /** A chegada: tela preta (algo caindo na chaminé), a Mary cai pela abertura, se sacode e fala. */
   private startIntro(): void {
+    // Vista no jogo: libera no SCENES (mesmo se pular).
+    if (!this.replay) markSceneSeen('act3-intro');
     this.mode = 'intro';
     this.elapsed = 0;
     this.stepIndex = -1;
@@ -365,9 +398,16 @@ export class NeighborScene extends Phaser.Scene {
     });
   }
 
-  /** Pular a chegada: escurece rápido e clareia com a Mary já no chão do sótão. A fala não é pulada. */
+  /**
+   * Pular a chegada: escurece rápido e clareia com a Mary já no chão do sótão. A fala não é pulada.
+   * Assistindo pelo SCENES, volta para o menu.
+   */
   private skipIntro(): void {
     if (this.mode !== 'intro' || this.elapsed < 0.2) return;
+    if (this.replay) {
+      this.exitReplay();
+      return;
+    }
     this.mode = 'skipping';
     hideChapter();
     this.showSkipHint(false);
@@ -388,14 +428,16 @@ export class NeighborScene extends Phaser.Scene {
 
   /**
    * A Mary fala (cada fala uma vez por jogada do ato); depois chama `after`. Se ela já falou isso, chama
-   * `after` na hora. O mundo para enquanto a caixa está aberta.
+   * `after` na hora. O mundo para enquanto a caixa está aberta. Pelo SCENES ela sempre fala (e não conta).
    */
   private talk(id: DialogueId, after: () => void): void {
-    if (act3Talks.has(id)) {
-      after();
-      return;
+    if (!this.replay) {
+      if (act3Talks.has(id)) {
+        after();
+        return;
+      }
+      act3Talks.add(id);
     }
-    act3Talks.add(id);
     this.mode = 'talking';
     this.afterTalk = after;
     this.reticle.setVisible(false);
@@ -517,13 +559,7 @@ export class NeighborScene extends Phaser.Scene {
     health.invulnLeft = PLAYER.invulnSec;
     this.combat.shots = [];
     // A briga recomeça: o doente vivo volta ao normal e o lustre volta para a corda.
-    if (this.sick.alive) {
-      this.sick.reset();
-      if (this.chandelier.state !== 'hanging') {
-        this.chandelier.reset();
-        this.sickView.resetChandelier(T3.chandelier);
-      }
-    }
+    if (this.kitchen.reset()) this.sickView.resetChandelier(T3.chandelier);
     this.spider.sprite.setVisible(true).setAlpha(1).setFlipY(false);
     this.startPlay(true);
   }
@@ -531,6 +567,7 @@ export class NeighborScene extends Phaser.Scene {
   /** A Mary entrou no vão da janela: sai na chuva e o ato termina (público para o console). */
   startEnding(): void {
     if (this.mode === 'ending' || this.mode === 'actEnd') return;
+    if (!this.replay) markSceneSeen('act3-ending');
     this.mode = 'ending';
     this.elapsed = 0;
     this.stepIndex = -1;
@@ -553,7 +590,160 @@ export class NeighborScene extends Phaser.Scene {
     this.mode = 'actEnd';
     saveProgress(recordActEnd(loadProgress(), ACT.id, act3Letters.ids));
     achieve({ type: 'actEnd', act: ACT.id });
+    // Terminar o ato libera o resumo dele no SCENES.
+    markSceneSeen('act3-recap');
     this.actEnd.show(ACT, act3Letters.count(ACT.letters), ACTS[ACTS.indexOf(ACT) + 1]);
+  }
+
+  // ---------- pelo SCENES ----------
+
+  /** Fim (ou pulo) de uma cena assistida pelo SCENES: escurece e volta para o menu. */
+  private exitReplay(fadeSec: number = ACT3.skipFadeSec): void {
+    if (!this.replay || this.mode === 'skipping') return;
+    this.mode = 'skipping';
+    hideChapter();
+    showCaption(null);
+    this.showSkipHint(false);
+    this.dialogue.hide();
+    this.reader.hide();
+    if (this.recap) this.sound_.music.stop(fadeSec);
+    const cam = this.cameras.main;
+    cam.fadeOut(fadeSec * 1000, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.leaveReplay());
+  }
+
+  /** Com a tela preta: volta para o SCENES com esta cena escolhida. */
+  private leaveReplay(): void {
+    this.recap = null;
+    void fadeTo(1, 0);
+    this.scene.start('game', { openScenes: this.replay ?? undefined });
+  }
+
+  /**
+   * A janela pelo SCENES: a Mary começa na bancada e anda sozinha até o vão (modo 'approach'); lá começa a
+   * mesma cutscene do fim do jogo.
+   */
+  private replayEnding(): void {
+    const s = ACT3_ENDING_START;
+    const m = this.spider.motor;
+    m.placeAt((s.tx + 0.5) * TILE, (s.ty + 1) * TILE - SPIDER.half);
+    m.surface = 'floor';
+    m.facing = -1;
+    this.spider.update(0, emptyInput());
+    this.startPlay(true);
+    this.mode = 'approach';
+    this.elapsed = 0;
+    this.reticle.setVisible(false);
+    this.hearts.setVisible(false);
+    this.hud.showHelp(false);
+    this.setBars(true, 0);
+    this.time.delayedCall(ACT3.skipHintAfterSec * 1000, () => {
+      if (this.mode === 'approach' || this.mode === 'ending') this.showSkipHint(true);
+    });
+  }
+
+  /** Um quadro da janela pelo SCENES: a Mary anda para a esquerda, sobe a parede e entra no vão. */
+  private updateApproach(dt: number): void {
+    const m = this.spider.motor;
+    this.elapsed += dt;
+    this.spider.update(dt, { ...emptyInput(), move: { x: -1, y: 0 } });
+    this.combat.update(dt, m);
+    this.kitchen.update(dt, null);
+    if (inRoofHole(m.body, ACT3_WINDOW, TILE) || this.elapsed >= ACT3.endApproachMaxSec) this.startEnding();
+  }
+
+  /**
+   * O resumo: cartão "ACT 3 / THE HOUSE NEXT DOOR" no preto e depois os planos do roteiro
+   * (src/level/recaps.ts), com faixas de cinema, legenda e a música do menu. A Mary anda sozinha
+   * (invencível); os ratos, a gosma, o doente e o lustre andam no mesmo passo fixo dela.
+   */
+  private startRecap(): void {
+    this.mode = 'recap';
+    this.reticle.setVisible(false);
+    this.hearts.setVisible(false);
+    this.hud.showHelp(false);
+    this.sound_.music.start();
+    const motor = this.spider.motor;
+    this.recap = new RecapRun(
+      ACT3_RECAP,
+      {
+        motor,
+        combat: this.combat,
+        stepSpider: (dt, input) => this.spider.update(dt, input),
+        stepWorld: (dt, fired) => {
+          this.updateGoo(dt);
+          this.handleKitchenEvents([...this.kitchen.onCombat(fired), ...this.kitchen.update(dt, motor.body)]);
+        },
+        cues: () => kitchenCues(this.kitchen),
+      },
+      TILE,
+    );
+    this.setBars(true, 0, RECAP.letterboxPx);
+    // Preto da câmera por baixo do cartão.
+    this.cameras.main.fadeOut(1, 0, 0, 0);
+    this.recapWait = RECAP.titleSec;
+    showChapter(`ACT ${ACT.number}`, SCENES.find((sc) => sc.id === 'act3-recap')?.name ?? ACT.name);
+    this.time.delayedCall(ACT3.skipHintAfterSec * 1000, () => {
+      if (this.mode === 'recap') this.showSkipHint(true);
+    });
+  }
+
+  /** Um quadro do resumo: cartão, diretor em passos fixos, cortes, legenda e cartas. */
+  private updateRecap(dt: number): void {
+    const rec = this.recap;
+    if (!rec) return;
+    if (this.recapWait > 0) {
+      this.recapWait -= dt;
+      return;
+    }
+    const out = rec.advance(dt);
+    if (out.webShots > 0) this.sound_.sfx.webShot('rope');
+    this.handleCombatEvents(out.combat);
+    for (const e of out.events) {
+      if (e.type === 'shot') this.cutTo(e.index);
+      else if (e.type === 'read') this.glimpseLetter(e.letter, e.sec);
+      else this.leaveReplay();
+    }
+    this.updateMoans(dt);
+    // Fim do plano: escurece para o corte (no último, mais devagar, e a música vai junto).
+    const left = rec.director.holdLeft;
+    const last = rec.director.shot === ACT3_RECAP.length - 1;
+    const fade = last ? RECAP.endFadeSec : RECAP.cutSec;
+    if (left !== null && left <= fade && !this.recapCut) {
+      this.recapCut = true;
+      showCaption(null);
+      this.cameras.main.fadeOut(fade * 1000, 0, 0, 0);
+      if (last) this.sound_.music.stop(fade);
+    }
+  }
+
+  /** Corte para o plano `index`: a Mary já está no começo dele; câmera, zoom, legenda e clareia. */
+  private cutTo(index: number): void {
+    const shot = ACT3_RECAP[index];
+    const cam = this.cameras.main;
+    const b = this.spider.motor.body;
+    const look = shot.look ?? { x: 0, y: 0 };
+    cam.setZoom(shot.zoom);
+    cam.startFollow(b, true, VIEW.cameraLerp, VIEW.cameraLerp);
+    cam.setFollowOffset(-look.x, -look.y);
+    cam.centerOn(b.x + look.x, b.y + look.y);
+    cam.fadeIn(RECAP.cutSec * 1000, 0, 0, 0);
+    this.recapCut = false;
+    showCaption(shot.caption ?? null);
+  }
+
+  /** Lendo a carta no resumo: a página aparece menor, por cima do plano, e some sozinha. */
+  private glimpseLetter(id: string, sec: number): void {
+    const letter = ACT3_LETTERS.find((l) => l.id === id);
+    if (!letter) return;
+    this.recapLetters.markRead(letter.id);
+    this.reader.show(letter, true);
+    this.sound_.sfx.paper();
+    this.time.delayedCall(Math.max(0, sec - 0.35) * 1000, () => {
+      if (this.mode !== 'recap') return;
+      this.reader.hide();
+      this.sound_.sfx.paper();
+    });
   }
 
   // ---------- quadro a quadro ----------
@@ -585,13 +775,20 @@ export class NeighborScene extends Phaser.Scene {
       case 'talking': {
         const blips = this.dialogue.update(dt);
         for (let i = 0; i < blips; i++) this.sound_.sfx.voice(this.dialogue.sad);
-        if (input.readPressed || input.jumpPressed || pad?.confirmPressed || pad?.readPressed) this.advanceDialogue();
+        // Pelo SCENES, B ou Start saem da cena (A continua passando a fala).
+        if (this.replay && (pad?.trapPressed || pad?.pausePressed)) this.exitReplay();
+        else if (input.readPressed || input.jumpPressed || pad?.confirmPressed || pad?.readPressed) this.advanceDialogue();
         placeBars(this.cameras.main, this.bars, this.barH.h);
         return;
       }
     }
 
     if (this.mode === 'intro' && (pad?.confirmPressed || pad?.pausePressed || input.jumpPressed || input.webPressed)) this.skipIntro();
+    // Pelo SCENES: A, B ou Start pulam (a chegada também com B).
+    if (this.replay && (pad?.confirmPressed || pad?.pausePressed || pad?.trapPressed)) {
+      if (this.mode === 'intro') this.skipIntro();
+      else if (this.mode === 'recap' || this.mode === 'ending' || this.mode === 'approach') this.exitReplay();
+    }
     if (this.mode === 'play' && pad?.pausePressed) {
       this.togglePause();
       return;
@@ -600,21 +797,25 @@ export class NeighborScene extends Phaser.Scene {
     const cam = this.cameras.main;
     for (const thunder of this.atmosphere.update(dt, cam.worldView)) this.sound_.storm.thunder(thunder);
     const light = (x: number, y: number) => this.atmosphere.lightAt(x, y);
-    this.updateGoo(dt);
+    // No resumo a gosma anda no passo fixo dele (sempre igual aos testes).
+    if (this.mode !== 'recap') this.updateGoo(dt);
 
-    if (this.mode === 'play' || this.mode === 'dying') this.frameFloor();
+    if (this.mode === 'play' || this.mode === 'dying' || this.mode === 'approach') this.frameFloor();
     if (this.mode === 'play') {
       if (this.graceLeft > 0) {
         this.graceLeft -= dt;
         input = { ...input, jumpPressed: false, webPressed: false, webHeld: false, attackPressed: false, trapPressed: false, readPressed: false };
       }
       this.updatePlay(dt, input);
+    } else if (this.mode === 'recap') {
+      this.updateRecap(dt);
+    } else if (this.mode === 'approach') {
+      this.updateApproach(dt);
     } else {
       // Cutscenes e morte: o mundo continua (ratos, doente), sem controle.
       if (this.mode !== 'ending' && this.mode !== 'skipping') this.spider.update(dt, emptyInput());
       this.combat.update(dt, m);
-      this.sick.update(dt, null);
-      this.chandelier.update(dt);
+      this.kitchen.update(dt, null);
       this.reader.hidePrompt();
       this.runTimeline(dt);
     }
@@ -622,7 +823,7 @@ export class NeighborScene extends Phaser.Scene {
     this.combatView.update(dt, time, light);
     this.sickView.update(time, light);
     this.gooView.update(dt, time, cam.worldView, this.atmosphere.storm.flash);
-    this.letters.update(time, act3Letters, light);
+    this.letters.update(time, this.mode === 'recap' ? this.recapLetters : act3Letters, light);
     this.updateSoot(dt);
     this.updateSpiderLook(time, dt);
     placeBars(cam, this.bars, this.barH.h);
@@ -667,7 +868,7 @@ export class NeighborScene extends Phaser.Scene {
     this.handleCombatEvents(events);
     if (this.mode !== 'play') return;
 
-    this.updateKitchen(dt);
+    this.handleKitchenEvents([...this.kitchen.onCombat(events), ...this.kitchen.update(dt, this.combat.health.dead ? null : m.body)]);
     if (this.mode !== 'play') return;
     this.updateMoans(dt);
 
@@ -746,46 +947,50 @@ export class NeighborScene extends Phaser.Scene {
         case 'spiderDied':
           this.die();
           break;
-        case 'targetHit':
-          if (e.target === this.ropeTarget) {
-            if (this.chandelier.cut()) sfx.ropeSnap();
-          } else if (e.target === this.sickTarget) {
-            if (e.kind === 'trap') this.sick.trap();
-            else if (this.sick.damage(SHOTS.damage) === 'died') this.sickDefeated(false);
-            this.groan(this.sick.x, 1, 0.9);
-          }
-          break;
       }
     }
   }
 
-  /** O doente e o lustre: tapas, gemidos, a queda do lustre (e quem estiver embaixo). */
-  private updateKitchen(dt: number): void {
-    const m = this.spider.motor;
-    const sick = this.sick;
-    for (const e of sick.update(dt, this.combat.health.dead ? null : m.body)) {
-      if (e.type === 'groan') this.groan(sick.x, 0.7, sick.aggro ? 0.85 : 0.6);
-      else if (e.type === 'swing') this.sound_.sfx.swipe();
-      else if (e.type === 'hit') this.hurt(sick.x, SICK.knockback);
-      if (this.mode !== 'play') return;
+  /**
+   * O doente e o lustre (src/systems/kitchen.ts): gemidos, tapas, a corda, a queda (e quem estiver embaixo)
+   * e as conquistas. No resumo a Mary é invencível e nada dá conquista.
+   */
+  private handleKitchenEvents(events: KitchenEvent[]): void {
+    const sfx = this.sound_.sfx;
+    const { sick, chandelier: c } = this;
+    const mode = this.mode;
+    for (const e of events) {
+      switch (e.type) {
+        case 'groan':
+          this.groan(sick.x, 0.7, sick.aggro ? 0.85 : 0.6);
+          break;
+        case 'swing':
+          sfx.swipe();
+          break;
+        case 'slap':
+          if (mode === 'play') this.hurt(sick.x, SICK.knockback);
+          break;
+        case 'sickShot':
+          this.groan(sick.x, 1, 0.9);
+          break;
+        case 'ropeCut':
+          sfx.ropeSnap();
+          break;
+        case 'crash':
+          sfx.crash();
+          this.cameras.main.shake(260, 0.012);
+          this.gooView.shards(c.x, c.box.bottom - 2);
+          break;
+        case 'sickDefeated':
+          if (!this.replay) achieve({ type: 'sickDefeated', act: ACT.id, byChandelier: e.byChandelier });
+          this.groan(sick.x, 1.1, 1);
+          break;
+        case 'maryCrushed':
+          if (mode === 'play') this.hurt(c.x, CHANDELIER.knockback);
+          break;
+      }
+      if (this.mode !== mode) return;
     }
-    const c = this.chandelier;
-    const falling = c.state === 'falling';
-    if (c.update(dt)) {
-      this.sound_.sfx.crash();
-      this.cameras.main.shake(260, 0.012);
-      this.gooView.shards(c.x, c.box.bottom - 2);
-    }
-    if (falling || c.state === 'falling') {
-      if (sick.alive && boxesOverlap(c.box, sick.box) && sick.crush()) this.sickDefeated(true);
-      if (boxesOverlap(c.box, bodyBox(m.body))) this.hurt(c.x, { x: 160, y: 120 });
-    }
-  }
-
-  /** O doente caiu: as conquistas e o último gemido. */
-  private sickDefeated(byChandelier: boolean): void {
-    achieve({ type: 'sickDefeated', act: ACT.id, byChandelier });
-    this.groan(this.sick.x, 1.1, 1);
   }
 
   /** Gemido do doente (ou da horda lá fora), com o lado da tela e o volume pela distância. */
@@ -956,11 +1161,14 @@ export class NeighborScene extends Phaser.Scene {
     if (this.mode === 'intro') {
       hideChapter();
       this.showSkipHint(false);
-      this.talk('arrival', () => this.startPlay());
+      // Pelo SCENES, depois da fala escurece e volta para o menu.
+      this.talk('arrival', () => (this.replay ? this.exitReplay(TRANSITION.fadeOutSec) : this.startPlay()));
     } else if (this.mode === 'dying') {
       this.respawn();
     } else if (this.mode === 'ending') {
-      this.endAct();
+      // Pelo SCENES a janela termina no preto e volta para o menu, sem a tela de fim do ato.
+      if (this.replay) this.leaveReplay();
+      else this.endAct();
     }
   }
 
@@ -1018,8 +1226,8 @@ export class NeighborScene extends Phaser.Scene {
   }
 
   /** Faixas pretas de cinema (entram e saem deslizando; postas a cada quadro compensando o zoom). */
-  private setBars(on: boolean, durationMs = 500): void {
-    const h = on ? BARS_PX : 0;
+  private setBars(on: boolean, durationMs = 500, px = BARS_PX): void {
+    const h = on ? px : 0;
     this.tweens.killTweensOf(this.barH);
     if (durationMs === 0) this.barH.h = h;
     else this.tweens.add({ targets: this.barH, h, duration: durationMs });

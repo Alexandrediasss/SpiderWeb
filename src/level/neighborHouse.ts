@@ -211,6 +211,12 @@ export const CHANDELIER_DEF: ChandelierDef = { x: 13 * T, y: top(29), floorY: to
 export const ACT3_WINDOW: TileRect = { tx: 0, ty: 33, w: 2, h: 2 };
 
 /**
+ * A janela assistida pelo SCENES: a Mary começa em cima da bancada, perto da janela (tile vazio com chão
+ * embaixo), e anda sozinha para a esquerda: sobe a parede e entra no vão, como no jogo.
+ */
+export const ACT3_ENDING_START = { tx: 5, ty: 36 };
+
+/**
  * Enquadramento de cada andar: a câmera segue a Mary na horizontal, mas na vertical fica no meio do andar
  * (`centerY`, px), para o teto e o chão aparecerem juntos (do teto da cozinha dá para ver o doente).
  * Vale o primeiro andar com a Mary acima de `belowY`.
