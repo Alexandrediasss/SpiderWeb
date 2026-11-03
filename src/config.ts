@@ -195,6 +195,11 @@ export const SFX = {
   stompVolume: 0.7,
   /** Sininho de conquista conseguida. */
   achievementVolume: 0.32,
+  /** Ato 3: a voz da Mary ("ts" de cada sílaba), o chiado do veneno, a gosma e o lustre caindo. */
+  voiceVolume: 0.22,
+  poisonVolume: 0.4,
+  gooVolume: 0.3,
+  crashVolume: 0.6,
 };
 
 /** Aviso de conquista conseguida. Spec: docs/features/achievements.md */
@@ -362,9 +367,10 @@ export const TRANSITION = {
    * dá um tranco (`hook`) e puxa a tela para o lado, trazendo a outra no lugar (`pull`) (s).
    */
   pull: { shootSec: 0.14, hookSec: 0.08, pullSec: 0.42, enterLagSec: 0.05 },
-  /** Gosma verde (ato 1) e teia com vento (ato 2). */
+  /** Gosma verde (ato 1), teia com vento (ato 2) e a luz que apaga (ato 3). */
   gooSec: 2.4,
   webSec: 2.6,
+  powerSec: 2.8,
   /** Largura do canvas da transição (a altura segue a proporção da janela). */
   width: 160,
 };
@@ -480,4 +486,111 @@ export const RECAP = {
   enterFadeSec: 0.5,
   /** Ato 2: força do vento nos planos sem rajada (só a chuva e o som; a aranha não sente). */
   breeze: 0.15,
+};
+
+/** Veneno da gosma verde (ato 3). Spec: docs/features/goo-poison.md */
+export const POISON = {
+  /** Quanto tempo até morrer (s). Não tem cura. */
+  sec: 5,
+  /** Fração da velocidade de andar/correr, da força do pulo e do controle no ar. */
+  speedScale: 0.45,
+  jumpScale: 0.55,
+  airScale: 0.5,
+  /** Cor de "doente" que a Mary vai pegando (misturada com a luz do lugar) e quanto ela balança (graus). */
+  tint: 0x9be07a,
+  wobbleDeg: 7,
+  /** Bolhinhas verdes saindo dela (por segundo). */
+  bubblesPerSec: 6,
+};
+
+/** Gosma verde: goteiras, jorros e poças (posições em src/level/neighborHouse.ts). Spec: docs/features/goo-poison.md */
+export const GOO_CFG = {
+  /** A gota cresce no teto por este tempo antes de cair (s). */
+  dripFormSec: 0.7,
+  dripGravity: 520,
+  /** Raio da gota que acerta (px). */
+  dripRadius: 2,
+  /** Jorro: borbulhando antes (aviso) e jorrando (s); a largura da coluna (px). */
+  jetWarnSec: 0.9,
+  jetSpraySec: 1.6,
+  jetWidth: 8,
+  /** A coluna sobe até a altura cheia neste tempo (s). */
+  jetRiseSec: 0.18,
+  /** Poça: a caixa da aranha precisa entrar este tanto (px) na poça para pegar. */
+  poolDepth: 2,
+};
+
+/** O doente da cozinha (ato 3). Spec: docs/features/act3-lights-out.md */
+export const SICK = {
+  hp: 10,
+  /** Tamanho da caixa (px): largura e altura, com os pés no chão. */
+  w: 14,
+  h: 50,
+  /** Andando sozinho (passivo) e atrás da Mary (bravo), px/s. */
+  idleSpeed: 9,
+  chaseSpeed: 36,
+  /** Pausas na patrulha (s, mín–máx). */
+  pauseSec: [1.4, 3.4] as const,
+  /** Alcance do tapa: na frente dele (px a partir do centro) e altura acima dos pés. */
+  reachX: 26,
+  reachUp: 58,
+  /** Braço levantado antes do tapa (dá para fugir), o tapa e o intervalo (s). */
+  windupSec: 0.55,
+  swingSec: 0.25,
+  cooldownSec: 1.1,
+  /** Preso na teia de prender (s) e o vermelho depois do dano (s). */
+  trapSec: 2,
+  flashSec: 0.15,
+  /** Empurrão do tapa na Mary (px/s). */
+  knockback: { x: 210, y: 170 },
+  /** Gemido a cada (s, mín–máx). */
+  groanGapSec: [3, 7] as const,
+};
+
+/** O lustre pendurado perto da janela da cozinha (ato 3). Spec: docs/features/act3-lights-out.md */
+export const CHANDELIER = {
+  /** Tamanho (px) e o comprimento da corda (px). */
+  w: 30,
+  h: 16,
+  ropeLength: 62,
+  /** Distância (px) da teia até a corda que conta como acerto. */
+  ropeHitPx: 4,
+  gravity: 900,
+  /** Balanço parado (graus e velocidade). */
+  swayDeg: 3,
+  swaySpeed: 1.3,
+};
+
+/** Falas da Mary (caixa de diálogo). Spec: docs/features/dialogue.md */
+export const DIALOGUE = {
+  /** Letras por segundo e a espera extra depois de pontuação (s). */
+  cps: 34,
+  punctuationPauseSec: 0.16,
+  /** Um "ts" da voz a cada tantas letras (espaços e pontuação não contam). */
+  blipEvery: 2,
+  /** Depois de abrir, ignora o botão por este tempo (s): a tecla que fechou a carta não pula a fala. */
+  openGraceSec: 0.35,
+};
+
+/** Ato 3: cutscenes, câmera, morte e fim. Spec: docs/features/act3-lights-out.md */
+export const ACT3 = {
+  /** Chegada (s): tela preta, a queda pela chaminé e a sacudida. */
+  introDarkSec: 1.1,
+  introFallSec: 1.0,
+  introCoughSec: 1.6,
+  /** Pular a chegada e o aviso de pular (s). */
+  skipFadeSec: 0.25,
+  skipHintAfterSec: 0.8,
+  /** Zoom da câmera na chegada e no fim. */
+  introZoom: 1.6,
+  /** Morte: tempo virada antes do escurecer e o escurecer (s). */
+  deathHoldSec: 0.6,
+  deathFadeSec: 0.8,
+  /** Fim: andando para fora pela janela, olhando a janela e o escurecer (s). */
+  endOutSec: 1.2,
+  endLookSec: 1.8,
+  endFadeSec: 1.2,
+  endZoom: 1.5,
+  /** Gemido abafado vindo de baixo, no 1º andar (s, mín–máx). */
+  moanGapSec: [5, 10] as const,
 };

@@ -271,4 +271,64 @@ export const BACKGROUND_PAINTERS: Record<BackgroundStyle, PixelFn> = {
     if (wx % 8 === 0 || wy % 8 === 0) return W.kitchenGrout;
     return (Math.floor(wx / 8) + Math.floor(wy / 8)) % 2 === 0 ? W.kitchen : W.kitchenAlt;
   },
+
+  // ---------- casa vizinha (ato 3): mais velha, manchada de umidade ----------
+
+  /** Quarto de hóspedes: papel azul-esverdeado desbotado com losangos e manchas de umidade. */
+  guestRoom: (px, py, c) => {
+    const A = PAL.act3;
+    const wx = wxOf(px, c);
+    const wy = wyOf(py, c);
+    const u = wx % 10;
+    const v = wy % 10;
+    let col: RGB = A.guest;
+    if (Math.abs(u - 5) + Math.abs(v - 5) === 4) col = A.guestPattern;
+    else if (u === 5 && v === 5) col = A.guestLight;
+    return damp(col, wx, wy);
+  },
+
+  /** Corredor: lambri de madeira escura embaixo e papel mostarda listrado em cima. */
+  hallway: (px, py, c) => {
+    const A = PAL.act3;
+    const wx = wxOf(px, c);
+    const wy = wyOf(py, c);
+    const floorBelow = [1, 2, 3].find((k) => c.at(0, k) === '=');
+    if (floorBelow !== undefined) {
+      if (floorBelow === 3 && py < 3) return py === 1 ? A.hallPanelLight : shadeColor(A.hallPanel, 0.8);
+      if (wx % 24 === 0 || wx % 24 === 23) return shadeColor(A.hallPanel, 0.75);
+      return wx % 24 === 1 ? A.hallPanelLight : A.hallPanel;
+    }
+    return damp(wx % 8 < 3 ? A.hallPaperLight : A.hallPaper, wx, wy);
+  },
+
+  /** Sala: listras vinho com o papel descascando em alguns pontos. */
+  parlor: (px, py, c) => {
+    const A = PAL.act3;
+    const wx = wxOf(px, c);
+    const wy = wyOf(py, c);
+    if (hash(Math.floor(wx / 12), Math.floor(wy / 9), 61) < 0.05) return hash(wx, wy, 62) < 0.3 ? shadeColor(A.peel, 0.85) : A.peel;
+    const stripe = wx % 12;
+    return damp(stripe < 2 ? A.parlorDark : stripe < 7 ? A.parlor : A.parlorLight, wx, wy);
+  },
+
+  /** Cozinha velha: azulejos em xadrez, rejunte escuro e sujeira subindo do chão. */
+  oldKitchen: (px, py, c) => {
+    const A = PAL.act3;
+    const wx = wxOf(px, c);
+    const wy = wyOf(py, c);
+    if (wx % 8 === 0 || wy % 8 === 0) return A.kitchenGrout;
+    const tile = (Math.floor(wx / 8) + Math.floor(wy / 8)) % 2 === 0 ? A.kitchenTile : A.kitchenTileAlt;
+    // Azulejo trincado aqui e ali.
+    if (hash(Math.floor(wx / 8), Math.floor(wy / 8), 63) < 0.12 && (wx % 8) === (wy % 8)) return A.kitchenGrout;
+    const nearFloor = c.at(0, 1) === '=' ? py / TILE : 0;
+    return nearFloor > 0.5 && hash(wx, wy, 64) < nearFloor * 0.5 ? A.grime : damp(tile, wx, wy);
+  },
 };
+
+/** Manchas de umidade: blocos grandes um pouco mais escuros, com a borda pontilhada. */
+function damp(col: RGB, wx: number, wy: number): RGB {
+  const big = hash(Math.floor(wx / 20), Math.floor(wy / 26), 60);
+  if (big < 0.18) return shadeColor(col, 0.82);
+  if (big < 0.24 && hash(wx, wy, 65) < 0.5) return shadeColor(col, 0.9);
+  return col;
+}

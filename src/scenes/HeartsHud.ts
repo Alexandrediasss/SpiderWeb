@@ -27,6 +27,14 @@ export class HeartsHud {
     for (const h of this.hearts) h.setVisible(on);
   }
 
+  /** Corações de outra cor (verdes com o veneno do ato 3); null volta ao normal. */
+  setTint(color: number | null): void {
+    for (const h of this.hearts) {
+      if (color === null) h.clearTint();
+      else h.setTint(color);
+    }
+  }
+
   /** O coração que acabou de ser perdido pisca um pouco antes de ficar vazio. */
   update(hp: number, dt: number): void {
     if (hp < this.lastHp) this.blinkLeft = BLINK_SEC;

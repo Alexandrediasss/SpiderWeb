@@ -218,3 +218,79 @@ function borderPoint(cx: number, cy: number, a: number, w: number, h: number): [
 function line(pc: PixelCanvas, a: [number, number], b: [number, number], c: RGB, alpha: number): void {
   pc.line(a[0], a[1], b[0], b[1], c, alpha);
 }
+
+// ---------------- a luz que apaga (ato 3) ----------------
+
+/**
+ * A luz que apaga: a tela pisca como uma lâmpada morrendo (clarões quentes e apagões cada vez mais longos)
+ * até ficar preta; no escuro, gotas de gosma verde caem do alto, estouram embaixo e o brilho verde some.
+ */
+export function drawPowerOut(pc: PixelCanvas, t: number, seed: number): void {
+  clear(pc);
+  const { width: w, height: h } = pc;
+  const G = PAL.intro;
+
+  // 1. A lâmpada morrendo: o escuro sobe aos trancos, com clarões quentes no meio.
+  const dark = easeIn(clamp01(t / 0.45));
+  const tick = Math.floor(t * 26);
+  const r = hash(tick, 0, seed);
+  const off = t > 0.04 && r < 0.3 + dark * 0.4;
+  const flash = t > 0.04 && t < 0.4 && !off && r > 0.82;
+  const black = t >= 0.45 ? 1 : off ? Math.min(1, dark + 0.45) : dark;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (flash) pc.set(x, y, PAL.light.lamp, 0.22 * (1 - dark));
+      const a = black >= 1 ? 1 : ditherLevel(black, x, y, 4);
+      if (a > 0) pc.set(x, y, 0x000000, a);
+    }
+  }
+  // O filamento da lâmpada, laranja, apagando no meio da tela.
+  if (t < 0.6) {
+    const glow = clamp01(1 - t / 0.6) * (off ? 0.35 : 1);
+    const bx = Math.round(w / 2);
+    const by = Math.round(h * 0.38);
+    for (let y = -7; y <= 7; y++) {
+      for (let x = -6; x <= 6; x++) {
+        const d = Math.hypot(x / 6, (y + 1) / 7);
+        if (d > 1 || d < 0.82) continue;
+        pc.set(bx + x, by + y, 0x5a5448, Math.max(0.3, black));
+      }
+    }
+    pc.rect(bx - 2, by + 7, 5, 3, 0x7a7262, Math.max(0.3, black));
+    for (let k = -3; k <= 3; k++) pc.set(bx + k, by - 1 + (k % 2 === 0 ? 0 : -1), 0xffa040, glow);
+    if (glow > 0.2) for (let k = -2; k <= 2; k++) pc.set(bx + k, by - 3, 0xffe2a0, glow * 0.5);
+  }
+
+  // 2. No escuro, as gotas de gosma caindo do alto e estourando embaixo.
+  if (t >= 0.45) {
+    const fade = 1 - clamp01((t - 0.86) / 0.14);
+    const drops = 6;
+    for (let k = 0; k < drops; k++) {
+      const start = 0.47 + k * 0.055 + hash(k, 1, seed) * 0.03;
+      const p = clamp01((t - start) / 0.16);
+      if (p <= 0) continue;
+      const x = Math.round(w * (0.12 + hash(k, 2, seed) * 0.76));
+      const y = Math.round(easeIn(p) * (h - 3));
+      if (p < 1) {
+        pc.rect(x, y - 3, 2, 3, G.goo, fade);
+        pc.set(x, y - 3, G.gooLight, fade);
+        continue;
+      }
+      // Estourou: respingos e o brilho em volta, embaixo.
+      const since = clamp01((t - start - 0.16) / 0.12);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI + Math.PI;
+        const d = 2 + since * 6;
+        pc.set(Math.round(x + Math.cos(a) * d), Math.round(h - 2 + Math.sin(a) * d * 0.6), G.gooLight, fade * (1 - since));
+      }
+      for (let yy = h - 14; yy < h; yy++) {
+        for (let xx = x - 16; xx <= x + 16; xx++) {
+          const v = 1 - Math.hypot((xx - x) / 16, (yy - h) / 12);
+          if (v > 0 && xx >= 0 && xx < w) pc.set(xx, yy, G.gooGlow, ditherLevel(v, xx, yy, 4) * 0.4 * fade);
+        }
+      }
+      pc.rect(x - 3, h - 1, 7, 1, G.goo, fade);
+    }
+  }
+  if (t >= 1) pc.rect(0, 0, w, h, 0x000000);
+}

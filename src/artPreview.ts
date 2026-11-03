@@ -18,10 +18,13 @@ import {
 import { buildZombieSheets } from './art/zombieArt';
 import { buildActArt } from './art/actArt';
 import { bakeRooftops, buildDebrisSheet, buildZombieFoot } from './art/rooftopArt';
-import { drawGoo, drawWeb } from './art/transitionArt';
+import { drawGoo, drawPowerOut, drawWeb } from './art/transitionArt';
+import { getNeighborArt, litNeighbor } from './art/neighborArt';
+import { buildPortrait } from './art/portraitArt';
+import { buildChandelier, buildSickDead, buildSickSheets } from './art/sickArt';
 import { buildGlint, buildNote, buildParchment } from './art/letterArt';
 import { ACTS } from './level/acts';
-import { LETTERS } from './level/letters';
+import { ALL_LETTERS } from './level/letters';
 import { PixelCanvas } from './art/PixelCanvas';
 import { DECOR_PAINTERS, paintDecor } from './art/decorArt';
 import { getLevelArt } from './art/levelArt';
@@ -105,7 +108,7 @@ show('Decorações', decor, 3);
 // Cartas: a folhinha no cenário, o brilho e cada página aberta (com as patas segurando).
 show('Carta no cenário e o brilho', buildNote(), 8);
 show('Brilho (carta não lida)', buildGlint(), 8);
-for (const l of LETTERS) show(`Página: ${l.id}`, buildParchment(l.paper), 3);
+for (const l of ALL_LETTERS) show(`Página: ${l.id}`, buildParchment(l.paper), 3);
 
 // Seleção de atos: a arte de cada ato.
 for (const a of ACTS) show(`Arte do ato ${a.number}: ${a.name}`, buildActArt(a.id), 3);
@@ -114,6 +117,7 @@ for (const a of ACTS) show(`Arte do ato ${a.number}: ${a.name}`, buildActArt(a.i
 for (const [name, draw] of [
   ['gosma (ato 1)', drawGoo],
   ['teia e vento (ato 2)', drawWeb],
+  ['a luz que apaga (ato 3)', drawPowerOut],
 ] as const) {
   const strip = new PixelCanvas(5 * 162, 90);
   [0.1, 0.3, 0.5, 0.7, 0.85].forEach((t, i) => {
@@ -132,6 +136,20 @@ const rooftops = bakeRooftops();
 const sky2 = buildStreetSky(rooftops.canvas.width, rooftops.canvas.height);
 sky2.blit(rooftops.canvas, 0, 0);
 show('Ato 2: a rua por cima dos postes', sky2, 1);
+
+// Ato 3: a Mary falando, o doente da cozinha, o lustre e a casa vizinha sem energia.
+const faces = new PixelCanvas(4 * 52, 48);
+(['normal', 'surprised', 'sad', 'cry'] as const).forEach((m, i) => faces.blit(buildPortrait(m), i * 52, 0));
+show('Ato 3: retrato da Mary (normal, surpresa, triste, chorando)', faces, 4);
+const sick = buildSickSheets();
+show('Ato 3: o doente (caminhada, bote, tapa, esticando o braço)', sick.body, 4);
+show('Ato 3: o doente caído', buildSickDead(), 4);
+const lustres = new PixelCanvas(70, 20);
+lustres.blit(buildChandelier(), 0, 0);
+lustres.blit(buildChandelier(true), 36, 0);
+show('Ato 3: o lustre (inteiro e quebrado)', lustres, 6);
+show('Ato 3: a casa vizinha à noite, sem energia', litNeighbor(), 1);
+show('Ato 3: a casa vizinha sem luz (cores pintadas)', getNeighborArt().canvas, 1);
 
 // Cutscene: o palco já com a escuridão (só a luz do cano e a do buraco), a bolha e a poça verdes.
 const stage = buildIntroStage();

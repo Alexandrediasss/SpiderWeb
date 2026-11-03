@@ -22,6 +22,9 @@ Testes: `tests/achievements.test.ts`.
 | 1 | RAT CONQUEROR | Kill all the rats. | Conquistador de ratos: mate todos os ratos. | Matar os quatro ratos do ato 1 na mesma jogada (morrer ou "Restart" traz todos de volta). |
 | 2 | WEBS THROUGH THE AIR | Shoot your webs across the poles. | Soltando teias pelos ares: solte teias pelos postes. | Terminar o ato 2 (entrar pela chaminé). |
 | 2 | HEAVY FOOT | Get stepped on by one of the sick. | Pé pesado: seja pisado por um doente. | Cair na rua no ato 2: libera no instante em que o pé do zumbi chega no chão (o tremor e o som da pisada). |
+| 3 | OUT THE WINDOW | Leave the house through the broken window. | (terminar o ato 3) | Terminar o ato 3 (sair pela janela quebrada da cozinha). |
+| 3 | PUT TO REST | Defeat the sick in the kitchen. | (derrotar o doente) | Derrotar o doente da cozinha, com teias ou com o lustre. |
+| 3 | LIGHTS OUT | Drop the chandelier on the sick. | (derrotar o doente com o lustre) | Cortar a corda do lustre com o doente embaixo. Libera junto com PUT TO REST. |
 
 ## Regras
 
@@ -29,7 +32,8 @@ Testes: `tests/achievements.test.ts`.
    - `letterRead` (ato e id da carta): ao abrir uma carta;
    - `actEnd` (ato): ao chegar no fim do ato (mesmo momento em que o progresso é salvo);
    - `allRatsKilled` (ato): quando morre o último rato vivo do ato 1 (não vale no resumo do SCENES);
-   - `stomped` (ato): na etapa `hold` da morte do ato 2, quando o pé do zumbi bate no chão.
+   - `stomped` (ato): na etapa `hold` da morte do ato 2, quando o pé do zumbi bate no chão;
+   - `sickDefeated` (ato, `byChandelier`): quando o doente da cozinha morre no ato 3. A conquista com `byChandelier: true` só libera se foi o lustre.
 2. **Uma vez só:** conquista conseguida fica para sempre e não avisa de novo.
 3. **Salvo separado do jogo:** fica em `spiderweb.achievements`, separado do progresso. O **NEW GAME não apaga as conquistas** (ele só zera atos e cartas). Se o navegador bloquear o `localStorage`, as conquistas funcionam na jogada, só não ficam salvas. JSON estragado ou com ids desconhecidos é ignorado (não trava o jogo).
 4. **Aviso:**

@@ -6,7 +6,7 @@ Testes: `tests/menu.test.ts` e `tests/progress.test.ts`.
 
 ## O que aparece
 
-- O nome do jogo, **SPIDER WEB**, segurado por um fio de teia que desce do topo da tela. No clarão do relâmpago, o título brilha junto.
+- O nome do jogo, **LITTLE TEARS**, segurado por um fio de teia que desce do topo da tela. No clarão do relâmpago, o título brilha junto.
 - Embaixo, o menu, um botão por linha: **NEW GAME**, **LOAD GAME**, **SCENES** e **ACHIEVEMENTS**. O jogo é em inglês.
 - Atrás, o próprio jogo: a câmera mostra o sótão e o céu (`TITLE.cameraX/Y`) e passeia devagar para os lados. A chuva cai e os relâmpagos acontecem normalmente.
 - A **música** (valsa em Ré menor) toca aqui, na seleção de atos e nas telas de SCENES e ACHIEVEMENTS.

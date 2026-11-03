@@ -9,7 +9,8 @@ export type GameEvent =
   | { type: 'letterRead'; act: string; letter: string }
   | { type: 'actEnd'; act: string }
   | { type: 'allRatsKilled'; act: string }
-  | { type: 'stomped'; act: string };
+  | { type: 'stomped'; act: string }
+  | { type: 'sickDefeated'; act: string; byChandelier: boolean };
 
 /** As conquistas da lista que este acontecimento libera (já tendo ou não). */
 export function triggeredBy(list: Achievement[], e: GameEvent): Achievement[] {
@@ -17,6 +18,7 @@ export function triggeredBy(list: Achievement[], e: GameEvent): Achievement[] {
     const t = a.trigger;
     if (t.type !== e.type || t.act !== e.act) return false;
     if (t.type === 'letterRead' && e.type === 'letterRead') return !t.letter || t.letter === e.letter;
+    if (t.type === 'sickDefeated' && e.type === 'sickDefeated') return !t.byChandelier || e.byChandelier;
     return true;
   });
 }

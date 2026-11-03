@@ -41,6 +41,7 @@ import { type TitleAction, TitleScreen } from './TitleScreen';
 import { type WebPullOptions, fadeTo, hideChapter, playActTransition, showChapter, webPull } from './Transitions';
 import { hasSave, loadProgress, saveProgress, startNewSave } from './progressStore';
 import { markSceneSeen } from './sceneStore';
+import { act3Letters, act3Talks } from './NeighborScene';
 
 /**
  * title: tela inicial (menu) | acts: seleção de atos | extras: SCENES ou ACHIEVEMENTS |
@@ -432,7 +433,7 @@ export class GameScene extends Phaser.Scene {
     this.fading = false;
   }
 
-  /** Escolheu um ato: a música some e toca a transição do ato (gosma no 1, teia e vento no 2). */
+  /** Escolheu um ato: a música some e toca a transição do ato (gosma no 1, teia e vento no 2, a luz apagando no 3). */
   private async startAct(act: Act): Promise<void> {
     if (this.fading) return;
     this.fading = true;
@@ -442,6 +443,10 @@ export class GameScene extends Phaser.Scene {
     if (act.id === 'act1') {
       runLetters.clear();
       await playActTransition('goo');
+    } else if (act.id === 'act3') {
+      act3Letters.clear();
+      act3Talks.clear();
+      await playActTransition('power');
     } else {
       await playActTransition('web');
     }
@@ -449,6 +454,7 @@ export class GameScene extends Phaser.Scene {
     this.title.hide();
     this.actsMenu.hide();
     if (act.id === 'act1') this.scene.start('intro');
+    else if (act.id === 'act3') this.scene.start('act3', { intro: true });
     else this.scene.start('act2', { intro: true });
   }
 

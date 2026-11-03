@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spider Web</title>
+    <title>Little Tears</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Press+Start+2P&display=swap" rel="stylesheet" />
     <style>
@@ -70,7 +70,9 @@
       #title h1 {
         position: relative;
         margin: 0;
-        font-size: clamp(30px, 8vw, 84px);
+        /* 12 letras ("LITTLE TEARS") cabem numa linha só até em janela estreita. */
+        font-size: clamp(30px, 6.6vw, 84px);
+        white-space: nowrap;
         font-weight: normal;
         letter-spacing: 0.08em;
         color: #e8e4f0;
@@ -985,6 +987,111 @@
           opacity: 0;
         }
       }
+      /* ---------- ato 3: caixa de diálogo da Mary (como a do Stardew Valley, com o retrato à esquerda) ---------- */
+      #dialogue {
+        position: fixed;
+        left: 50%;
+        bottom: 3vh;
+        transform: translateX(-50%);
+        width: min(92vw, 1100px);
+        height: clamp(110px, 26vh, 260px);
+        display: flex;
+        gap: 0.8vh;
+        cursor: pointer;
+        image-rendering: pixelated;
+      }
+      #dialogue.hidden {
+        display: none;
+      }
+      /* Madeira da moldura: borda clara e escura, como pixel art. */
+      #dialogue .dlg-portrait,
+      #dialogue .dlg-box {
+        position: relative;
+        box-sizing: border-box;
+        border: 4px solid #3b2010;
+        box-shadow:
+          inset 0 0 0 3px #c47a3a,
+          inset 0 0 0 6px #7a4420,
+          0 4px 0 rgba(0, 0, 0, 0.55);
+        border-radius: 3px;
+      }
+      #dialogue .dlg-portrait {
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1.2;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.2vh;
+        padding: 1.4vh 1.2vh;
+        background: linear-gradient(#a8622c, #8a4e22);
+      }
+      /* O retrato ocupa quase toda a altura do painel (padding em % seria da largura da caixa inteira). */
+      #dialogue .dlg-face {
+        height: 66%;
+        width: auto;
+        aspect-ratio: 1;
+        image-rendering: pixelated;
+        border: 3px solid #3b2010;
+        box-shadow: inset 0 0 0 2px #e8b878;
+      }
+      #dialogue .dlg-name {
+        margin: 0;
+        padding: 3% 10%;
+        font-size: clamp(8px, 1.3vw, 14px);
+        letter-spacing: 0.12em;
+        color: #3b2010;
+        background: linear-gradient(#f6e0b0, #e2c186);
+        border: 2px solid #3b2010;
+        border-radius: 3px;
+      }
+      #dialogue .dlg-box {
+        flex: 1 1 auto;
+        padding: 2.6vh 3vh;
+        background: linear-gradient(#f5d9a2, #e9c27e);
+      }
+      #dialogue .dlg-text {
+        margin: 0;
+        font-size: clamp(10px, 1.7vw, 20px);
+        line-height: 1.9;
+        color: #3b2412;
+        white-space: pre-wrap;
+      }
+      #dialogue .dlg-next {
+        position: absolute;
+        right: 3%;
+        bottom: 8%;
+        color: #7a3a14;
+        font-size: clamp(8px, 1.2vw, 14px);
+        animation: dlg-bob 0.8s steps(2, start) infinite;
+      }
+      #dialogue .dlg-next.hidden {
+        display: none;
+      }
+      @keyframes dlg-bob {
+        to {
+          transform: translateY(3px);
+        }
+      }
+      /* Veneno: a borda da tela verde, pulsando. */
+      #poison {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, rgba(40, 200, 70, 0) 45%, rgba(40, 200, 70, 0.5) 100%);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      #poison.on {
+        opacity: 1;
+        animation: poison-pulse 1s ease-in-out infinite;
+      }
+      @keyframes poison-pulse {
+        50% {
+          opacity: 0.55;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1007,7 +1114,7 @@ X  attack web   B  trap web   Y  read
 START  pause   SELECT  mute</div>
     <div id="debug" class="panel hidden"></div>
     <div id="title">
-      <h1>SPIDER WEB</h1>
+      <h1>LITTLE TEARS</h1>
       <nav id="title-menu">
         <button class="menu-button" type="button" data-action="new">NEW GAME</button>
         <button class="menu-button" type="button" data-action="load">LOAD GAME</button>
@@ -1081,6 +1188,11 @@ START  pause   SELECT  mute</div>
       <p class="end-letters"></p>
       <p class="end-next"></p>
       <div class="end-hint"><span class="btn a pad">A</span><span class="key kb">ENTER</span>  continue</div>
+    </div>
+    <div id="poison"></div>
+    <div id="dialogue" class="hidden">
+      <div class="dlg-portrait"><p class="dlg-name">MARY</p></div>
+      <div class="dlg-box"><p class="dlg-text"></p><span class="dlg-next">&#9660;</span></div>
     </div>
     <div id="chapter"><p class="chapter-act"></p><h2 class="chapter-name"></h2></div>
     <div id="toast"></div>

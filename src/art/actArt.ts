@@ -9,6 +9,8 @@ import { SPIDER_FRAMES, buildSpiderSheet } from './spiderArt';
 import { HOUSES_BASE, WIDE_SHOT, buildHouses, buildRoofEdge, buildStreetSky, buildWideStreet } from './streetArt';
 import { mixColor, shadeColor } from './tilePainters';
 import { drawLock } from './uiArt';
+import { getNeighborArt } from './neighborArt';
+import { CHANDELIER_ART, SICK_FRAME, SICK_POSES, buildChandelier, buildSickSheets } from './sickArt';
 
 const WEB_COLOR = 0xe8e4f0;
 import { ZOMBIE_FRAMES, ZOMBIE_LOOKS, buildZombieSheets } from './zombieArt';
@@ -19,7 +21,7 @@ const S = PAL.street;
 const A = PAL.acts;
 
 export function buildActArt(actId: string): PixelCanvas {
-  const pc = actId === 'act1' ? actOne() : actId === 'act2' ? actTwo() : lockedAct();
+  const pc = actId === 'act1' ? actOne() : actId === 'act2' ? actTwo() : actId === 'act3' ? actThree() : lockedAct();
   grungeFrame(pc, actId.length * 17);
   return pc;
 }
@@ -140,6 +142,78 @@ function actTwo(): PixelCanvas {
     const y = Math.floor(hash(i, 8, 6) * (ACT_ART.h - 30));
     for (let k = 0; k < len; k++) pc.set(x + k, y, R.streak, 0.25 + (0.6 * k) / len);
   }
+  return pc;
+}
+
+/**
+ * Ato 3: a cozinha escura da casa vizinha no clarão de um raio. O doente embaixo do lustre, a gosma
+ * jorrando do esgoto, o machado na parede, e a Mary pendurada num fio de teia, olhando a corda do lustre.
+ */
+function actThree(): PixelCanvas {
+  const pc = new PixelCanvas(ACT_ART.w, ACT_ART.h);
+  const art = getNeighborArt();
+  const x0 = 130;
+  const y0 = 672 + 4 - ACT_ART.h;
+  // O cenário com a luz da casa sem energia e um pouco do clarão do raio entrando pela janela.
+  for (let y = 0; y < ACT_ART.h; y++) {
+    for (let x = 0; x < ACT_ART.w; x++) {
+      const s = ((y0 + y) * art.canvas.width + x0 + x) * 4;
+      const d = (y * ACT_ART.w + x) * 4;
+      const flash = (art.flash.data[s + 3] / 255) * 0.4;
+      for (let k = 0; k < 3; k++) {
+        const lit = (art.canvas.data[s + k] * art.light.data[s + k]) / 255;
+        pc.data[d + k] = Math.min(255, lit + (art.flash.data[s + k] - lit) * flash * 0.5 + 6);
+      }
+      pc.data[d + 3] = 255;
+    }
+  }
+  const floor = 672 - y0;
+  const G = PAL.intro;
+  // A gosma jorrando do buraco do esgoto, com o brilho verde em volta.
+  const jx = 18 * 16 + 8 - x0;
+  for (let y = 0; y < ACT_ART.h; y++) {
+    for (let x = 0; x < ACT_ART.w; x++) {
+      const v = 1 - Math.hypot((x - jx) / 46, (y - floor + 30) / 52);
+      if (v > 0) pc.set(x, y, G.gooGlow, ditherLevel(v, x, y, 4) * 0.28);
+    }
+  }
+  for (let y = floor - 64; y < floor; y++) {
+    const half = 2 + Math.round(Math.sin(y * 0.7) * 1.2);
+    for (let x = jx - half; x <= jx + half; x++) pc.set(x, y, x === jx - half ? G.gooLight : x === jx + half ? G.gooDark : G.goo);
+  }
+  for (let i = 0; i < 12; i++) pc.set(jx - 8 + Math.floor(hash(i, 1, 9) * 16), floor - 64 - Math.floor(hash(i, 2, 9) * 14), G.gooLight);
+  pc.rect(jx - 22, floor - 2, 44, 2, G.goo);
+  pc.rect(jx - 22, floor - 2, 44, 1, G.gooLight);
+
+  // O doente, embaixo do lustre, esticando o braço; a borda acesa pelo raio.
+  const lustreX = 13 * 16 - x0;
+  const sheets = buildSickSheets();
+  const pose = SICK_POSES.indexOf('walk0');
+  const sick = new PixelCanvas(SICK_FRAME.w, SICK_FRAME.h);
+  blitRegion(sick, sheets.body, pose * SICK_FRAME.w, 0, SICK_FRAME.w, SICK_FRAME.h, 0, 0, 0x8088a8);
+  blitRegion(sick, sheets.eyes, pose * SICK_FRAME.w, 0, SICK_FRAME.w, SICK_FRAME.h, 0, 0, 0xffffff);
+  rimLight(sick, S.flash);
+  pc.blit(sick, lustreX - SICK_FRAME.w / 2 + 4, floor - SICK_FRAME.h);
+
+  // O lustre pendurado (a corda sobe até o teto, fora do quadro).
+  const ly = 22;
+  pc.line(lustreX, 0, lustreX, ly, PAL.act3.rope);
+  const lustre = buildChandelier();
+  const tinted = new PixelCanvas(CHANDELIER_ART.w, CHANDELIER_ART.h);
+  blitRegion(tinted, lustre, 0, 0, CHANDELIER_ART.w, CHANDELIER_ART.h, 0, 0, 0xa0a4c0);
+  rimLight(tinted, S.flash);
+  pc.blit(tinted, lustreX - Math.floor(CHANDELIER_ART.w / 2), ly);
+
+  // A Mary pendurada num fio de teia, ao lado da corda (2×).
+  const mx = lustreX - 44;
+  const my = 46;
+  pc.line(mx, 0, mx, my - 6, WEB_COLOR);
+  const scale = 2;
+  const big = new PixelCanvas(SPIDER.frameW * scale, SPIDER.frameH * scale);
+  const air = SPIDER_FRAMES.findIndex((f) => f.name === 'air');
+  blitRegion(big, buildSpiderSheet(), air * SPIDER.frameW, 0, SPIDER.frameW, SPIDER.frameH, 0, 0, mixColor(0x6a7090, 0xffffff, 0.35), scale);
+  rimLight(big, S.flash);
+  pc.blit(big, mx - big.width / 2, my - big.height / 2);
   return pc;
 }
 

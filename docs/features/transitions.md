@@ -9,6 +9,7 @@ Três transições, todas em HTML/canvas por cima do jogo (o Phaser continua rod
 | SCENES → assistir uma cena (e a volta) | Escurece em `RECAP.enterFadeSec` e a cena começa; no fim ela escurece e o SCENES clareia em `TRANSITION.fadeInSec`, com a mesma cena escolhida ([scenes.md](scenes.md)). |
 | Escolher o **ato 1** (ou NEW GAME) | **Gosma verde**: o líquido mutante espirra na "lente" e escorre do alto até cobrir tudo; o verde apaga para o preto e começa a cutscene de abertura. |
 | Escolher o **ato 2** | **Teia e vento**: riscos de vento cruzam a tela, fios de teia saem das bordas e tecem uma teia no meio enquanto o fundo escurece; uma rajada arranca a teia e começa o ato 2. |
+| Escolher o **ato 3** | **A luz que apaga**: a tela pisca como uma lâmpada morrendo até ficar preta; no escuro, gotas de gosma verde caem e estouram embaixo, e o brilho some. A casa vizinha está sem energia. |
 
 Código:
 - `src/art/transitionArt.ts`: lógica pura. Desenha um quadro de cada transição num `PixelCanvas` de baixa resolução, a partir do tempo (0..1).
@@ -51,6 +52,14 @@ Duração `TRANSITION.webSec`:
 2. **Teia (15–65%):** fios saem das bordas até um centro (os raios da teia); depois a espiral é tecida de fora para dentro. O fundo escurece até o preto.
 3. **Rajada (70–100%):** os fios são arrastados para a direita, se esticam e somem. Fica o preto.
 4. Som: assobio de vento (`Sfx.whoosh`) e "fiuu" de teia a cada fio.
+
+## A luz que apaga (ato 3)
+
+Duração `TRANSITION.powerSec` (`drawPowerOut`):
+1. **Lâmpada morrendo (0–45%):** o escuro sobe aos trancos por cima do menu, com apagões cada vez mais longos e clarões quentes no meio. No centro, o contorno de uma lâmpada com o filamento laranja apagando.
+2. **Gotas no escuro (45–86%):** com a tela já preta, seis gotas de gosma verde caem do alto, uma depois da outra, e estouram embaixo com respingos e um brilho verde.
+3. **Apagar (86–100%):** o verde some e fica o preto.
+4. Som: o zumbido elétrico da lâmpada morrendo (`Sfx.buzz`), dois estalos (`Sfx.spark`) e um "plip" (`Sfx.drip`) para cada gota.
 
 ## Casos de borda
 

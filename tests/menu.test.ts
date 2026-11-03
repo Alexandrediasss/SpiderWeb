@@ -35,7 +35,9 @@ describe('jogo salvo', () => {
     expect(currentActIndex(emptyProgress(), ACTS)).toBe(0);
     const after1 = recordActEnd(emptyProgress(), 'act1', []);
     expect(currentActIndex(after1, ACTS)).toBe(1);
-    // O ato 3 ainda não existe: continua no 2 mesmo depois de terminar o 2.
-    expect(currentActIndex(recordActEnd(after1, 'act2', []), ACTS)).toBe(1);
+    const after2 = recordActEnd(after1, 'act2', []);
+    expect(currentActIndex(after2, ACTS)).toBe(2);
+    // O ato 4 ainda não existe: continua no 3 mesmo depois de terminar o 3.
+    expect(currentActIndex(recordActEnd(after2, 'act3', []), ACTS)).toBe(2);
   });
 });

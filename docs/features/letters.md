@@ -19,6 +19,8 @@ Testes: `tests/letters.test.ts`.
 | 2 | Em cima da cama do quarto | (9, 22) | sim | Dia 21: a asma da filha, o remédio na loja da rua de cima, a água da chuva, o plano do cachorro, o tapa, o buraco no telhado. |
 | 3 | No canto direito do sótão | (73, 11) | extra | Dia 15: ele e a Lonnie, que estavam perto do divórcio, mais unidos do que nunca. "I LOVE YOU, LONNIE!" |
 
+**Ato 3** (casa vizinha, `ACT3_LETTERS`): Dia 22 em cima de uma caixa do sótão (45, 8), Dia 35 em cima da cama (12, 22) e Dia 40 no chão do armário (61, 26), com sangue nas margens da página (`paper.blood`). Nenhuma é extra. Fechar a do Dia 35 ou a do Dia 40 faz a Mary falar ([dialogue.md](dialogue.md)). Detalhes: [act3-lights-out.md](act3-lights-out.md).
+
 O tile é a célula vazia logo acima da superfície: a folha fica apoiada no chão dela. As três ficam no caminho natural da fase (sala → quarto → sótão). A 3ª fica do outro lado do sótão, passando pelo rato, por isso é a extra.
 
 ## Regras

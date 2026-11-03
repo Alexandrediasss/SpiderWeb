@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LETTER, SPIDER, TILE } from '../src/config';
 import { ACTS } from '../src/level/acts';
 import { HOUSE_MAP, ROOMS } from '../src/level/houseMap';
-import { LETTERS } from '../src/level/letters';
+import { ALL_LETTERS, LETTERS } from '../src/level/letters';
 import { isSolidChar } from '../src/level/legend';
 import { LevelGrid } from '../src/physics/LevelGrid';
 import { SpiderMotor } from '../src/systems/SpiderMotor';
@@ -13,7 +13,7 @@ const grid = LevelGrid.fromAscii(HOUSE_MAP, TILE, isSolidChar);
 
 describe('cartas no mapa', () => {
   it('ids únicos e todas pertencem a um ato', () => {
-    const ids = LETTERS.map((l) => l.id);
+    const ids = ALL_LETTERS.map((l) => l.id);
     expect(new Set(ids).size).toBe(ids.length);
     const inActs = ACTS.flatMap((a) => a.letters);
     for (const id of ids) expect(inActs).toContain(id);

@@ -39,6 +39,13 @@ export class SpiderMotor {
    * para escalar; a aranha só para nela.
    */
   bounds: { minX: number; maxX: number } | null = null;
+  /**
+   * Fração da velocidade (andar, correr e controle no ar) e da força do pulo. O veneno do ato 3 deixa a
+   * aranha lenta e fraca nos pulos. Spec: docs/features/goo-poison.md
+   */
+  speedScale = 1;
+  jumpScale = 1;
+  airScale = 1;
 
   private stickCooldown = 0;
   private lock: InputLock | null = null;
@@ -97,7 +104,7 @@ export class SpiderMotor {
       return;
     }
 
-    const speed = (this.running ? SPIDER.runSpeed : SPIDER.walkSpeed) * this.windWalkFactor();
+    const speed = (this.running ? SPIDER.runSpeed : SPIDER.walkSpeed) * this.speedScale * this.windWalkFactor();
     const result = walkAlongSurface(this.grid, this.body, this.surface, this.dir, speed * dt, SPIDER.stepPx);
     if (result.turnedCorner) this.lock = { dir: this.dir, key: inputKey(input.move) };
     this.surface = result.surface;
@@ -148,11 +155,12 @@ export class SpiderMotor {
   private jump(): void {
     if (this.surface === 'air') return;
     const { normal, tangent } = SURFACES[this.surface];
-    const along = this.dir === 0 ? 0 : this.dir * (this.running ? SPIDER.runSpeed : SPIDER.walkSpeed);
-    this.body.vx = normal.x * SPIDER.jumpSpeed + tangent.x * along;
-    this.body.vy = normal.y * SPIDER.jumpSpeed + tangent.y * along;
+    const along = this.dir === 0 ? 0 : this.dir * (this.running ? SPIDER.runSpeed : SPIDER.walkSpeed) * this.speedScale;
+    const jump = SPIDER.jumpSpeed * this.jumpScale;
+    this.body.vx = normal.x * jump + tangent.x * along;
+    this.body.vy = normal.y * jump + tangent.y * along;
     // Pulo de parede ganha um pouco de altura.
-    if (normal.x !== 0) this.body.vy -= SPIDER.jumpSpeed * 0.35;
+    if (normal.x !== 0) this.body.vy -= jump * 0.35;
     this.detach();
     this.stickCooldown = SPIDER.stickCooldown;
   }
@@ -197,8 +205,8 @@ export class SpiderMotor {
         b.vy -= WEB.releaseBoost;
       }
     } else {
-      const ax = input.move.x * AIR.accel;
-      if (Math.abs(b.vx) < AIR.maxSpeedX || Math.sign(ax) !== Math.sign(b.vx)) b.vx += ax * dt;
+      const ax = input.move.x * AIR.accel * this.airScale;
+      if (Math.abs(b.vx) < AIR.maxSpeedX * this.airScale || Math.sign(ax) !== Math.sign(b.vx)) b.vx += ax * dt;
     }
     // Vento: no ar e na teia ele empurra, até levar a aranha na velocidade dele.
     if (this.wind !== 0 && (Math.sign(b.vx) !== Math.sign(this.wind) || Math.abs(b.vx) < WIND.maxAirSpeed)) {

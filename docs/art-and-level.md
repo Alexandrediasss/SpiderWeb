@@ -22,7 +22,10 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 | Miniatura de cada cena do SCENES, feita com a própria arte do jogo | `src/art/sceneThumbs.ts` (`buildSceneThumb`) |
 | Ato 2: tiles da rua (postes, fios, árvore, outdoor, ponto de ônibus, semáforo, telhados), noite e luz das luminárias | `src/art/rooftopArt.ts` (cores em `PAL.act2`; mapa e legenda próprios em `src/level/rooftops.ts`) |
 | Ato 2: o pé do zumbi e os detritos (telha, jornal, galho, tampa) | `src/art/rooftopArt.ts` |
-| Transições de ato (gosma verde, teia e vento) | `src/art/transitionArt.ts` |
+| Ato 3: a casa vizinha (papéis de parede `guestRoom`, `hallway`, `parlor`, `oldKitchen`; decorações só dela: luminária apagada, chaminé, fuligem, rachadura, balde, sangue, machado, esgoto, janela quebrada, galões, cano, rachadura com gosma) e a luz sem energia (lua pelas janelas, brilho verde da gosma) | `src/art/neighborArt.ts` e `tilePainters.ts` (cores em `PAL.act3`; mapa, decorações e posições em `src/level/neighborHouse.ts`) |
+| Ato 3: o doente (caminhada, bote, tapa, braço esticado, caído) e o lustre (inteiro e quebrado) | `src/art/sickArt.ts` |
+| Ato 3: o retrato da Mary para as falas (normal, surpresa, triste, chorando) | `src/art/portraitArt.ts` |
+| Transições de ato (gosma verde, teia e vento, a luz que apaga) | `src/art/transitionArt.ts` |
 | Tiles e papéis de parede | `src/art/tilePainters.ts` |
 | Janelas, quadros, luminárias, teias... | `src/art/decorArt.ts` |
 | Montagem do cenário numa textura só (+ máscara do lado de fora) | `src/art/levelBaker.ts` |
@@ -33,7 +36,7 @@ Toda a arte é **gerada por código** no boot (`BootScene` → `art/textures.ts`
 
 ## Editar o mapa
 
-O mapa da casa é ASCII em `HOUSE_MAP` (o do ato 2 é `ROOFTOP_MAP`, com legenda própria: [features/act2-rooftops.md](features/act2-rooftops.md)): cada caractere é um tile de 16×16, e todas as linhas precisam ter o mesmo tamanho (o teste `tests/houseMap.test.ts` confere).
+O mapa da casa é ASCII em `HOUSE_MAP` (o do ato 2 é `ROOFTOP_MAP`, com legenda própria: [features/act2-rooftops.md](features/act2-rooftops.md); o do ato 3 é `NEIGHBOR_MAP`, com a mesma legenda da casa: [features/act3-lights-out.md](features/act3-lights-out.md)): cada caractere é um tile de 16×16, e todas as linhas precisam ter o mesmo tamanho (o teste `tests/houseMap.test.ts` confere).
 
 | Char | Material | Colide? |
 |---|---|---|

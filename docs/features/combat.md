@@ -62,6 +62,7 @@ As duas saem do centro da aranha na direção da mira (cursor do mouse ou analó
 - **Prender:** rede 5×5, mais lenta (`SHOTS.trap`), recarga de 1 s.
 - Andam em passos de 2 px e param no primeiro rato vivo ou sólido que tocarem, com um respingo. Somem ao chegar no alcance máximo.
 - **Mira assistida (só no controle):** se um rato está a até `SHOTS.aimAssistDeg` da mira, dentro do alcance e sem parede no caminho, a teia vai direto nele. No mouse a mira é exata.
+- **Outros alvos (ato 3):** o combate também acerta o que estiver em `Combat.targets` (o doente da cozinha e a corda do lustre) e só avisa com o evento `targetHit`; a cena decide o que acontece ([act3-lights-out.md](act3-lights-out.md)). No ato 3, qualquer dano com a Mary envenenada mata na hora ([goo-poison.md](goo-poison.md)).
 
 ## Sons (sintetizados, como os mobs do Minecraft)
 

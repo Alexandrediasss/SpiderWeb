@@ -12,6 +12,15 @@ import { Storm, type ThunderEvent, boltPath } from '../systems/storm';
 /** Ordem de desenho: cenário 0, chuva 1, escuro 2, clarão 3, feixes 4, poeira 5, raio 6; aranha e teia vêm depois. */
 export const DEPTH = { rain: 1, light: 2, flash: 3, beam: 4, dust: 5, bolt: 6 } as const;
 
+/** Texturas do mapa de luz, do clarão e dos feixes (a casa do ato 1 usa as do boot; o ato 3 tem as suas). */
+export interface AtmosphereTextures {
+  light: string;
+  flash: string;
+  beam: (i: number) => string;
+}
+
+const HOUSE_TEXTURES: AtmosphereTextures = { light: TEX.light, flash: TEX.flash, beam: TEX.beam };
+
 interface Drop {
   x: number;
   y: number;
@@ -38,6 +47,7 @@ export class Atmosphere {
     private readonly scene: Phaser.Scene,
     private readonly art: LevelArt,
     seed: number,
+    tex: AtmosphereTextures = HOUSE_TEXTURES,
   ) {
     this.storm = new Storm(seed);
     this.rngState = seed || 1;
@@ -45,14 +55,14 @@ export class Atmosphere {
     this.H = art.canvas.height;
 
     this.rainGfx = scene.add.graphics().setDepth(DEPTH.rain);
-    this.lightImg = scene.add.image(0, 0, TEX.light).setOrigin(0, 0).setDepth(DEPTH.light);
+    this.lightImg = scene.add.image(0, 0, tex.light).setOrigin(0, 0).setDepth(DEPTH.light);
     this.lightImg.setBlendMode(Phaser.BlendModes.MULTIPLY);
-    this.flashImg = scene.add.image(0, 0, TEX.flash).setOrigin(0, 0).setDepth(DEPTH.flash).setAlpha(0);
+    this.flashImg = scene.add.image(0, 0, tex.flash).setOrigin(0, 0).setDepth(DEPTH.flash).setAlpha(0);
     this.flashImg.setBlendMode(Phaser.BlendModes.ADD);
     this.boltGfx = scene.add.graphics().setDepth(DEPTH.bolt);
 
     art.lamps.forEach((lamp, i) => {
-      scene.add.image(lamp.x, lamp.y, TEX.beam(i)).setOrigin(0.5, 0).setDepth(DEPTH.beam).setBlendMode(Phaser.BlendModes.ADD);
+      scene.add.image(lamp.x, lamp.y, tex.beam(i)).setOrigin(0.5, 0).setDepth(DEPTH.beam).setBlendMode(Phaser.BlendModes.ADD);
       this.addDust(lamp.x, lamp.y);
     });
   }

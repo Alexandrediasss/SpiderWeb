@@ -157,6 +157,62 @@ export function buildFlashMap(grid: LevelGrid, outside: Uint8Array, windows: Vec
   return pc;
 }
 
+/** Uma fonte de luz redonda (sem lâmpada): o brilho da gosma, a lua entrando pela janela. */
+export interface Glow {
+  x: number;
+  y: number;
+  radius: number;
+  color: RGB;
+  /** 0..1 no centro. */
+  strength: number;
+}
+
+/**
+ * Mapa de luz de uma casa sem energia (ato 3): o escuro `ambient` mais o brilho de cada `Glow`, com sombra
+ * dos sólidos (a luz entra `LIGHT.penetration` px neles). Os degradês saem em faixas com pontilhado.
+ */
+export function buildGlowLightMap(grid: LevelGrid, outside: Uint8Array, ambient: RGB, glows: Glow[]): PixelCanvas {
+  const W = grid.widthPx;
+  const H = grid.heightPx;
+  const acc = [new Float32Array(W * H), new Float32Array(W * H), new Float32Array(W * H)];
+  for (const g of glows) {
+    const col = rgb01(g.color);
+    const x0 = Math.max(0, Math.floor(g.x - g.radius));
+    const x1 = Math.min(W - 1, Math.ceil(g.x + g.radius));
+    const y0 = Math.max(0, Math.floor(g.y - g.radius));
+    const y1 = Math.min(H - 1, Math.ceil(g.y + g.radius));
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const i = y * W + x;
+        if (outside[i]) continue;
+        const d = Math.hypot(x + 0.5 - g.x, y + 0.5 - g.y);
+        if (d >= g.radius) continue;
+        if (!reaches(grid, g, x + 0.5, y + 0.5, LIGHT.penetration)) continue;
+        const f = g.strength * (1 - d / g.radius) ** 1.6;
+        for (let k = 0; k < 3; k++) acc[k][i] += f * col[k];
+      }
+    }
+  }
+  const pc = new PixelCanvas(W, H);
+  const amb = rgb01(ambient);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      const o = i * 4;
+      pc.data[o + 3] = 255;
+      if (outside[i]) {
+        pc.data[o] = pc.data[o + 1] = pc.data[o + 2] = 255;
+        continue;
+      }
+      for (let k = 0; k < 3; k++) {
+        const add = ditherLevel(Math.min(1, acc[k][i]), x, y, LIGHT.bands);
+        pc.data[o + k] = Math.round(Math.min(1, amb[k] + add) * 255);
+      }
+    }
+  }
+  return pc;
+}
+
 /** Cor da luz (0..1 por canal) num ponto do mapa de luz. */
 export function sampleLight(light: PixelCanvas, x: number, y: number): [number, number, number] {
   const px = Math.max(0, Math.min(light.width - 1, Math.floor(x)));
