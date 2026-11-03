@@ -32,6 +32,50 @@ export function nearbyLetter(letters: Letter[], pos: Vec2, tile: number, radius:
   return best;
 }
 
+/** As cartas obrigatórias (não extras) já foram todas lidas? Elas abrem o buraco do telhado. */
+export function requiredLettersRead(letters: Letter[], log: LetterLog): boolean {
+  return letters.every((l) => l.extra || log.has(l.id));
+}
+
+/**
+ * Divide o texto de uma carta em páginas que cabem no papel. Cada página tem até `pageChars` caracteres,
+ * contando `paragraphCost` por parágrafo (o espaço entre eles) e `headingCost` na primeira (o cabeçalho).
+ * Quebra entre parágrafos; um parágrafo que não cabe sozinho é quebrado entre frases. Devolve, por página,
+ * os parágrafos dela.
+ */
+export function paginateLetter(text: string, pageChars: number, paragraphCost: number, headingCost: number): string[][] {
+  const pieces: string[] = [];
+  for (const para of text.split('\n\n')) {
+    if (para.length + paragraphCost <= pageChars - headingCost) {
+      pieces.push(para);
+      continue;
+    }
+    // Parágrafo grande demais: quebra entre frases, juntando as que cabem.
+    let chunk = '';
+    for (const sentence of para.match(/[^.!?]+[.!?]+["']?\s*|[^.!?]+$/g) ?? [para]) {
+      if (chunk && chunk.length + sentence.length + paragraphCost > pageChars - headingCost) {
+        pieces.push(chunk.trim());
+        chunk = '';
+      }
+      chunk += sentence;
+    }
+    if (chunk.trim()) pieces.push(chunk.trim());
+  }
+
+  const pages: string[][] = [[]];
+  let used = headingCost;
+  for (const piece of pieces) {
+    const cost = piece.length + paragraphCost;
+    if (pages[pages.length - 1].length > 0 && used + cost > pageChars) {
+      pages.push([]);
+      used = 0;
+    }
+    pages[pages.length - 1].push(piece);
+    used += cost;
+  }
+  return pages;
+}
+
 /** Cartas lidas na jogada atual do ato. */
 export class LetterLog {
   private readonly read = new Set<string>();

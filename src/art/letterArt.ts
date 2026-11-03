@@ -29,6 +29,8 @@ export interface PaperStyle {
   torn?: boolean;
   /** Coraçãozinho rabiscado no canto. */
   heart?: boolean;
+  /** Respingos e uma marca de dedo de sangue nas margens (fora da área do texto). */
+  blood?: boolean;
 }
 
 // ---------------- no cenário ----------------
@@ -113,6 +115,7 @@ export function buildParchment(style: PaperStyle): PixelCanvas {
     }
   }
   if (style.heart) stampHeart(pc, P.x + P.w - 26, P.y + P.h - 26);
+  if (style.blood) stampBlood(pc, style.seed, inPaper);
 
   // As patas: atrás (mais escuras) primeiro, depois as da frente. Sombra das pontas no papel.
   for (const leg of LEGS) for (const side of [1, -1] as const) shadeTip(pc, mirrorLeg(leg, side), inPaper);
@@ -206,6 +209,33 @@ function flapColor(u: number, v: number): RGB {
   if (a + v <= 10) return L.creaseLight;
   if (a === 9 || v === 9) return L.edgeDark;
   return shadeColor(L.paperDark, 0.92);
+}
+
+/** Sangue nas margens: respingos no canto de cima, uma gota escorrendo na direita e a marca de um dedo embaixo. */
+function stampBlood(pc: PixelCanvas, seed: number, inPaper: (x: number, y: number) => boolean): void {
+  const t = PAGE.text;
+  const outsideText = (x: number, y: number) => x < t.x || x >= t.x + t.w || y < t.y || y >= t.y + t.h;
+  const dot = (cx: number, cy: number, r: number, c: RGB) => {
+    for (let y = Math.floor(cy - r); y <= cy + r; y++) {
+      for (let x = Math.floor(cx - r); x <= cx + r; x++) {
+        if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r && inPaper(x, y) && outsideText(x, y)) pc.set(x, y, c, 0.9);
+      }
+    }
+  };
+  // Respingo grande no canto de cima e as gotinhas em volta.
+  dot(108, 11, 3.2, L.bloodDark);
+  dot(108, 11, 2.2, L.blood);
+  for (let i = 0; i < 9; i++) dot(96 + hash(i, 1, seed) * 20, 7 + hash(i, 2, seed) * 7, 0.6 + hash(i, 3, seed) * 0.9, L.blood);
+  // Uma gota escorrendo pela margem da direita.
+  for (let y = 40; y < 72; y++) dot(113 + Math.sin(y * 0.3) * 0.6, y, y > 68 ? 1.6 : 0.9, y % 7 === 0 ? L.bloodDark : L.blood);
+  // A marca de um dedo no canto de baixo à esquerda (anéis de digital).
+  for (let r = 1; r <= 5; r++) {
+    for (let a = 0; a < 18; a++) {
+      const ang = (a / 18) * Math.PI * 2;
+      if ((a + r) % 3 === 0) continue;
+      dot(24 + Math.cos(ang) * r * 1.1, 134 + Math.sin(ang) * r * 1.4, 0.5, r % 2 ? L.blood : L.bloodDark);
+    }
+  }
 }
 
 function stampHeart(pc: PixelCanvas, x: number, y: number): void {

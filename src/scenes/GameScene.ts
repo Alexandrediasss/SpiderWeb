@@ -1,7 +1,9 @@
 // Cena principal: tela inicial, seleção de atos, jogo, cartas, pausa, morte e fim do ato.
 // Cenário, atmosfera, aranha, ratos, câmera, mira, som e debug.
 import Phaser from 'phaser';
-import { GAMEPAD, INTRO, LETTER, LIGHT, PLAYER, RECAP, SHOTS, STREET, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
+import { GAMEPAD, HOLE_BREAK, INTRO, LETTER, LIGHT, PLAYER, RECAP, SHOTS, STREET, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
+import { PLANK } from '../art/holeArt';
+import { PAL } from '../art/palette';
 import { getLevelArt } from '../art/levelArt';
 import { TEX } from '../art/textures';
 import { type Sound, getSound } from '../audio/sound';
@@ -18,7 +20,8 @@ import type { LevelGrid } from '../physics/LevelGrid';
 import type { Vec2 } from '../physics/surfaces';
 import { Combat, type CombatEvent, aimAtTarget } from '../systems/combat';
 import { type SpiderInput, emptyInput } from '../systems/input';
-import { LetterLog, letterCenter, nearbyLetter } from '../systems/letters';
+import { Timeline } from '../systems/cutscene';
+import { LetterLog, letterCenter, nearbyLetter, requiredLettersRead } from '../systems/letters';
 import { currentActIndex, hasProgress, recordActEnd } from '../systems/progress';
 import { RecapRun } from '../systems/recap';
 import { inRoofHole } from '../systems/roofHole';
@@ -38,6 +41,7 @@ import { type TitleAction, TitleScreen } from './TitleScreen';
 import { type WebPullOptions, fadeTo, hideChapter, playActTransition, showChapter, webPull } from './Transitions';
 import { hasSave, loadProgress, saveProgress, startNewSave } from './progressStore';
 import { markSceneSeen } from './sceneStore';
+import { act3Letters, act3Talks } from './NeighborScene';
 
 /**
  * title: tela inicial (menu) | acts: seleção de atos | extras: SCENES ou ACHIEVEMENTS |
@@ -48,7 +52,20 @@ import { markSceneSeen } from './sceneStore';
  * actEnd: tela de fim do ato (depois da cutscene da rua) |
  * recap: o resumo do ato 1, assistido pelo SCENES (a aranha anda sozinha; dá para pular).
  */
-type Mode = 'title' | 'acts' | 'extras' | 'leaving' | 'emerge' | 'play' | 'paused' | 'reading' | 'dying' | 'exiting' | 'actEnd' | 'recap';
+type Mode =
+  | 'title'
+  | 'acts'
+  | 'extras'
+  | 'leaving'
+  | 'emerge'
+  | 'play'
+  | 'paused'
+  | 'reading'
+  | 'holeBreak'
+  | 'dying'
+  | 'exiting'
+  | 'actEnd'
+  | 'recap';
 
 /** Telas do menu que abrem com a teia (além do LOAD GAME). */
 type Extras = 'scenes' | 'achievements';
@@ -120,6 +137,18 @@ export class GameScene extends Phaser.Scene {
   /** Já escureceu para o corte deste plano / está saindo do resumo. */
   private recapCut = false;
   private recapLeaving = false;
+  /** Buraco no telhado: fechado pelas tábuas até as cartas obrigatórias serem lidas. */
+  private holeOpen = true;
+  private planks: Phaser.GameObjects.Image[] = [];
+  /** A cutscene das tábuas arrebentando (modo 'holeBreak'). */
+  private holeTl: Timeline | null = null;
+  private holeElapsed = 0;
+  private holeStep = -1;
+  private holeBars: Phaser.GameObjects.Rectangle[] = [];
+  private holeGfx!: Phaser.GameObjects.Graphics;
+  private holeDrips: { x: number; y: number; vy: number }[] = [];
+  /** As tábuas soltas caindo (no relógio da cutscene, não em tweens: assim pular e os quadros batem). */
+  private holePieces: { img: Phaser.GameObjects.Image; vx: number; vy: number; spin: number; floor: number }[] = [];
 
   constructor() {
     super('game');
@@ -137,11 +166,27 @@ export class GameScene extends Phaser.Scene {
     this.recapBars = [];
     this.recapCut = false;
     this.recapLeaving = false;
+    this.holeTl = null;
+    this.holeElapsed = 0;
+    this.holeStep = -1;
+    this.holeDrips = [];
+    this.holePieces = [];
     const art = getLevelArt();
     this.grid = art.grid;
     const seed = (Date.now() & 0x7fffffff) || 1;
     this.add.image(0, 0, TEX.level).setOrigin(0, 0);
     this.atmosphere = new Atmosphere(this, art, seed);
+    // Tábuas do buraco no telhado (por cima da chuva, embaixo do escuro): somem quando ele abre.
+    this.planks = Array.from({ length: PLANK.count }, (_, i) =>
+      this.add
+        .image(ROOF_HOLE.tx * TILE - 2, ROOF_HOLE.ty * TILE + i * PLANK.h, TEX.holePlanks, `plank${i}`)
+        .setOrigin(0, 0)
+        .setDepth(1.5)
+        .setTint(PAL.light.ambient),
+    );
+    this.holeGfx = this.add.graphics().setDepth(6.7);
+    // Fica aberto no resumo e depois que as duas cartas obrigatórias foram lidas nesta jogada do ato.
+    this.setHoleOpen(!!data.recap || requiredLettersRead(LETTERS, runLetters));
 
     // Som: criado uma vez e reaproveitado entre reinícios. Música só na tela inicial.
     this.sound_ = getSound();
@@ -162,7 +207,10 @@ export class GameScene extends Phaser.Scene {
     this.hearts = new HeartsHud(this, PLAYER.maxHp);
     this.hearts.setVisible(false);
     this.letters = new LetterSprites(this, LETTERS);
-    this.reader = new LetterReader(() => this.closeLetter());
+    this.reader = new LetterReader(
+      () => this.advanceLetter(),
+      () => this.sound_.sfx.paper(),
+    );
     this.title = new TitleScreen((a) => this.onTitleAction(a), !data.skipTitle && !data.openActs && !data.openScenes && !data.recap);
     this.title.setEnabled('load', hasSave());
     this.title.focus(hasSave() ? 'load' : 'new');
@@ -228,10 +276,14 @@ export class GameScene extends Phaser.Scene {
     kb?.on('keydown-ESC', () => this.togglePause());
     kb?.on('keydown-P', () => this.togglePause());
     kb?.on('keydown-ENTER', () => {
-      this.closeLetter();
+      this.advanceLetter();
       this.skipRecap();
+      this.skipHoleBreak();
     });
-    kb?.on('keydown-SPACE', () => this.skipRecap());
+    kb?.on('keydown-SPACE', () => {
+      this.skipRecap();
+      this.skipHoleBreak();
+    });
 
     if (import.meta.env.DEV) {
       Object.assign(window, {
@@ -381,7 +433,7 @@ export class GameScene extends Phaser.Scene {
     this.fading = false;
   }
 
-  /** Escolheu um ato: a música some e toca a transição do ato (gosma no 1, teia e vento no 2). */
+  /** Escolheu um ato: a música some e toca a transição do ato (gosma no 1, teia e vento no 2, a luz apagando no 3). */
   private async startAct(act: Act): Promise<void> {
     if (this.fading) return;
     this.fading = true;
@@ -391,6 +443,10 @@ export class GameScene extends Phaser.Scene {
     if (act.id === 'act1') {
       runLetters.clear();
       await playActTransition('goo');
+    } else if (act.id === 'act3') {
+      act3Letters.clear();
+      act3Talks.clear();
+      await playActTransition('power');
     } else {
       await playActTransition('web');
     }
@@ -398,6 +454,7 @@ export class GameScene extends Phaser.Scene {
     this.title.hide();
     this.actsMenu.hide();
     if (act.id === 'act1') this.scene.start('intro');
+    else if (act.id === 'act3') this.scene.start('act3', { intro: true });
     else this.scene.start('act2', { intro: true });
   }
 
@@ -425,6 +482,7 @@ export class GameScene extends Phaser.Scene {
 
   private togglePause(): void {
     if (this.mode === 'recap') this.skipRecap();
+    else if (this.mode === 'holeBreak') this.skipHoleBreak();
     else if (this.mode === 'play') this.pauseGame();
     else if (this.mode === 'paused') this.resumeGame();
     else if (this.mode === 'reading') this.closeLetter();
@@ -625,6 +683,13 @@ export class GameScene extends Phaser.Scene {
     this.sound_.sfx.paper();
   }
 
+  /** Próxima página da carta aberta; na última, fecha. */
+  private advanceLetter(): void {
+    if (this.mode !== 'reading') return;
+    if (this.reader.turn(1)) this.sound_.sfx.paper();
+    else this.closeLetter();
+  }
+
   private closeLetter(): void {
     if (this.mode !== 'reading') return;
     this.mode = 'play';
@@ -634,6 +699,185 @@ export class GameScene extends Phaser.Scene {
     this.anims.resumeAll();
     this.graceLeft = TITLE.inputGraceSec;
     this.sound_.sfx.paper();
+    // Acabou de ler a segunda carta obrigatória: a chuva arrebenta as tábuas do buraco no telhado.
+    if (!this.holeOpen && requiredLettersRead(LETTERS, runLetters)) this.startHoleBreak();
+  }
+
+  // ---------- buraco no telhado ----------
+
+  /** Abre (tiles vazios, chuva entrando, sem tábuas) ou fecha o buraco do telhado. */
+  private setHoleOpen(open: boolean): void {
+    this.holeOpen = open;
+    const { tx, ty, w, h } = ROOF_HOLE;
+    for (let y = ty; y < ty + h; y++) for (let x = tx; x < tx + w; x++) this.grid.setSolid(x, y, !open);
+    this.atmosphere.leaking = open;
+    for (const p of this.planks) p.setVisible(!open);
+  }
+
+  /**
+   * A cutscene das tábuas arrebentando: corte para o buraco, as tábuas rangem e tremem, cai um raio, elas
+   * arrebentam e caem no sótão, e a chuva entra. Depois volta para a aranha (público para o console).
+   */
+  startHoleBreak(): void {
+    if (this.holeOpen || (this.mode !== 'play' && this.mode !== 'reading')) return;
+    this.mode = 'holeBreak';
+    this.holeElapsed = 0;
+    this.holeStep = -1;
+    this.holeDrips = [];
+    this.holeTl = new Timeline([
+      { name: 'out', sec: HOLE_BREAK.fadeSec },
+      { name: 'creak', sec: HOLE_BREAK.creakSec },
+      { name: 'break', sec: HOLE_BREAK.breakSec },
+      { name: 'look', sec: HOLE_BREAK.lookSec },
+      { name: 'back', sec: HOLE_BREAK.fadeSec },
+    ]);
+    this.reticle.setVisible(false);
+    this.hearts.setVisible(false);
+    this.reader.hidePrompt();
+    this.cameras.main.fadeOut(HOLE_BREAK.fadeSec * 1000, 0, 0, 0);
+  }
+
+  /** Pular: escurece rápido e volta já com o buraco aberto. */
+  private skipHoleBreak(): void {
+    if (this.mode !== 'holeBreak' || !this.holeTl || this.holeElapsed < HOLE_BREAK.skipAfterSec) return;
+    const back = this.holeTl.total - HOLE_BREAK.fadeSec;
+    if (this.holeElapsed >= back) return;
+    if (!this.holeOpen) this.breakPlanks(false);
+    this.holeElapsed = back;
+    this.holeStep = this.holeTl.steps.length - 1;
+    this.cameras.main.fadeOut(HOLE_BREAK.fadeSec * 1000, 0, 0, 0);
+  }
+
+  private updateHoleBreak(dt: number): void {
+    const cam = this.cameras.main;
+    for (const thunder of this.atmosphere.update(dt, cam.worldView)) this.sound_.storm.thunder(thunder);
+    placeBars(cam, this.holeBars, RECAP.letterboxPx);
+    this.playerInput.read(this.spider.motor.body);
+    const f = this.playerInput.padFrame;
+    if (f?.musicPressed) this.sound_.hub.toggleMute();
+    if (f?.confirmPressed || f?.pausePressed) this.skipHoleBreak();
+    this.drawHoleDrips(dt);
+    this.updateHolePieces(dt);
+
+    const tl = this.holeTl;
+    if (!tl) return;
+    this.holeElapsed += dt;
+    const at = tl.at(this.holeElapsed);
+    if (!at) {
+      this.endHoleBreak();
+      return;
+    }
+    if (at.index !== this.holeStep) {
+      this.holeStep = at.index;
+      this.enterHoleStep(at.name);
+    }
+    if (at.name === 'creak') {
+      // As tábuas tremem cada vez mais e a água pinga pelas frestas.
+      const shake = at.progress * 1.6;
+      this.planks.forEach((p, i) => p.setX(ROOF_HOLE.tx * TILE - 2 + Math.round(Math.sin(this.holeElapsed * 47 + i * 2) * shake)));
+      if (Math.random() < dt * (3 + at.progress * 10)) {
+        this.holeDrips.push({ x: (ROOF_HOLE.tx + Math.random() * ROOF_HOLE.w) * TILE, y: (ROOF_HOLE.ty + ROOF_HOLE.h) * TILE, vy: 30 });
+      }
+      if (at.local > HOLE_BREAK.creakSec * 0.55 && at.local - dt <= HOLE_BREAK.creakSec * 0.55) this.sound_.sfx.creak();
+    }
+  }
+
+  private enterHoleStep(name: string): void {
+    const cam = this.cameras.main;
+    switch (name) {
+      case 'creak': {
+        // Corte para o buraco, com faixas de cinema.
+        const bar = () => this.add.rectangle(0, 0, VIEW.width, RECAP.letterboxPx, 0x000000).setOrigin(0, 0).setScrollFactor(0).setDepth(30);
+        this.holeBars = [bar(), bar()];
+        cam.stopFollow();
+        cam.setZoom(HOLE_BREAK.zoom);
+        cam.centerOn((ROOF_HOLE.tx + ROOF_HOLE.w / 2) * TILE, (ROOF_HOLE.ty + ROOF_HOLE.h / 2) * TILE + HOLE_BREAK.lookDownPx);
+        cam.fadeIn(HOLE_BREAK.fadeSec * 1000, 0, 0, 0);
+        this.sound_.sfx.creak();
+        break;
+      }
+      case 'break':
+        this.atmosphere.storm.strike(true);
+        this.breakPlanks(true);
+        cam.shake(220, 0.01);
+        break;
+      case 'back':
+        cam.fadeOut(HOLE_BREAK.fadeSec * 1000, 0, 0, 0);
+        break;
+    }
+  }
+
+  /** As tábuas arrebentam: o buraco abre e (se `fall`) elas caem girando até o chão do sótão. */
+  private breakPlanks(fall: boolean): void {
+    const floorY = this.floorBelowHole();
+    this.setHoleOpen(true);
+    if (!fall) return;
+    this.sound_.sfx.boardsBreak();
+    // Uma cópia solta de cada tábua cai na frente do escuro, girando, até o chão do sótão.
+    this.planks.forEach((p, i) => {
+      const img = this.add
+        .image(p.x + PLANK.w / 2, p.y + PLANK.h / 2, TEX.holePlanks, `plank${i}`)
+        .setDepth(6.6)
+        .setData('hole', true);
+      this.holePieces.push({
+        img,
+        vx: (i - 1.5) * 14,
+        vy: -20 - i * 15,
+        spin: (i % 2 === 0 ? 1 : -1) * HOLE_BREAK.fallSpinDeg * (0.6 + i * 0.15),
+        floor: floorY - 2 - (i % 2) * 2,
+      });
+    });
+    this.updateHolePieces(0);
+  }
+
+  /** Tábuas soltas: caem com gravidade, giram e param deitadas no chão; recebem a luz do lugar. */
+  private updateHolePieces(dt: number): void {
+    for (const p of this.holePieces) {
+      const img = p.img;
+      if (img.y < p.floor) {
+        p.vy += HOLE_BREAK.fallGravity * dt;
+        img.x += p.vx * dt;
+        img.y = Math.min(p.floor, img.y + p.vy * dt);
+        img.angle += p.spin * dt;
+        if (img.y >= p.floor) img.setAngle(Math.round(img.angle / 180) * 180);
+      }
+      const [r, g, b] = this.atmosphere.lightAt(img.x, img.y);
+      const ch = (v: number) => Math.round(Math.max(0.45, Math.min(1, v)) * 255);
+      img.setTint((ch(r) << 16) | (ch(g) << 8) | ch(b));
+    }
+  }
+
+  /** Altura do chão do sótão embaixo do buraco (px). */
+  private floorBelowHole(): number {
+    let ty = ROOF_HOLE.ty + ROOF_HOLE.h;
+    while (ty < this.grid.rows && !this.grid.isSolidTile(ROOF_HOLE.tx, ty)) ty++;
+    return ty * TILE;
+  }
+
+  private drawHoleDrips(dt: number): void {
+    const g = this.holeGfx;
+    g.clear();
+    const floorY = this.floorBelowHole();
+    g.fillStyle(PAL.light.rain, 0.8);
+    this.holeDrips = this.holeDrips.filter((d) => {
+      d.vy += 600 * dt;
+      d.y += d.vy * dt;
+      g.fillRect(Math.round(d.x), Math.round(d.y), 1, 2);
+      return d.y < floorY;
+    });
+  }
+
+  /** Fim da cutscene: as tábuas soltas somem (a tela está preta) e o jogo volta com a câmera na aranha. */
+  private endHoleBreak(): void {
+    this.holeTl = null;
+    this.holeDrips = [];
+    this.holeGfx.clear();
+    this.holePieces = [];
+    for (const b of this.holeBars) b.destroy();
+    this.holeBars = [];
+    this.children.list.filter((o) => o.getData('hole')).forEach((o) => o.destroy());
+    this.cameras.main.setZoom(1);
+    this.startPlay();
   }
 
   /** Vida zerou: a aranha cai, a tela escurece e o jogo reinicia. */
@@ -658,6 +902,10 @@ export class GameScene extends Phaser.Scene {
       this.updateRecap(dt, time);
       return;
     }
+    if (this.mode === 'holeBreak') {
+      this.updateHoleBreak(dt);
+      return;
+    }
     if (this.mode === 'paused') {
       pi.read(m.body);
       this.handlePausedPad();
@@ -668,7 +916,10 @@ export class GameScene extends Phaser.Scene {
       const inp = pi.read(m.body);
       const f = pi.padFrame;
       if (f?.musicPressed) this.sound_.hub.toggleMute();
-      if (inp.readPressed || inp.jumpPressed || f?.trapPressed || f?.confirmPressed || f?.pausePressed) this.closeLetter();
+      // F, Espaço, Y ou A: próxima página (fecha na última). B ou Start: fecha na hora. ←/→ ou LB/RB no controle: vira.
+      if (f?.trapPressed || f?.pausePressed) this.closeLetter();
+      else if (inp.readPressed || inp.jumpPressed || f?.confirmPressed) this.advanceLetter();
+      else if (f?.navX && this.reader.turn(f.navX)) this.sound_.sfx.paper();
       return;
     }
 
@@ -724,7 +975,7 @@ export class GameScene extends Phaser.Scene {
     this.updateReticle(input);
 
     if (this.debug) this.drawDebug();
-    if (this.mode === 'play' && inRoofHole(m.body, ROOF_HOLE, TILE)) this.goToStreet();
+    if (this.mode === 'play' && this.holeOpen && inRoofHole(m.body, ROOF_HOLE, TILE)) this.goToStreet();
   }
 
   /** "READ" em cima da carta perto (só grudada numa superfície); F / Y abre. */

@@ -16,5 +16,6 @@ export interface Act {
 export const ACTS: Act[] = [
   { id: 'act1', number: 1, name: 'AWAKENING', playable: true, letters: ['table', 'bed', 'attic'] },
   { id: 'act2', number: 2, name: 'ROOFTOPS', playable: true, requires: 'act1', letters: [] },
-  { id: 'act3', number: 3, name: '???', playable: false, letters: [] },
+  { id: 'act3', number: 3, name: 'LIGHTS OUT', playable: true, requires: 'act2', letters: ['day22', 'day35', 'day40'] },
+  { id: 'act4', number: 4, name: '???', playable: false, letters: [] },
 ];

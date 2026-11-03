@@ -7,15 +7,18 @@
 //          "Conquistador de ratos - Mate todos os ratos."
 //   Ato 2: "Soltando teias pelos ares - Solte teias pelos postes."
 //          "Pé pesado - Seja pisado por um doente." (nas cartas do pai, os zumbis são "the sick")
+//   Ato 3: terminar o ato, derrotar o doente e derrotar o doente com o lustre (nomes escolhidos em inglês).
 
-export type AchievementIcon = 'letter' | 'heart' | 'roof' | 'rat' | 'web' | 'foot';
+export type AchievementIcon = 'letter' | 'heart' | 'roof' | 'rat' | 'web' | 'foot' | 'window' | 'grave' | 'chandelier';
 
 /** O que libera a conquista. `letter` vazio = qualquer carta do ato. */
 export type AchievementTrigger =
   | { type: 'letterRead'; act: string; letter?: string }
   | { type: 'actEnd'; act: string }
   | { type: 'allRatsKilled'; act: string }
-  | { type: 'stomped'; act: string };
+  | { type: 'stomped'; act: string }
+  /** `byChandelier`: só vale derrotando com o lustre. */
+  | { type: 'sickDefeated'; act: string; byChandelier?: boolean };
 
 export interface Achievement {
   id: string;
@@ -74,5 +77,29 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: 'Get stepped on by one of the sick.',
     icon: 'foot',
     trigger: { type: 'stomped', act: 'act2' },
+  },
+  {
+    id: 'window',
+    act: 'act3',
+    name: 'OUT THE WINDOW',
+    description: 'Leave the house through the broken window.',
+    icon: 'window',
+    trigger: { type: 'actEnd', act: 'act3' },
+  },
+  {
+    id: 'rest',
+    act: 'act3',
+    name: 'PUT TO REST',
+    description: 'Defeat the sick in the kitchen.',
+    icon: 'grave',
+    trigger: { type: 'sickDefeated', act: 'act3' },
+  },
+  {
+    id: 'chandelier',
+    act: 'act3',
+    name: 'LIGHTS OUT',
+    description: 'Drop the chandelier on the sick.',
+    icon: 'chandelier',
+    trigger: { type: 'sickDefeated', act: 'act3', byChandelier: true },
   },
 ];

@@ -34,10 +34,16 @@ describe('o que libera cada conquista', () => {
     expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'letterRead', act: 'act1', letter: 'attic' }))).toEqual(['explorer', 'love']);
   });
 
-  it('terminar o ato 1 dá ROOF DIGGER; terminar o ato 2 dá WEBS THROUGH THE AIR', () => {
+  it('terminar o ato 1 dá ROOF DIGGER, o 2 dá WEBS THROUGH THE AIR e o 3 dá OUT THE WINDOW', () => {
     expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act1' }))).toEqual(['roof']);
     expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act2' }))).toEqual(['poles']);
-    expect(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act3' })).toEqual([]);
+    expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act3' }))).toEqual(['window']);
+    expect(triggeredBy(ACHIEVEMENTS, { type: 'actEnd', act: 'act4' })).toEqual([]);
+  });
+
+  it('derrotar o doente dá PUT TO REST; com o lustre, também LIGHTS OUT', () => {
+    expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'sickDefeated', act: 'act3', byChandelier: false }))).toEqual(['rest']);
+    expect(ids(triggeredBy(ACHIEVEMENTS, { type: 'sickDefeated', act: 'act3', byChandelier: true }))).toEqual(['rest', 'chandelier']);
   });
 
   it('matar todos os ratos do ato 1 dá RAT CONQUEROR; ser pisada no ato 2 dá HEAVY FOOT', () => {
@@ -64,7 +70,7 @@ describe('conseguir e salvar', () => {
 
   it('agrupa por ato, na ordem, marcando as conseguidas', () => {
     const groups = byAct(ACHIEVEMENTS, ['love', 'poles']);
-    expect(groups.map((g) => g.act)).toEqual(['act1', 'act2']);
+    expect(groups.map((g) => g.act)).toEqual(['act1', 'act2', 'act3']);
     expect(groups[0].items.map((i) => [i.item.id, i.unlocked])).toEqual([
       ['explorer', false],
       ['love', true],

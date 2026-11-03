@@ -175,6 +175,50 @@ const GLYPHS: Record<AchievementIcon, (pc: PixelCanvas) => void> = {
     pc.line(11, 12, 15, 12, Z.web);
     pc.line(11, 14, 14, 13, Z.web);
   },
+  // Janela quebrada (saída do ato 3): moldura, o vão escuro e cacos nas bordas.
+  window: (pc) => {
+    const D = PAL.decor;
+    pc.rect(5, 5, 14, 14, D.frame);
+    pc.rect(5, 5, 14, 1, D.frameLight);
+    pc.rect(7, 7, 10, 10, PAL.medal.inner);
+    pc.rect(11, 7, 2, 10, D.frame);
+    for (const [x, y, dx, dy] of [
+      [7, 7, 3, 3],
+      [16, 7, -2, 4],
+      [7, 16, 2, -3],
+      [16, 16, -3, -2],
+    ]) {
+      pc.line(x, y, x + dx, y + dy, PAL.act3.glass);
+    }
+    pc.rect(4, 19, 16, 2, D.sill);
+  },
+  // Lápide com uma cruz (o doente descansa).
+  grave: (pc) => {
+    const M = PAL.medal;
+    for (let y = 6; y <= 18; y++) {
+      for (let x = 7; x <= 16; x++) {
+        const arch = y < 9 && Math.hypot(x - 11.5, y - 9) > 4.6;
+        if (!arch) pc.set(x, y, x === 7 || y === 6 ? M.roofLight : M.roof);
+      }
+    }
+    pc.rect(11, 8, 2, 7, M.paper);
+    pc.rect(9, 10, 6, 2, M.paper);
+    pc.rect(5, 18, 14, 2, M.paperDark);
+  },
+  // Lustre de latão com velas.
+  chandelier: (pc) => {
+    const C = PAL.act3;
+    pc.rect(11, 3, 2, 6, C.ropeDark);
+    pc.rect(6, 12, 12, 2, C.brass);
+    pc.rect(6, 12, 12, 1, C.brassLight);
+    for (const x of [5, 9, 14, 18]) {
+      pc.line(12, 10, x, 11, C.brass);
+      pc.rect(x - 1, 7, 2, 4, C.candle);
+    }
+    pc.rect(10, 9, 4, 3, C.brassDark);
+    for (const x of [7, 10, 13, 16]) pc.set(x, 15 + (x % 2), C.crystal);
+    pc.rect(11, 14, 2, 4, C.brassDark);
+  },
   // Teia: fios saindo do canto e dois anéis.
   web: (pc) => {
     const M = PAL.medal;

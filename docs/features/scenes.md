@@ -25,6 +25,8 @@ Testes: `tests/scenes.test.ts` (lista e salvo) e `tests/recap.test.ts` (diretor 
 | 2 | ACROSS THE STREET | resumo do ato 2 | termina o ato 2 |
 | 2 | THE CHIMNEY | cutscene da chaminé | a cutscene começa no jogo (telhado vizinho) |
 
+O **ato 3** ainda não tem cenas no SCENES (a chegada pela chaminé, o fim na janela e o resumo do ato ficam para depois). A tela mostra só os atos 1 e 2.
+
 ## Regras
 
 1. **Liberar:** a cena é marcada como vista quando **começa** no jogo (pular também conta). O resumo é marcado no fim do ato, junto com o progresso salvo. Assistir pelo SCENES não marca nada.

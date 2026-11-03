@@ -3,11 +3,11 @@
 // Spec: docs/features/transitions.md
 import { TRANSITION } from '../config';
 import { PixelCanvas } from '../art/PixelCanvas';
-import { drawGoo, drawWeb } from '../art/transitionArt';
+import { drawGoo, drawPowerOut, drawWeb } from '../art/transitionArt';
 import { buildWebSplat } from '../art/uiArt';
 import { getSound } from '../audio/sound';
 
-export type ActTransition = 'goo' | 'web';
+export type ActTransition = 'goo' | 'web' | 'power';
 
 const wait = (sec: number) => new Promise<void>((r) => window.setTimeout(r, sec * 1000));
 
@@ -125,11 +125,11 @@ export function playActTransition(kind: ActTransition): Promise<void> {
   const canvas = document.getElementById('transition') as HTMLCanvasElement | null;
   const ctx = canvas?.getContext('2d');
   if (!canvas || !ctx) return fadeTo(1, TRANSITION.fadeOutSec);
-  const sec = kind === 'goo' ? TRANSITION.gooSec : TRANSITION.webSec;
-  const draw = kind === 'goo' ? drawGoo : drawWeb;
+  const sec = kind === 'goo' ? TRANSITION.gooSec : kind === 'web' ? TRANSITION.webSec : TRANSITION.powerSec;
+  const draw = kind === 'goo' ? drawGoo : kind === 'web' ? drawWeb : drawPowerOut;
   const seed = (Date.now() & 0xffff) + 1;
   const { sfx } = getSound();
-  const cues = kind === 'goo' ? [0, 0.45] : [0, 0.18, 0.26, 0.34, 0.7];
+  const cues = kind === 'goo' ? [0, 0.45] : kind === 'web' ? [0, 0.18, 0.26, 0.34, 0.7] : [0, 0.2, 0.36, 0.63, 0.74, 0.85];
   let cue = 0;
   let pc: PixelCanvas | null = null;
   canvas.classList.remove('hidden');
@@ -148,6 +148,11 @@ export function playActTransition(kind: ActTransition): Promise<void> {
       while (cue < cues.length && t >= cues[cue]) {
         if (kind === 'goo') {
           if (cue === 0) sfx.goo();
+          else sfx.drip();
+        } else if (kind === 'power') {
+          // O zumbido da lâmpada morrendo, dois estalos e as gotas no escuro.
+          if (cue === 0) sfx.buzz();
+          else if (cue < 3) sfx.spark();
           else sfx.drip();
         } else if (cue === 0 || cue === cues.length - 1) sfx.whoosh();
         else sfx.webShot('rope');

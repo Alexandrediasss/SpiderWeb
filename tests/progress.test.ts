@@ -34,13 +34,16 @@ describe('recordActEnd', () => {
 });
 
 describe('isUnlocked', () => {
-  it('o ato 2 só libera depois do 1; o que ainda não existe nunca libera', () => {
-    const [a1, a2, a3] = ACTS;
+  it('cada ato só libera depois do anterior; o que ainda não existe nunca libera', () => {
+    const [a1, a2, a3, a4] = ACTS;
     expect(isUnlocked(emptyProgress(), a1)).toBe(true);
     expect(isUnlocked(emptyProgress(), a2)).toBe(false);
     const done = recordActEnd(emptyProgress(), 'act1', []);
     expect(isUnlocked(done, a2)).toBe(true);
-    expect(isUnlocked(recordActEnd(done, 'act2', []), a3)).toBe(false);
+    expect(isUnlocked(done, a3)).toBe(false);
+    const done2 = recordActEnd(done, 'act2', []);
+    expect(isUnlocked(done2, a3)).toBe(true);
+    expect(isUnlocked(recordActEnd(done2, 'act3', []), a4)).toBe(false);
   });
 });
 

@@ -2,7 +2,17 @@
 // Legenda em src/level/legend.ts (minúscula = sólido, MAIÚSCULA = fundo, ~ = céu, . = vazio).
 // Todas as linhas precisam ter o mesmo tamanho (o jogo avisa se não tiverem).
 
-export type RoomStyle = 'attic' | 'bedroom' | 'bathroom' | 'living' | 'kitchen';
+export type RoomStyle =
+  | 'attic'
+  | 'bedroom'
+  | 'bathroom'
+  | 'living'
+  | 'kitchen'
+  // Casa vizinha (ato 3): quarto de hóspedes, corredor, sala e a cozinha velha.
+  | 'guestRoom'
+  | 'hallway'
+  | 'parlor'
+  | 'oldKitchen';
 
 export interface Room {
   name: string;

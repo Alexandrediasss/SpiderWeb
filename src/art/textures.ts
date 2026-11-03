@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import { SPIDER } from '../config';
 import { PixelCanvas } from './PixelCanvas';
+import { PLANK, buildHolePlanks } from './holeArt';
 import { buildGlint, buildNote } from './letterArt';
 import { buildGooBlob, buildGooGlow, buildGooPuddle, buildIntroDarkness, buildIntroStage } from './introArt';
 import { getLevelArt } from './levelArt';
@@ -50,6 +51,7 @@ export const TEX = {
   wideStreet: 'wideStreet',
   roofEdge: 'roofEdge',
   note: 'note',
+  holePlanks: 'holePlanks',
   glint: 'glint',
 } as const;
 
@@ -95,6 +97,9 @@ export function registerTextures(scene: Phaser.Scene): void {
 
   // Cartas no cenário.
   addCanvas(scene, TEX.note, buildNote());
+  // Tábuas que tapam o buraco do telhado até as cartas obrigatórias serem lidas.
+  const planks = addCanvas(scene, TEX.holePlanks, buildHolePlanks());
+  for (let i = 0; i < PLANK.count; i++) planks.add(`plank${i}`, 0, 0, i * PLANK.h, PLANK.w, PLANK.h);
   addCanvas(scene, TEX.glint, buildGlint());
 
   // Cutscene da rua.

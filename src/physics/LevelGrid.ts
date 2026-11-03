@@ -38,6 +38,15 @@ export class LevelGrid {
     return this.rows * this.tileSize;
   }
 
+  /**
+   * Muda um tile em jogo (dentro do mapa). Usado no buraco do telhado: fechado (tábuas) até as cartas
+   * obrigatórias serem lidas. Spec: docs/features/street-cutscene.md
+   */
+  setSolid(tx: number, ty: number, solid: boolean): void {
+    if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) return;
+    this.solid[ty * this.cols + tx] = solid ? 1 : 0;
+  }
+
   /** Fora do mapa: sólido, ou o tile da borda mais próxima (veja `Outside`). */
   isSolidTile(tx: number, ty: number): boolean {
     if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) {

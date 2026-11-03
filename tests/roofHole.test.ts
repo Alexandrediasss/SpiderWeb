@@ -65,4 +65,31 @@ describe('buraco no telhado', () => {
     expect(isSolidChar(HOUSE_MAP[puddle.ty + 1][tx])).toBe(true);
     expect(Math.abs(puddle.tx - tx)).toBeLessThanOrEqual(1);
   });
+
+  it('fechado pelas tábuas (tiles sólidos), a aranha anda pelo teto embaixo dele sem entrar', () => {
+    const closed = LevelGrid.fromAscii(HOUSE_MAP, TILE, isSolidChar);
+    for (let y = ty; y < ty + h; y++) for (let x = tx; x < tx + w; x++) closed.setSolid(x, y, true);
+    let row = ty + h;
+    while (closed.isSolidTile(tx - 2, row)) row++;
+    const m = new SpiderMotor(closed, (tx - 2) * TILE + 8, row * TILE + SPIDER.half);
+    m.surface = 'ceiling';
+    let entered = false;
+    for (let i = 0; i < 120; i++) {
+      m.update(DT, input({ move: { x: 1, y: 0 } }));
+      entered ||= inRoofHole(m.body, ROOF_HOLE, TILE);
+    }
+    expect(entered).toBe(false);
+    expect(m.surface).toBe('ceiling');
+    expect(m.body.x).toBeGreaterThan((tx + w) * TILE);
+  });
+
+  it('setSolid muda só o tile pedido e ignora fora do mapa', () => {
+    const g = LevelGrid.fromAscii(HOUSE_MAP, TILE, isSolidChar);
+    g.setSolid(tx, ty, true);
+    expect(g.isSolidTile(tx, ty)).toBe(true);
+    expect(g.isSolidTile(tx + 1, ty)).toBe(false);
+    g.setSolid(tx, ty, false);
+    expect(g.isSolidTile(tx, ty)).toBe(false);
+    expect(() => g.setSolid(-5, 999, true)).not.toThrow();
+  });
 });

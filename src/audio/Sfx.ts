@@ -248,6 +248,204 @@ export class Sfx {
     });
   }
 
+  /** Tábua encharcada rangendo: tom grave e áspero que oscila, num passa-banda de madeira. */
+  creak(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const v = this.vary();
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(75 * v, t);
+    osc.frequency.linearRampToValueAtTime(110 * v, t + 0.35);
+    osc.frequency.linearRampToValueAtTime(65 * v, t + 0.7);
+    const chop = ctx.createGain();
+    chop.gain.value = 0.5;
+    const lfo = ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.value = 23;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.5;
+    lfo.connect(depth).connect(chop.gain);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 650;
+    band.Q.value = 2.5;
+    osc.connect(band).connect(chop).connect(this.envelope(t, SFX.shotVolume * 0.6, 0.08, 0.75)).connect(this.destination);
+    for (const o of [osc, lfo]) {
+      o.start(t);
+      o.stop(t + 0.8);
+    }
+  }
+
+  /** Tábuas arrebentando: estalo seco, baque e as tábuas batendo no chão logo depois. */
+  boardsBreak(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.shotVolume;
+    const crack = this.noiseSource(t, 0.15);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 2400;
+    band.Q.value = 0.9;
+    crack.connect(band).connect(this.envelope(t, vol, 0.002, 0.13)).connect(this.destination);
+    this.click(t, 170, 55, 0.25, vol * 0.8);
+    for (let i = 0; i < 4; i++) this.click(t + 0.55 + i * 0.09 * this.vary(), 320 * this.vary(), 140, 0.07, vol * 0.45);
+  }
+
+  // ---------- ato 3 ----------
+
+  /**
+   * Uma sílaba da voz da Mary: um "ts" curtinho (ruído agudo num passa-banda), como as falas do Hollow
+   * Knight. Cada sílaba muda um pouco de tom; triste, sai mais grave e mais baixa.
+   */
+  voice(sad: boolean): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const v = this.vary();
+    const dur = 0.035 + (v - 0.94) * 0.2;
+    const src = this.noiseSource(t, dur + 0.02);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 2.2;
+    band.frequency.setValueAtTime((sad ? 3600 : 5200) * v, t);
+    band.frequency.exponentialRampToValueAtTime((sad ? 2600 : 4200) * v, t + dur);
+    src.connect(band).connect(this.envelope(t, SFX.voiceVolume * (sad ? 0.75 : 1), 0.004, dur)).connect(this.destination);
+    // Um "t" na frente: clique agudo bem curto.
+    this.click(t, 2400 * v, 1600, 0.012, SFX.voiceVolume * 0.25);
+  }
+
+  /** A lâmpada morrendo (transição do ato 3): zumbido elétrico que treme e some. */
+  buzz(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 120;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 1100;
+    band.Q.value = 0.8;
+    const amp = ctx.createGain();
+    // Liga e desliga aos trancos, cada vez mais fraco.
+    amp.gain.setValueAtTime(0, t);
+    for (let i = 0; i < 9; i++) {
+      const at = t + i * 0.11 * this.vary();
+      amp.gain.setValueAtTime(i % 2 === 0 ? SFX.zapVolume * (1 - i / 10) : 0.0001, at);
+    }
+    amp.gain.setValueAtTime(0.0001, t + 1.1);
+    osc.connect(band).connect(amp).connect(this.destination);
+    osc.start(t);
+    osc.stop(t + 1.15);
+  }
+
+  /** Pegou o veneno: chiado borbulhante (ruído picotado) e bolhas. */
+  poisoned(): void {
+    const t = this.ctx.currentTime;
+    this.hiss(t, 0.5, 2400, 900, SFX.poisonVolume, 26);
+    for (let i = 0; i < 6; i++) this.click(t + 0.05 + i * 0.06 * this.vary(), 500 + i * 90, 1200, 0.03, SFX.poisonVolume * 0.3);
+  }
+
+  /** Envenenada, a cada segundo: um "tum" grave, como um coração fraco. */
+  poisonTick(): void {
+    const t = this.ctx.currentTime;
+    this.click(t, 90, 50, 0.16, SFX.poisonVolume * 0.8);
+    this.click(t + 0.17, 80, 45, 0.12, SFX.poisonVolume * 0.5);
+  }
+
+  /** Gota de gosma estourando: "plop" grosso e molhado. */
+  gooPlop(volume = 1): void {
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(700 * this.vary(), t);
+    osc.frequency.exponentialRampToValueAtTime(180, t + 0.08);
+    osc.connect(this.envelope(t, SFX.gooVolume * 0.6 * volume, 0.004, 0.1)).connect(this.destination);
+    osc.start(t);
+    osc.stop(t + 0.12);
+  }
+
+  /** O jorro borbulhando antes de sair: gorgolejo (bolhas em sequência). */
+  gurgle(volume = 1): void {
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 7; i++) this.click(t + i * 0.1 * this.vary(), 260 + (i % 3) * 120, 520, 0.05, SFX.gooVolume * 0.5 * volume);
+  }
+
+  /** O jorro saindo: chiado molhado que sobe. */
+  gooSpray(volume = 1): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const src = this.noiseSource(t, 1.3);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 1.1;
+    band.frequency.setValueAtTime(600, t);
+    band.frequency.exponentialRampToValueAtTime(1500, t + 0.3);
+    src.connect(band).connect(this.envelope(t, SFX.gooVolume * volume, 0.05, 1.25)).connect(this.destination);
+  }
+
+  /** A corda do lustre arrebentando: estalo seco. */
+  ropeSnap(): void {
+    const t = this.ctx.currentTime;
+    const src = this.noiseSource(t, 0.06);
+    const high = this.ctx.createBiquadFilter();
+    high.type = 'highpass';
+    high.frequency.value = 1800;
+    src.connect(high).connect(this.envelope(t, SFX.crashVolume * 0.7, 0.002, 0.05)).connect(this.destination);
+  }
+
+  /** O lustre batendo no chão: baque de metal, sino desafinado e vidro estilhaçando. */
+  crash(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vol = SFX.crashVolume;
+    this.click(t, 140, 45, 0.3, vol);
+    for (const [f, level] of [
+      [523, 0.35],
+      [1440, 0.2],
+      [2270, 0.15],
+    ]) {
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = f * this.vary();
+      osc.connect(this.envelope(t, vol * level, 0.003, 0.7)).connect(this.destination);
+      osc.start(t);
+      osc.stop(t + 0.75);
+    }
+    for (let i = 0; i < 9; i++) {
+      const at = t + 0.02 + i * 0.03 * this.vary();
+      const src = this.noiseSource(at, 0.05);
+      const high = ctx.createBiquadFilter();
+      high.type = 'highpass';
+      high.frequency.value = 4000 + i * 300;
+      src.connect(high).connect(this.envelope(at, vol * 0.4, 0.002, 0.04)).connect(this.destination);
+    }
+  }
+
+  /** O tapa do doente: deslocamento de ar grave. */
+  swipe(): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const src = this.noiseSource(t, 0.25);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 1.4;
+    band.frequency.setValueAtTime(300, t);
+    band.frequency.exponentialRampToValueAtTime(900, t + 0.12);
+    band.frequency.exponentialRampToValueAtTime(250, t + 0.24);
+    src.connect(band).connect(this.envelope(t, SFX.shotVolume * 0.9, 0.03, 0.24)).connect(this.destination);
+  }
+
+  /** A Mary caindo pela chaminé (chegada do ato 3): batidas abafadas e fuligem. */
+  chimneyFall(): void {
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 4; i++) this.click(t + i * 0.18 * this.vary(), 200 - i * 20, 70, 0.1, SFX.shotVolume * (0.35 + i * 0.12));
+    const src = this.noiseSource(t + 0.6, 0.4);
+    const low = this.ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.value = 700;
+    src.connect(low).connect(this.envelope(t + 0.6, SFX.shotVolume * 0.4, 0.02, 0.38)).connect(this.destination);
+  }
+
   // ---------- peças ----------
 
   /** Variação determinística de ±6% no tom, para os sons não serem idênticos. */

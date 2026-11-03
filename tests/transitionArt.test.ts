@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PixelCanvas } from '../src/art/PixelCanvas';
-import { drawGoo, drawWeb } from '../src/art/transitionArt';
+import { drawGoo, drawPowerOut, drawWeb } from '../src/art/transitionArt';
 import { WEB_SPLAT, buildWebSplat } from '../src/art/uiArt';
 import { TRANSITION } from '../src/config';
 
@@ -19,6 +19,7 @@ function coverage(pc: PixelCanvas): { opaque: number; allBlack: boolean } {
 describe.each([
   ['gosma', drawGoo],
   ['teia', drawWeb],
+  ['luz que apaga', drawPowerOut],
 ] as const)('transição: %s', (_name, draw) => {
   it('começa quase vazia e termina com a tela inteira preta', () => {
     const pc = new PixelCanvas(160, 90);

@@ -18,7 +18,8 @@ Testes: `tests/progress.test.ts` e `tests/actArt.test.ts`.
 |---|---|---|---|
 | 1 | AWAKENING | jogável | A aranha na calha do telhado, de costas, olhando a horda na rua, com um raio no céu. |
 | 2 | ROOFTOPS | jogável depois de terminar o ato 1 ([act2-rooftops.md](act2-rooftops.md)) | A aranha no meio do balanço, presa na teia de um poste de luz, com a ventania, um fio faiscando e a horda embaixo. |
-| 3 | ??? | COMING SOON | Silhueta dos telhados do bairro na tempestade, escurecida e com um cadeado. |
+| 3 | LIGHTS OUT | jogável depois de terminar o ato 2 ([act3-lights-out.md](act3-lights-out.md)) | A cozinha escura da casa vizinha no clarão de um raio: o doente embaixo do lustre, a gosma jorrando do esgoto, o machado na parede e a Mary pendurada num fio de teia. |
+| 4 | ??? | COMING SOON | Silhueta dos telhados do bairro na tempestade, escurecida e com um cadeado. |
 
 ## Seleção de atos
 
@@ -37,18 +38,20 @@ Fluxo: menu principal → LOAD GAME (a teia puxa o menu para o lado e traz esta 
 4. **Música:** continua tocando a valsa da tela inicial. Ela some ao escolher um ato.
 5. **Ao escolher o ato 1:** as cartas lidas são zeradas, toca a transição da gosma verde e começa a cutscene de abertura.
 6. **Ao escolher o ato 2:** toca a transição da teia e do vento e começa a cutscene de abertura do ato 2.
+7. **Ao escolher o ato 3:** as cartas lidas e as falas da Mary do ato 3 são zeradas, toca a transição da luz que apaga e começa a chegada pela chaminé.
 
 ## Fim do ato
 
 1. **Gatilhos:**
    - ato 1: sair pelo buraco do telhado;
-   - ato 2: entrar pela chaminé da casa vizinha ([act2-rooftops.md](act2-rooftops.md)).
+   - ato 2: entrar pela chaminé da casa vizinha ([act2-rooftops.md](act2-rooftops.md));
+   - ato 3: sair pela janela quebrada da cozinha ([act3-lights-out.md](act3-lights-out.md)).
 
    No ato 1: A cutscene da rua ([street-cutscene.md](street-cutscene.md)) é o final do ato: quando ela acaba (ou é pulada), a tela continua preta e aparece o fim do ato. Antes, a aranha voltava para o sótão; agora não volta mais.
 2. **Tela de fim:** aparece em etapas, por cima do preto:
    - `END OF` / `ACT 1` / `AWAKENING`;
    - `LETTERS FOUND 2 / 3` (só em ato com cartas);
-   - o próximo ato: `ACT 2 · ROOFTOPS` ou `ACT 3 · COMING SOON`;
+   - o próximo ato: `ACT 2 · ROOFTOPS`, `ACT 3 · LIGHTS OUT` ou `ACT 4 · COMING SOON`;
    - depois de `ACT_END.continueAfterSec`, o aviso `(A) / ENTER continue`.
 3. **Continuar:** `Enter`, `Espaço`, `Esc`, clique ou `A`/`Start`. O jogo volta para a seleção de atos (com a música), já mostrando o ato 1 como completo.
 4. **Salvar:** ao chegar no fim do ato, o progresso é salvo: o ato fica completo e as cartas achadas são somadas às de antes (fica o conjunto de todas as que já foram lidas em alguma jogada).

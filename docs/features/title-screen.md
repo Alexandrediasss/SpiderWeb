@@ -6,7 +6,7 @@ Testes: `tests/menu.test.ts` e `tests/progress.test.ts`.
 
 ## O que aparece
 
-- O nome do jogo, **SPIDER WEB**, segurado por um fio de teia que desce do topo da tela. No clarão do relâmpago, o título brilha junto.
+- O nome do jogo, **LITTLE TEARS**, segurado por um fio de teia que desce do topo da tela. No clarão do relâmpago, o título brilha junto.
 - Embaixo, o menu, um botão por linha: **NEW GAME**, **LOAD GAME**, **SCENES** e **ACHIEVEMENTS**. O jogo é em inglês.
 - Atrás, o próprio jogo: a câmera mostra o sótão e o céu (`TITLE.cameraX/Y`) e passeia devagar para os lados. A chuva cai e os relâmpagos acontecem normalmente.
 - A **música** (valsa em Ré menor) toca aqui, na seleção de atos e nas telas de SCENES e ACHIEVEMENTS.
@@ -29,7 +29,7 @@ O item selecionado fica preenchido, com a setinha piscando. Item apagado (LOAD G
 2. **LOAD GAME:** carrega o jogo atual. A teia engata no botão e puxa o menu para a direita, trazendo a **seleção de atos** ([acts.md](acts.md)), já mostrando o ato mais adiantado que está liberado. Lá o BACK volta para cá.
    - Fica apagado se o navegador não tem nenhum jogo salvo (nunca começou um NEW GAME nem terminou um ato).
 3. **SCENES:** a teia puxa o menu e traz a tela de cenas, como o museu do *Sonic Generations*: as cutscenes e os resumos de cada ato, liberados ao serem vistos no jogo. Spec: [scenes.md](scenes.md).
-4. **ACHIEVEMENTS:** a teia puxa o menu e traz as conquistas de cada ato, acesas as já conseguidas, com a contagem (`2 / 4`). Só dá para voltar. Spec: [achievements.md](achievements.md).
+4. **ACHIEVEMENTS:** a teia puxa o menu e traz as conquistas de cada ato, acesas as já conseguidas, com a contagem (`2 / 6`). Só dá para voltar. Spec: [achievements.md](achievements.md).
 5. O item selecionado ao abrir: LOAD GAME se existe jogo salvo, senão NEW GAME.
 
 ## Regras

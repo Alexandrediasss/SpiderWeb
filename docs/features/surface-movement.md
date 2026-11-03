@@ -6,7 +6,10 @@ Testes: `tests/surfaceMovement.test.ts`.
 ## Modelo
 
 - A aranha é uma **AABB quadrada** de `SPIDER.half * 2` px (10×10). O sprite é só visual.
-- O mundo é uma grade de tiles sólidos/vazios (`LevelGrid`). Fora do mapa conta como sólido.
+- O mundo é uma grade de tiles sólidos/vazios (`LevelGrid`). O que existe fora do mapa depende de `outside`:
+  - `'solid'` (padrão, a casa do ato 1): tudo sólido, a casa é fechada;
+  - `'edge'` (ato 2): continua o tile da borda mais próxima. Acima do telhado é ar (não dá para subir pela borda até o céu nem prender teia no céu); a casa e a rua continuam sólidas nos lados.
+- **Parede invisível** (`motor.bounds`, só no ato 2): limite horizontal do mundo em px. A aranha só para nela, não dá para escalar.
 - Estado `surface`: `floor | ceiling | wallLeft | wallRight | air`.
   - `wallLeft` = a parede está à **esquerda** da aranha; `wallRight` = à direita.
 
@@ -44,6 +47,16 @@ O deslocamento `speed * dt` é aplicado em passos de no máximo `SPIDER.stepPx` 
    - nova superfície = aquela cuja normal é igual ao vetor de movimento antigo.
    - Se a nova posição colidir ou não tiver apoio, a aranha cai (`air`).
 
+## Vento (só no ato 2)
+
+O `SpiderMotor` recebe o vento em `motor.wind` (aceleração horizontal). Grudada, a aranha nunca solta:
+- andando no chão ou no teto, fica mais lenta contra o vento e mais rápida a favor;
+- **parada** no chão ou no teto, a rajada a arrasta grudada no sentido do vento, contornando cantos. Nesse quadro `motor.sliding` fica `true` e as patas se mexem (animação de andar);
+- nas paredes o vento não muda nada;
+- arrastada para fora de uma beirada sem canto para contornar, ela sai voando.
+
+Detalhes e números: [wind.md](wind.md).
+
 ## Pular / ar
 
 - `Espaço` grudada: `v = normal * jumpSpeed + tangent * dir * velocidadeAtual`, estado `air`, e um `stickCooldown` curto (0,12 s).
@@ -54,7 +67,7 @@ O deslocamento `speed * dt` é aplicado em passos de no máximo `SPIDER.stepPx` 
 
 - Ângulo alvo pela tabela; o ângulo exibido interpola pelo caminho mais curto (`SPIDER.rotateLerp`).
 - O sprite é deslocado `SPIDER.half - SPIDER.frameH / 2` px na direção dos pés para os pés encostarem na superfície (em `Spider.ts`).
-- Animações: `idle` (parada), `walk` (andando, mais rápida correndo), `air` (no ar e na teia).
+- Animações: `idle` (parada), `walk` (andando, mais rápida correndo, e também quando o vento arrasta: `motor.sliding`), `air` (no ar e na teia).
 
 ## Casos de borda conhecidos
 

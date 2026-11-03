@@ -22,12 +22,14 @@ Testado com o 8BitDo Ultimate 2C com fio no Windows (modo XInput, que aparece co
 | Teia de ataque (tira vida) | `X` |
 | Teia que prende (5 s) | `B` |
 | Ler a carta perto | `Y` (fecha com `Y`, `B`, `A` ou `Start`) |
-| Começar (tela inicial) | `A` ou `Start` |
+| Menu principal | D-pad ou analógico ↑/↓ escolhe; `A`/`Start` confirma; `B` volta (na pergunta do NEW GAME, ←/→ troca entre YES e NO e `B` é NO) |
 | Seleção de atos | `LB`/`RB`, D-pad ou analógico ←/→ trocam; `A`/`Start` escolhe; `B` volta |
+| SCENES | ←/→ troca de cartão, ↑/↓ troca de ato; `A`/`Start` assiste; `B` volta (assistindo, `A`/`B`/`Start` pula) |
+| ACHIEVEMENTS | `A`, `B` ou `Start` voltam |
 | Pausar | `Start` / `Menu` (no menu: ↑/↓ escolhe, `A` confirma, `B` volta) |
 | Som liga/desliga | `Select` / `View` (botão da esquerda no centro) |
 
-Teias de combate e ratos: [combat.md](combat.md). Menu de pausa: [pause-menu.md](pause-menu.md). Cartas: [letters.md](letters.md). Atos: [acts.md](acts.md).
+Teias de combate e ratos: [combat.md](combat.md). Menu de pausa: [pause-menu.md](pause-menu.md). Cartas: [letters.md](letters.md). Menu principal: [title-screen.md](title-screen.md). Atos: [acts.md](acts.md). SCENES: [scenes.md](scenes.md). Conquistas: [achievements.md](achievements.md).
 
 ## Regras
 

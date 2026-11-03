@@ -28,7 +28,17 @@ export type CombatEvent =
   | { type: 'ratDied'; rat: Rat }
   | { type: 'ratTrapped'; rat: Rat }
   | { type: 'spiderHurt' }
-  | { type: 'spiderDied' };
+  | { type: 'spiderDied' }
+  | { type: 'targetHit'; target: ShotTarget; kind: ShotKind; x: number; y: number };
+
+/**
+ * Algo além dos ratos que as teias de combate acertam (ato 3: o doente e a corda do lustre). O combate só
+ * avisa (`targetHit`); quem decide o que acontece é a cena, com a lógica do alvo.
+ */
+export interface ShotTarget {
+  /** A teia em (x, y) acerta? */
+  hitTest(x: number, y: number): boolean;
+}
 
 /** Vida da aranha com invencibilidade curta depois de cada dano. */
 export class Health {
@@ -87,6 +97,8 @@ export class Combat {
   readonly health = new Health(PLAYER.maxHp);
   readonly rats: Rat[];
   shots: WebShot[] = [];
+  /** Outros alvos das teias de combate (o ato 3 põe o doente e a corda do lustre aqui). */
+  targets: ShotTarget[] = [];
   private readonly cooldown: Record<ShotKind, number> = { attack: 0, trap: 0 };
 
   constructor(
@@ -133,7 +145,7 @@ export class Combat {
     return events;
   }
 
-  /** Move as teias em passos de 2 px: param na parede (respingo) ou no primeiro rato vivo que tocarem. */
+  /** Move as teias em passos de 2 px: param na parede (respingo), no primeiro rato vivo ou em outro alvo que tocarem. */
   private updateShots(dt: number, events: CombatEvent[]): void {
     const STEP = 2;
     this.shots = this.shots.filter((s) => {
@@ -152,6 +164,11 @@ export class Combat {
         const rat = this.rats.find((r) => r.alive && inside(r.body, s.x, s.y, 2));
         if (rat) {
           this.hitRat(rat, s, events);
+          return false;
+        }
+        const target = this.targets.find((t) => t.hitTest(s.x, s.y));
+        if (target) {
+          events.push({ type: 'splat', kind: s.kind, x: s.x, y: s.y }, { type: 'targetHit', target, kind: s.kind, x: s.x, y: s.y });
           return false;
         }
         if (s.traveled >= cfg.range) return false;
