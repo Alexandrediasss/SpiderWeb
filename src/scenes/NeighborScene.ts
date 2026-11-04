@@ -1,14 +1,11 @@
-// Ato 3, LIGHTS OUT: a casa vizinha, sem energia. A chegada pela chaminé (a Mary descobre que fala), as
-// cartas, as falas, a gosma e o veneno, os ratos, o doente da cozinha e o lustre, os checkpoints, a morte, o
-// fim saindo pela janela quebrada e a pausa. Pelo SCENES (`replay`): a chegada, o resumo do ato ou a janela, e
-// depois volta para o menu.
+// Ato 3, LIGHTS OUT: a casa vizinha, sem energia. As cartas, as falas, a gosma e o veneno, os ratos, o doente
+// da cozinha e o lustre, os checkpoints, a morte e a pausa. A chegada e o fim são cutscenes à parte
+// (ChimneyScene e WindowScene). Pelo SCENES (`replay`): o resumo do ato, e depois volta para o menu.
 // Spec: docs/features/act3-lights-out.md (gosma e veneno: goo-poison.md; falas: dialogue.md; SCENES: scenes.md)
 import Phaser from 'phaser';
-import { ACT3, CHANDELIER, GAMEPAD, LETTER, LIGHT, PLAYER, POISON, RECAP, SHOTS, SICK, SPIDER, TILE, TITLE, TRANSITION, VIEW, WEB } from '../config';
+import { ACT3, CHANDELIER, GAMEPAD, LETTER, LIGHT, PLAYER, POISON, RECAP, SHOTS, SICK, SPIDER, TILE, TITLE, VIEW, WEB, WINDOW_CUT } from '../config';
 import { PAL } from '../art/palette';
-import { getNeighborArt } from '../art/neighborArt';
-import { SICK_FRAME, SICK_POSES, buildChandelier, buildSickDead, buildSickSheets } from '../art/sickArt';
-import { TEX } from '../art/textures';
+import { T3, TEX, ensureAct3Textures } from '../art/textures';
 import { mixColor } from '../art/tilePainters';
 import { type Sound, getSound } from '../audio/sound';
 import { Atmosphere } from '../entities/Atmosphere';
@@ -22,10 +19,8 @@ import { DIALOGUES, type DialogueId } from '../level/dialogues';
 import { ACT3_LETTERS, type Letter } from '../level/letters';
 import {
   ACT3_CHECKPOINTS,
-  ACT3_ENDING_START,
   ACT3_WINDOW,
   CHANDELIER_DEF,
-  CHIMNEY_BREACH,
   FLOOR_VIEWS,
   GOO,
   KITCHEN,
@@ -67,31 +62,18 @@ import { loadProgress, saveProgress } from './progressStore';
 import { markSceneSeen } from './sceneStore';
 
 /**
- * intro: a chegada pela chaminé | skipping: pulou a chegada (a tela escurece) | talking: a Mary falando |
- * play: jogando | paused | reading: lendo uma carta | dying: morreu (vira e escurece) | ending: saindo pela
- * janela | actEnd: tela de fim do ato | recap: o resumo do ato (pelo SCENES) | approach: a janela pelo SCENES,
- * a Mary andando sozinha da bancada até o vão.
+ * skipping: pulou o resumo (a tela escurece) | talking: a Mary falando | play: jogando | paused |
+ * reading: lendo uma carta | dying: morreu (vira e escurece) | ending: entrou no vão da janela (escurece e vem
+ * a cutscene) | actEnd: tela de fim do ato | recap: o resumo do ato (pelo SCENES).
  */
-type Mode = 'intro' | 'skipping' | 'talking' | 'play' | 'paused' | 'reading' | 'dying' | 'ending' | 'actEnd' | 'recap' | 'approach';
+type Mode = 'skipping' | 'talking' | 'play' | 'paused' | 'reading' | 'dying' | 'ending' | 'actEnd' | 'recap';
 
 interface Act3Data {
-  /** true = começa pela cutscene de chegada (vindo da seleção de atos). */
-  intro?: boolean;
-  /** Assistindo pelo SCENES: a chegada, o resumo do ato ou a janela; no fim volta para o menu. */
+  /** Assistindo pelo SCENES: o resumo do ato; no fim volta para o menu. */
   replay?: SceneId;
 }
 
 const ACT = ACTS[2];
-const T3 = {
-  level: 'act3Level',
-  light: 'act3Light',
-  flash: 'act3Flash',
-  sick: 'sick',
-  sickEyes: 'sickEyes',
-  sickDead: 'sickDead',
-  chandelier: 'chandelier',
-  chandelierBroken: 'chandelierBroken',
-} as const;
 /** Faixas de cinema (px da tela). */
 const BARS_PX = 22;
 
@@ -99,29 +81,6 @@ const BARS_PX = 22;
 export const act3Letters = new LetterLog();
 /** Falas que a Mary já disse nesta jogada do ato (cada uma uma vez só). */
 export const act3Talks = new Set<DialogueId>();
-
-/** A arte é pintada uma vez só (as texturas sobrevivem aos reinícios da cena). */
-function ensureTextures(scene: Phaser.Scene): ReturnType<typeof getNeighborArt> {
-  const art = getNeighborArt();
-  const tex = scene.textures;
-  if (!tex.exists(T3.level)) {
-    tex.addCanvas(T3.level, art.canvas.toCanvas());
-    tex.addCanvas(T3.light, art.light.toCanvas());
-    tex.addCanvas(T3.flash, art.flash.toCanvas());
-    const sheets = buildSickSheets();
-    for (const [key, pc] of [
-      [T3.sick, sheets.body],
-      [T3.sickEyes, sheets.eyes],
-    ] as const) {
-      const t = tex.addCanvas(key, pc.toCanvas());
-      SICK_POSES.forEach((p, i) => t?.add(p, 0, i * SICK_FRAME.w, 0, SICK_FRAME.w, SICK_FRAME.h));
-    }
-    tex.addCanvas(T3.sickDead, buildSickDead().toCanvas());
-    tex.addCanvas(T3.chandelier, buildChandelier().toCanvas());
-    tex.addCanvas(T3.chandelierBroken, buildChandelier(true).toCanvas());
-  }
-  return art;
-}
 
 export class NeighborScene extends Phaser.Scene {
   private grid!: LevelGrid;
@@ -158,7 +117,7 @@ export class NeighborScene extends Phaser.Scene {
   /** Checkpoint ativo (índice em ACT3_CHECKPOINTS). Público para o console. */
   checkpoint = 0;
   private graceLeft = 0;
-  /** Cutscenes e a morte usam o próprio relógio. */
+  /** A morte usa o próprio relógio. */
   private tl: Timeline | null = null;
   private elapsed = 0;
   private stepIndex = -1;
@@ -172,8 +131,6 @@ export class NeighborScene extends Phaser.Scene {
   private bubbleClock = 0;
   /** Até o próximo gemido abafado vindo de baixo (no 1º andar). */
   private moanLeft = 0;
-  private soot: { x: number; y: number; vx: number; vy: number; life: number }[] = [];
-  private sootGfx!: Phaser.GameObjects.Graphics;
   private rng: () => number = Math.random;
   /** Assistindo pelo SCENES (null = jogando). */
   private replay: SceneId | null = null;
@@ -205,7 +162,6 @@ export class NeighborScene extends Phaser.Scene {
     this.poison = new Poison();
     this.poisonSecond = 0;
     this.bubbleClock = 0;
-    this.soot = [];
     this.barH = { h: 0 };
     this.poisonPips = [];
     this.replay = data.replay ?? null;
@@ -219,7 +175,7 @@ export class NeighborScene extends Phaser.Scene {
     this.rng = makeRng(seed + 99);
     this.moanLeft = this.between(ACT3.moanGapSec);
 
-    const art = ensureTextures(this);
+    const art = ensureAct3Textures(this);
     this.grid = art.grid;
     // A transição do ato deixou a tela preta: a cena clareia com a câmera.
     void fadeTo(0, 0);
@@ -246,13 +202,12 @@ export class NeighborScene extends Phaser.Scene {
     const sound = this.sound_;
     const start = spawnPoint(ACT3_CHECKPOINTS[0], TILE, SPIDER.half);
     this.spider = new Spider(this, this.grid, start.x, start.y, () => {
-      if (this.mode === 'play' || this.mode === 'recap' || this.mode === 'approach') sound.footsteps.step(this.spider.motor.running);
+      if (this.mode === 'play' || this.mode === 'recap') sound.footsteps.step(this.spider.motor.running);
     });
     this.spider.motor.surface = 'floor';
     this.combat = new Combat(this.grid, NEIGHBOR_RATS, recap ? RECAP.seed : seed);
     this.combat.targets = this.kitchen.targets;
     this.combatView = new CombatView(this, this.combat);
-    this.sootGfx = this.add.graphics().setDepth(9.5);
 
     this.playerInput = new PlayerInput(this, this.grid);
     this.reticle = this.add.image(0, 0, TEX.reticle).setDepth(10).setVisible(false);
@@ -294,7 +249,6 @@ export class NeighborScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     kb?.on('keydown-ESC', () => {
       if (this.mode === 'reading') this.closeLetter();
-      else if (this.mode === 'intro') this.skipIntro();
       else if (this.replay) this.exitReplay();
       else this.togglePause();
     });
@@ -310,14 +264,17 @@ export class NeighborScene extends Phaser.Scene {
     });
     for (const key of ['keydown-ENTER', 'keydown-SPACE']) {
       kb?.on(key, () => {
-        if (this.mode === 'intro') this.skipIntro();
-        else if (this.mode === 'talking') this.advanceDialogue();
+        if (this.mode === 'talking') this.advanceDialogue();
         else if (this.mode === 'reading' && key === 'keydown-ENTER') this.advanceLetter();
         else if (this.replay && this.mode !== 'skipping') this.exitReplay();
       });
     }
 
+    // A cutscene da janela acorda esta cena quando acaba: é o fim do ato.
+    const onWake = () => this.endAct();
+    this.events.on('wake', onWake);
     this.events.once('shutdown', () => {
+      this.events.off('wake', onWake);
       this.pauseMenu.destroy();
       this.actEnd.destroy();
       this.reader.destroy();
@@ -332,8 +289,6 @@ export class NeighborScene extends Phaser.Scene {
     });
 
     if (this.replay === 'act3-recap') this.startRecap();
-    else if (this.replay === 'act3-ending') this.replayEnding();
-    else if (data.intro || this.replay === 'act3-intro') this.startIntro();
     else this.startPlay(true);
 
     if (import.meta.env.DEV) {
@@ -373,71 +328,16 @@ export class NeighborScene extends Phaser.Scene {
     this.cameras.main.setFollowOffset(0, y - view.centerY);
   }
 
-  /** A chegada: tela preta (algo caindo na chaminé), a Mary cai pela abertura, se sacode e fala. */
-  private startIntro(): void {
-    // Vista no jogo: libera no SCENES (mesmo se pular).
-    if (!this.replay) markSceneSeen('act3-intro');
-    this.mode = 'intro';
-    this.elapsed = 0;
-    this.stepIndex = -1;
-    this.tl = new Timeline([
-      { name: 'dark', sec: ACT3.introDarkSec },
-      { name: 'fall', sec: ACT3.introFallSec },
-      { name: 'cough', sec: ACT3.introCoughSec },
-    ]);
-    this.setBars(true, 0);
-    this.spider.sprite.setVisible(false);
-    const cam = this.cameras.main;
-    cam.setZoom(ACT3.introZoom);
-    cam.centerOn(CHIMNEY_BREACH.x - 10, CHIMNEY_BREACH.y);
-    cam.fadeOut(1, 0, 0, 0);
-    this.sound_.sfx.chimneyFall();
-    this.showSkipHint(false);
-    this.time.delayedCall(ACT3.skipHintAfterSec * 1000, () => {
-      if (this.mode === 'intro') this.showSkipHint(true);
-    });
-  }
-
-  /**
-   * Pular a chegada: escurece rápido e clareia com a Mary já no chão do sótão. A fala não é pulada.
-   * Assistindo pelo SCENES, volta para o menu.
-   */
-  private skipIntro(): void {
-    if (this.mode !== 'intro' || this.elapsed < 0.2) return;
-    if (this.replay) {
-      this.exitReplay();
-      return;
-    }
-    this.mode = 'skipping';
-    hideChapter();
-    this.showSkipHint(false);
-    const cam = this.cameras.main;
-    cam.fadeOut(ACT3.skipFadeSec * 1000, 0, 0, 0);
-    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      const p = { x: CHIMNEY_BREACH.x, y: spawnPoint(ACT3_CHECKPOINTS[0], TILE, SPIDER.half).y };
-      this.spider.motor.placeAt(p.x, p.y);
-      this.spider.motor.surface = 'floor';
-      this.spider.sprite.setVisible(true);
-      this.spider.update(0, emptyInput());
-      cam.setZoom(ACT3.introZoom);
-      cam.centerOn(p.x - 10, p.y - 20);
-      cam.fadeIn(ACT3.skipFadeSec * 1000, 0, 0, 0);
-      this.talk('arrival', () => this.startPlay());
-    });
-  }
-
   /**
    * A Mary fala (cada fala uma vez por jogada do ato); depois chama `after`. Se ela já falou isso, chama
-   * `after` na hora. O mundo para enquanto a caixa está aberta. Pelo SCENES ela sempre fala (e não conta).
+   * `after` na hora. O mundo para enquanto a caixa está aberta.
    */
   private talk(id: DialogueId, after: () => void): void {
-    if (!this.replay) {
-      if (act3Talks.has(id)) {
-        after();
-        return;
-      }
-      act3Talks.add(id);
+    if (act3Talks.has(id)) {
+      after();
+      return;
     }
+    act3Talks.add(id);
     this.mode = 'talking';
     this.afterTalk = after;
     this.reticle.setVisible(false);
@@ -480,7 +380,7 @@ export class NeighborScene extends Phaser.Scene {
 
   private onPauseAction(action: PauseAction): void {
     if (action === 'resume') this.resume();
-    else if (action === 'restart') this.scene.restart({ intro: false } satisfies Act3Data);
+    else if (action === 'restart') this.scene.restart({} satisfies Act3Data);
     else this.scene.start('game');
   }
 
@@ -564,13 +464,13 @@ export class NeighborScene extends Phaser.Scene {
     this.startPlay(true);
   }
 
-  /** A Mary entrou no vão da janela: sai na chuva e o ato termina (público para o console). */
+  /**
+   * A Mary entrou no vão da janela: o controle trava, ela segue andando, a tela escurece e começa a cutscene.
+   * Esta cena dorme até ela acabar (público para o console).
+   */
   startEnding(): void {
     if (this.mode === 'ending' || this.mode === 'actEnd') return;
-    if (!this.replay) markSceneSeen('act3-ending');
     this.mode = 'ending';
-    this.elapsed = 0;
-    this.stepIndex = -1;
     this.spider.motor.rope = null;
     this.reticle.setVisible(false);
     this.hearts.setVisible(false);
@@ -579,11 +479,12 @@ export class NeighborScene extends Phaser.Scene {
     this.reader.hidePrompt();
     this.hud.showHelp(false);
     this.setBars(true);
-    this.tl = new Timeline([
-      { name: 'out', sec: ACT3.endOutSec },
-      { name: 'look', sec: ACT3.endLookSec },
-      { name: 'fade', sec: ACT3.endFadeSec },
-    ]);
+    const cam = this.cameras.main;
+    cam.fadeOut(WINDOW_CUT.exitFadeSec * 1000, 0, 0, 0);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.launch('window', { kitchen: this.kitchen.snapshot() });
+      this.scene.sleep();
+    });
   }
 
   private endAct(): void {
@@ -598,7 +499,7 @@ export class NeighborScene extends Phaser.Scene {
   // ---------- pelo SCENES ----------
 
   /** Fim (ou pulo) de uma cena assistida pelo SCENES: escurece e volta para o menu. */
-  private exitReplay(fadeSec: number = ACT3.skipFadeSec): void {
+  private exitReplay(fadeSec: number = RECAP.cutSec): void {
     if (!this.replay || this.mode === 'skipping') return;
     this.mode = 'skipping';
     hideChapter();
@@ -617,39 +518,6 @@ export class NeighborScene extends Phaser.Scene {
     this.recap = null;
     void fadeTo(1, 0);
     this.scene.start('game', { openScenes: this.replay ?? undefined });
-  }
-
-  /**
-   * A janela pelo SCENES: a Mary começa na bancada e anda sozinha até o vão (modo 'approach'); lá começa a
-   * mesma cutscene do fim do jogo.
-   */
-  private replayEnding(): void {
-    const s = ACT3_ENDING_START;
-    const m = this.spider.motor;
-    m.placeAt((s.tx + 0.5) * TILE, (s.ty + 1) * TILE - SPIDER.half);
-    m.surface = 'floor';
-    m.facing = -1;
-    this.spider.update(0, emptyInput());
-    this.startPlay(true);
-    this.mode = 'approach';
-    this.elapsed = 0;
-    this.reticle.setVisible(false);
-    this.hearts.setVisible(false);
-    this.hud.showHelp(false);
-    this.setBars(true, 0);
-    this.time.delayedCall(ACT3.skipHintAfterSec * 1000, () => {
-      if (this.mode === 'approach' || this.mode === 'ending') this.showSkipHint(true);
-    });
-  }
-
-  /** Um quadro da janela pelo SCENES: a Mary anda para a esquerda, sobe a parede e entra no vão. */
-  private updateApproach(dt: number): void {
-    const m = this.spider.motor;
-    this.elapsed += dt;
-    this.spider.update(dt, { ...emptyInput(), move: { x: -1, y: 0 } });
-    this.combat.update(dt, m);
-    this.kitchen.update(dt, null);
-    if (inRoofHole(m.body, ACT3_WINDOW, TILE) || this.elapsed >= ACT3.endApproachMaxSec) this.startEnding();
   }
 
   /**
@@ -683,7 +551,7 @@ export class NeighborScene extends Phaser.Scene {
     this.cameras.main.fadeOut(1, 0, 0, 0);
     this.recapWait = RECAP.titleSec;
     showChapter(`ACT ${ACT.number}`, SCENES.find((sc) => sc.id === 'act3-recap')?.name ?? ACT.name);
-    this.time.delayedCall(ACT3.skipHintAfterSec * 1000, () => {
+    this.time.delayedCall(RECAP.skipHintAfterSec * 1000, () => {
       if (this.mode === 'recap') this.showSkipHint(true);
     });
   }
@@ -775,20 +643,14 @@ export class NeighborScene extends Phaser.Scene {
       case 'talking': {
         const blips = this.dialogue.update(dt);
         for (let i = 0; i < blips; i++) this.sound_.sfx.voice(this.dialogue.sad);
-        // Pelo SCENES, B ou Start saem da cena (A continua passando a fala).
-        if (this.replay && (pad?.trapPressed || pad?.pausePressed)) this.exitReplay();
-        else if (input.readPressed || input.jumpPressed || pad?.confirmPressed || pad?.readPressed) this.advanceDialogue();
+        if (input.readPressed || input.jumpPressed || pad?.confirmPressed || pad?.readPressed) this.advanceDialogue();
         placeBars(this.cameras.main, this.bars, this.barH.h);
         return;
       }
     }
 
-    if (this.mode === 'intro' && (pad?.confirmPressed || pad?.pausePressed || input.jumpPressed || input.webPressed)) this.skipIntro();
-    // Pelo SCENES: A, B ou Start pulam (a chegada também com B).
-    if (this.replay && (pad?.confirmPressed || pad?.pausePressed || pad?.trapPressed)) {
-      if (this.mode === 'intro') this.skipIntro();
-      else if (this.mode === 'recap' || this.mode === 'ending' || this.mode === 'approach') this.exitReplay();
-    }
+    // No resumo: A, B ou Start pulam.
+    if (this.mode === 'recap' && (pad?.confirmPressed || pad?.pausePressed || pad?.trapPressed)) this.exitReplay();
     if (this.mode === 'play' && pad?.pausePressed) {
       this.togglePause();
       return;
@@ -800,7 +662,7 @@ export class NeighborScene extends Phaser.Scene {
     // No resumo a gosma anda no passo fixo dele (sempre igual aos testes).
     if (this.mode !== 'recap') this.updateGoo(dt);
 
-    if (this.mode === 'play' || this.mode === 'dying' || this.mode === 'approach') this.frameFloor();
+    if (this.mode === 'play' || this.mode === 'dying') this.frameFloor();
     if (this.mode === 'play') {
       if (this.graceLeft > 0) {
         this.graceLeft -= dt;
@@ -809,11 +671,10 @@ export class NeighborScene extends Phaser.Scene {
       this.updatePlay(dt, input);
     } else if (this.mode === 'recap') {
       this.updateRecap(dt);
-    } else if (this.mode === 'approach') {
-      this.updateApproach(dt);
     } else {
-      // Cutscenes e morte: o mundo continua (ratos, doente), sem controle.
-      if (this.mode !== 'ending' && this.mode !== 'skipping') this.spider.update(dt, emptyInput());
+      // Morte e saída pela janela: o mundo continua (ratos, doente), sem controle.
+      if (this.mode === 'dying') this.spider.update(dt, emptyInput());
+      if (this.mode === 'ending') this.spider.sprite.x -= WINDOW_CUT.exitWalkSpeed * dt;
       this.combat.update(dt, m);
       this.kitchen.update(dt, null);
       this.reader.hidePrompt();
@@ -824,7 +685,6 @@ export class NeighborScene extends Phaser.Scene {
     this.sickView.update(time, light);
     this.gooView.update(dt, time, cam.worldView, this.atmosphere.storm.flash);
     this.letters.update(time, this.mode === 'recap' ? this.recapLetters : act3Letters, light);
-    this.updateSoot(dt);
     this.updateSpiderLook(time, dt);
     placeBars(cam, this.bars, this.barH.h);
     if (this.debug) this.drawDebug();
@@ -1083,113 +943,24 @@ export class NeighborScene extends Phaser.Scene {
     this.reader.showPrompt(rect.left + (c.x - view.x) * k, rect.top + (c.y - 10 - view.y) * k);
   }
 
-  // ---------- cutscenes ----------
+  // ---------- a morte ----------
 
   private runTimeline(dt: number): void {
-    if (!this.tl || this.mode === 'skipping') return;
+    if (!this.tl || this.mode !== 'dying') return;
     this.elapsed += dt;
     const at = this.tl.at(this.elapsed);
     if (!at) {
-      this.finishTimeline();
+      this.tl = null;
+      this.respawn();
       return;
     }
     if (at.index !== this.stepIndex) {
       this.stepIndex = at.index;
-      this.enterStep(at.name);
-    }
-    this.runStep(at.name, at.progress, dt);
-  }
-
-  private enterStep(name: string): void {
-    const cam = this.cameras.main;
-    const m = this.spider.motor;
-    switch (name) {
-      // Chegada.
-      case 'fall':
-        m.placeAt(CHIMNEY_BREACH.x, CHIMNEY_BREACH.y);
-        this.spider.sprite.setVisible(true);
-        for (let i = 0; i < 14; i++) this.puffSoot(CHIMNEY_BREACH.x + 4, CHIMNEY_BREACH.y + (this.rng() - 0.5) * 10);
-        cam.fadeIn(350, 0, 0, 0);
-        break;
-      case 'cough':
-        showChapter(`ACT ${ACT.number}`, ACT.name);
-        this.atmosphere.storm.strike(true);
-        break;
-      // Morte.
-      case 'fade':
-        cam.fadeOut((this.mode === 'dying' ? ACT3.deathFadeSec : ACT3.endFadeSec) * 1000, 0, 0, 0);
-        break;
-      // Fim: a câmera vai para a janela.
-      case 'out': {
-        const w = ACT3_WINDOW;
-        cam.stopFollow();
-        cam.pan((w.tx + w.w) * TILE + 30, (w.ty + w.h / 2) * TILE, 700, 'Sine.easeInOut');
-        cam.zoomTo(ACT3.endZoom, 700, 'Sine.easeInOut');
-        break;
-      }
-      case 'look':
-        this.atmosphere.storm.strike(true);
-        break;
-    }
-  }
-
-  private runStep(name: string, p: number, dt: number): void {
-    const sp = this.spider.sprite;
-    switch (name) {
-      case 'fall':
-        if (this.rng() < 0.3) this.puffSoot(this.spider.motor.body.x, this.spider.motor.body.y);
-        break;
-      case 'cough':
-        // Ela se sacode (fuligem saindo).
-        sp.x += Math.round(Math.sin(p * 80)) * (p < 0.5 ? 1 : 0);
-        if (p < 0.6 && this.rng() < 0.25) this.puffSoot(this.spider.motor.body.x + (this.rng() - 0.5) * 8, this.spider.motor.body.y - 2);
-        break;
-      case 'out':
-        // Sai pela janela, para a chuva, e some.
-        sp.x -= 18 * dt;
-        sp.setAlpha(Math.max(0, 1 - p * 1.2));
-        break;
-      case 'look':
-      case 'fade':
-        if (this.mode === 'ending') sp.setVisible(false);
-        break;
-    }
-  }
-
-  private finishTimeline(): void {
-    this.tl = null;
-    if (this.mode === 'intro') {
-      hideChapter();
-      this.showSkipHint(false);
-      // Pelo SCENES, depois da fala escurece e volta para o menu.
-      this.talk('arrival', () => (this.replay ? this.exitReplay(TRANSITION.fadeOutSec) : this.startPlay()));
-    } else if (this.mode === 'dying') {
-      this.respawn();
-    } else if (this.mode === 'ending') {
-      // Pelo SCENES a janela termina no preto e volta para o menu, sem a tela de fim do ato.
-      if (this.replay) this.leaveReplay();
-      else this.endAct();
+      if (at.name === 'fade') this.cameras.main.fadeOut(ACT3.deathFadeSec * 1000, 0, 0, 0);
     }
   }
 
   // ---------- desenho e ajuda ----------
-
-  private puffSoot(x: number, y: number): void {
-    this.soot.push({ x, y, vx: (this.rng() - 0.5) * 30, vy: -10 - this.rng() * 25, life: 0.9 });
-  }
-
-  private updateSoot(dt: number): void {
-    const g = this.sootGfx;
-    g.clear();
-    this.soot = this.soot.filter((s) => (s.life -= dt) > 0);
-    for (const s of this.soot) {
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      s.vx *= 0.96;
-      g.fillStyle(PAL.act3.sootLight, Math.min(1, s.life * 1.3));
-      g.fillRect(Math.round(s.x), Math.round(s.y), 2, 2);
-    }
-  }
 
   /** Direção das teias de combate: o mouse aponta direto; no controle, a mira gruda num alvo perto. */
   private shotDir(input: SpiderInput): Vec2 {

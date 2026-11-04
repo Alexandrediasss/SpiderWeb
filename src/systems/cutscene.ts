@@ -22,6 +22,16 @@ export class Timeline {
     this.total = steps.reduce((s, st) => s + st.sec, 0);
   }
 
+  /** Em que instante (s) começa a etapa `name`. */
+  startOf(name: string): number {
+    let start = 0;
+    for (const st of this.steps) {
+      if (st.name === name) return start;
+      start += st.sec;
+    }
+    throw new Error(`Etapa desconhecida: ${name}`);
+  }
+
   /** Etapa no instante `t` (s), ou null depois do fim. */
   at(t: number): StepAt | null {
     let start = 0;

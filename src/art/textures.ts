@@ -1,12 +1,29 @@
 // Ponte entre a arte gerada (PixelCanvas) e o gerenciador de texturas do Phaser.
 import Phaser from 'phaser';
 import { SPIDER } from '../config';
+import type { LevelArt } from './levelArt';
 import { PixelCanvas } from './PixelCanvas';
 import { PLANK, buildHolePlanks } from './holeArt';
 import { buildGlint, buildNote } from './letterArt';
+import {
+  buildHouseFront,
+  buildMark,
+  buildMiniMary,
+  buildMoonBeam,
+  buildOutsideBack,
+  buildOutsideFront,
+  buildShaftBack,
+  buildShaftMouth,
+  buildShaftShade,
+  buildShaftWalls,
+  buildSillBack,
+  buildSillFront,
+} from './act3CutArt';
 import { buildGooBlob, buildGooGlow, buildGooPuddle, buildIntroDarkness, buildIntroStage } from './introArt';
 import { getLevelArt } from './levelArt';
+import { getNeighborArt } from './neighborArt';
 import { RAT_FRAME, RAT_POSES, buildHearts, buildRatSheets, buildRatWeb } from './ratArt';
+import { SICK_FRAME, SICK_POSES, buildChandelier, buildSickDead, buildSickSheets } from './sickArt';
 import { SPIDER_FRAMES, buildReticle, buildSpiderSheet } from './spiderArt';
 import {
   buildFarGround,
@@ -53,6 +70,31 @@ export const TEX = {
   note: 'note',
   holePlanks: 'holePlanks',
   glint: 'glint',
+} as const;
+
+/** Texturas do ato 3 (o cenário, o doente e o lustre) e dos palcos das cutscenes dele. */
+export const T3 = {
+  level: 'act3Level',
+  light: 'act3Light',
+  flash: 'act3Flash',
+  sick: 'sick',
+  sickEyes: 'sickEyes',
+  sickDead: 'sickDead',
+  chandelier: 'chandelier',
+  chandelierBroken: 'chandelierBroken',
+  shaftWalls: 'act3ShaftWalls',
+  shaftBack: 'act3ShaftBack',
+  shaftMouth: 'act3ShaftMouth',
+  shaftShade: 'act3ShaftShade',
+  moonBeam: 'act3MoonBeam',
+  markBang: 'act3MarkBang',
+  markAsk: 'act3MarkAsk',
+  sillBack: 'act3SillBack',
+  sillFront: 'act3SillFront',
+  outsideBack: 'act3OutsideBack',
+  outsideFront: 'act3OutsideFront',
+  houseFront: 'act3HouseFront',
+  miniMary: 'act3MiniMary',
 } as const;
 
 function addCanvas(scene: Phaser.Scene, key: string, pc: PixelCanvas): Phaser.Textures.CanvasTexture {
@@ -128,6 +170,51 @@ export function registerTextures(scene: Phaser.Scene): void {
   addCanvas(scene, TEX.nearGround, buildNearGround());
   addCanvas(scene, TEX.wideStreet, buildWideStreet());
   addCanvas(scene, TEX.roofEdge, buildRoofEdge());
+}
+
+/** O cenário do ato 3, o doente e o lustre. A arte é pintada uma vez só (as texturas sobrevivem às cenas). */
+export function ensureAct3Textures(scene: Phaser.Scene): LevelArt {
+  const art = getNeighborArt();
+  const tex = scene.textures;
+  if (!tex.exists(T3.level)) {
+    tex.addCanvas(T3.level, art.canvas.toCanvas());
+    tex.addCanvas(T3.light, art.light.toCanvas());
+    tex.addCanvas(T3.flash, art.flash.toCanvas());
+    const sheets = buildSickSheets();
+    for (const [key, pc] of [
+      [T3.sick, sheets.body],
+      [T3.sickEyes, sheets.eyes],
+    ] as const) {
+      const t = tex.addCanvas(key, pc.toCanvas());
+      SICK_POSES.forEach((p, i) => t?.add(p, 0, i * SICK_FRAME.w, 0, SICK_FRAME.w, SICK_FRAME.h));
+    }
+    tex.addCanvas(T3.sickDead, buildSickDead().toCanvas());
+    tex.addCanvas(T3.chandelier, buildChandelier().toCanvas());
+    tex.addCanvas(T3.chandelierBroken, buildChandelier(true).toCanvas());
+  }
+  return art;
+}
+
+/** Os palcos das cutscenes do ato 3 (pintados só quando uma delas abre). */
+export function ensureAct3CutTextures(scene: Phaser.Scene): void {
+  if (scene.textures.exists(T3.shaftWalls)) return;
+  for (const [key, build] of [
+    [T3.shaftWalls, buildShaftWalls],
+    [T3.shaftBack, buildShaftBack],
+    [T3.shaftMouth, buildShaftMouth],
+    [T3.shaftShade, buildShaftShade],
+    [T3.moonBeam, buildMoonBeam],
+    [T3.markBang, () => buildMark('!')],
+    [T3.markAsk, () => buildMark('?')],
+    [T3.sillBack, buildSillBack],
+    [T3.sillFront, buildSillFront],
+    [T3.outsideBack, buildOutsideBack],
+    [T3.outsideFront, buildOutsideFront],
+    [T3.houseFront, buildHouseFront],
+    [T3.miniMary, buildMiniMary],
+  ] as const) {
+    addCanvas(scene, key, build());
+  }
 }
 
 export function registerAnimations(scene: Phaser.Scene): void {

@@ -11,7 +11,7 @@ Código:
 - `src/level/recaps.ts`: o roteiro dos três resumos (planos, ações, legendas).
 - `src/systems/kitchen.ts`: o doente e o lustre juntos (teias que acertam, tapas, a queda), usado pelo jogo e pelo resumo do ato 3, e as marcas que o resumo do ato 3 usa.
 - `src/scenes/cinema.ts`: faixas pretas (com o zoom compensado) e a legenda (`#recap-caption`).
-- Replays: `IntroScene`, `StreetScene`, `RooftopScene` e `NeighborScene` aceitam `replay`; a `GameScene` roda o resumo do ato 1 (modo `recap`), a `RooftopScene` o do ato 2 e a `NeighborScene` o do ato 3.
+- Replays: `IntroScene`, `StreetScene`, `RooftopScene`, `ChimneyScene`, `WindowScene` e `NeighborScene` aceitam `replay`; a `GameScene` roda o resumo do ato 1 (modo `recap`), a `RooftopScene` o do ato 2 e a `NeighborScene` o do ato 3.
 
 Testes: `tests/scenes.test.ts` (lista e salvo), `tests/recap.test.ts` (diretor e os três roteiros com a física de verdade) e `tests/kitchen.test.ts` (o doente e o lustre).
 
@@ -25,9 +25,9 @@ Testes: `tests/scenes.test.ts` (lista e salvo), `tests/recap.test.ts` (diretor e
 | 2 | THE STORM | abertura do ato 2 ([act2-rooftops.md](act2-rooftops.md)) | a cutscene começa no jogo |
 | 2 | ACROSS THE STREET | resumo do ato 2 | termina o ato 2 |
 | 2 | THE CHIMNEY | cutscene da chaminé | a cutscene começa no jogo (telhado vizinho) |
-| 3 | MARY | chegada pela chaminé, com a primeira fala ([act3-lights-out.md](act3-lights-out.md)) | a cutscene começa no jogo |
+| 3 | MARY | a chegada pela chaminé, com a primeira fala ([act3-cutscenes.md](act3-cutscenes.md)) | a cutscene começa no jogo |
 | 3 | THE HOUSE NEXT DOOR | resumo do ato 3 | termina o ato 3 |
-| 3 | THE WINDOW | o fim saindo pela janela quebrada | a cutscene começa no jogo (a Mary entra no vão da janela) |
+| 3 | THE WINDOW | o fim saindo pela janela quebrada ([act3-cutscenes.md](act3-cutscenes.md)) | a cutscene começa no jogo (a Mary entra no vão da janela) |
 
 ## Regras
 
@@ -42,8 +42,8 @@ Testes: `tests/scenes.test.ts` (lista e salvo), `tests/recap.test.ts` (diretor e
 4. **Controles da tela:** `←`/`→` (ou `A`/`D`) troca de cartão, `↑`/`↓` troca de ato; `Enter`/`Espaço` ou `A`/`Start` assiste; `Esc`/`Backspace` ou `B` volta. Mouse: passar por cima escolhe, clique assiste. Entrar e sair da tela é a teia que puxa ([transitions.md](transitions.md)).
 5. **Assistir:** a tela escurece (`RECAP.enterFadeSec`) e a cena começa como no jogo. No fim, ou pulando (`Enter`/`Esc`/`Espaço`, `A`/`B`/`Start`), escurece e volta para o SCENES com a mesma cena escolhida. A música do menu para nas cutscenes e continua nos resumos.
 6. **Replays não mexem no jogo:** não salvam progresso, não dão conquista (matar todos os ratos ou derrubar o lustre no resumo não vale), não marcam cartas nem falas como lidas, e os fins (a chaminé, a janela) terminam no preto, sem a tela "END OF ACT".
-7. **A chegada do ato 3 (MARY) tem fala:** no jogo a fala não é pulada, mas pelo SCENES dá para sair a qualquer hora. Durante a queda, `Enter`/`Esc`/`Espaço` ou `A`/`B`/`Start` voltam ao SCENES. Durante a fala, `Enter`/`Espaço`/`F` ou `A`/`Y` passam a linha (como no jogo) e `Esc` ou `B`/`Start` voltam ao SCENES. A fala aparece sempre, mesmo se a Mary já falou na jogada. Depois da última linha, escurece e volta.
-8. **Os fins pelo SCENES começam um pouco antes:** a chaminé começa no beiral da casa vizinha (`ENDING_START`) e a janela em cima da bancada da cozinha (`ACT3_ENDING_START`); a aranha anda sozinha até o gatilho e a cutscene é a mesma do jogo.
+7. **A chegada do ato 3 (MARY) tem fala:** no jogo a fala não é pulada, mas pelo SCENES dá para sair a qualquer hora. Antes da fala, `Enter`/`Esc`/`Espaço` ou `A`/`B`/`Start` voltam ao SCENES. Durante a fala, `Enter`/`Espaço`/`F` ou `A`/`Y` passam a linha e `Esc` ou `B`/`Start` voltam ao SCENES. Depois da última linha, escurece e volta.
+8. **O fim do ato 2 pelo SCENES começa um pouco antes:** a chaminé começa no beiral da casa vizinha (`ENDING_START`); a aranha anda sozinha até o gatilho e a cutscene é a mesma do jogo. **THE WINDOW** mostra a cozinha com o doente andando (pelo SCENES não há jogada para lembrar).
 
 ## Os resumos dos atos
 
@@ -95,5 +95,5 @@ O objetivo é uma faixa de posição e/ou "grudada" (`attached: true` ou numa su
 - **Debug:**
   - `localStorage.setItem('spiderweb.scenes', '["act1-intro","act1-recap","act1-street","act2-intro","act2-recap","act2-ending","act3-intro","act3-recap","act3-ending"]')` libera todas; `localStorage.removeItem('spiderweb.scenes')` tranca de novo;
   - `__scene.scene.restart({ openScenes: 'act1-recap' })` abre o SCENES direto (com a cena escolhida);
-  - `__scene.scene.restart({ recap: true })` roda o resumo do ato 1; `__scene.game.scene.stop('game'); __scene.game.scene.start('act2', { replay: 'act2-recap' })` o do ato 2 (ou `'act2-intro'`, `'act2-ending'`); `__scene.game.scene.stop('game'); __scene.game.scene.start('act3', { replay: 'act3-recap' })` o do ato 3 (ou `'act3-intro'`, `'act3-ending'`);
+  - `__scene.scene.restart({ recap: true })` roda o resumo do ato 1; `__scene.game.scene.stop('game'); __scene.game.scene.start('act2', { replay: 'act2-recap' })` o do ato 2 (ou `'act2-intro'`, `'act2-ending'`); `__scene.game.scene.stop('game'); __scene.game.scene.start('act3', { replay: 'act3-recap' })` o do ato 3; `start('chimney', { replay: true })` e `start('window', { replay: true })` as cutscenes do ato 3;
   - durante o resumo, `__scene.recap.director` (ato 1), `__scene2.recap.director` (ato 2) ou `__scene3.recap.director` (ato 3) mostra o plano e a ação atuais (`shot`, `action`) e `timeouts`.

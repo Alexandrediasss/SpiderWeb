@@ -39,6 +39,11 @@ export class DialogueBox {
     return this.run !== null;
   }
 
+  /** Qual linha está na caixa (0 = a primeira). */
+  get lineIndex(): number {
+    return this.run?.index ?? 0;
+  }
+
   /** O humor da linha atual (a voz triste sai mais grave). */
   get sad(): boolean {
     const m = this.run?.line.mood;

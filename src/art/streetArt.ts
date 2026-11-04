@@ -62,7 +62,7 @@ export const HOUSES_BASE = 120;
 /** Onde fica a linha do chão de cada faixa de chão dentro da sua imagem. */
 export const GROUND_ANCHOR = { far: 6, mid: 14, near: 8 } as const;
 
-interface Win {
+export interface Win {
   x: number;
   y: number;
   w: number;
@@ -213,7 +213,7 @@ export function buildRoofShot(): { roof: PixelCanvas; front: PixelCanvas } {
 
 // ---------------- plano 2: as casas do outro lado da rua ----------------
 
-function siding(pc: PixelCanvas, x: number, y: number, w: number, h: number, base: RGB): void {
+export function siding(pc: PixelCanvas, x: number, y: number, w: number, h: number, base: RGB): void {
   for (let yy = 0; yy < h; yy++) {
     for (let xx = 0; xx < w; xx++) {
       let col = (y + yy) % 3 === 0 ? S.sidingDark : base;
@@ -225,7 +225,7 @@ function siding(pc: PixelCanvas, x: number, y: number, w: number, h: number, bas
   pc.rect(x + w - 2, y, 2, h, shadeColor(S.trim, 0.75));
 }
 
-function gableRoof(pc: PixelCanvas, cx: number, eaveY: number, halfW: number, height: number): void {
+export function gableRoof(pc: PixelCanvas, cx: number, eaveY: number, halfW: number, height: number): void {
   for (let r = 0; r <= height; r++) {
     const half = Math.round(halfW * (r / height));
     const y = eaveY - height + r;
@@ -238,7 +238,7 @@ function gableRoof(pc: PixelCanvas, cx: number, eaveY: number, halfW: number, he
   pc.rect(cx - halfW, eaveY, halfW * 2 + 1, 2, S.trim);
 }
 
-function windowAt(pc: PixelCanvas, win: Win): void {
+export function windowAt(pc: PixelCanvas, win: Win): void {
   const { x, y, w, h, lit } = win;
   pc.rect(x - 3, y, 3, h, S.sidingDark);
   pc.rect(x + w, y, 3, h, S.sidingDark);
@@ -263,7 +263,7 @@ function windowAt(pc: PixelCanvas, win: Win): void {
   pc.rect(x - 2, y + h + 1, w + 4, 1, S.trim);
 }
 
-function tree(pc: PixelCanvas, cx: number, base: number, r: number, trunkH: number): void {
+export function tree(pc: PixelCanvas, cx: number, base: number, r: number, trunkH: number): void {
   pc.rect(cx - 2, base - trunkH, 4, trunkH, S.trunk);
   const top = base - trunkH - r + 4;
   const blobs = [
@@ -286,7 +286,7 @@ function tree(pc: PixelCanvas, cx: number, base: number, r: number, trunkH: numb
   }
 }
 
-function bush(pc: PixelCanvas, x: number, base: number, w: number, h: number): void {
+export function bush(pc: PixelCanvas, x: number, base: number, w: number, h: number): void {
   for (let yy = 0; yy < h; yy++) {
     for (let xx = 0; xx < w; xx++) {
       const nx = (xx - w / 2) / (w / 2);
@@ -438,7 +438,7 @@ function reflections(pc: PixelCanvas, y0: number, y1: number, strength: number):
   }
 }
 
-function puddles(pc: PixelCanvas, y0: number, y1: number, count: number, seed: number): void {
+export function puddles(pc: PixelCanvas, y0: number, y1: number, count: number, seed: number): void {
   for (let i = 0; i < count; i++) {
     const cx = Math.floor(hash(i, seed, 1) * pc.width);
     const cy = Math.floor(y0 + hash(i, seed, 2) * (y1 - y0));
@@ -462,7 +462,7 @@ function softTop(pc: PixelCanvas, rows: number): void {
   }
 }
 
-function asphalt(pc: PixelCanvas, y0: number, y1: number): void {
+export function asphalt(pc: PixelCanvas, y0: number, y1: number): void {
   for (let y = y0; y < y1; y++) {
     for (let x = 0; x < pc.width; x++) {
       let col = hash(x, y, 11) < 0.12 ? S.asphaltLight : S.asphalt;
@@ -472,7 +472,7 @@ function asphalt(pc: PixelCanvas, y0: number, y1: number): void {
   }
 }
 
-function sidewalk(pc: PixelCanvas, y0: number, y1: number, slabW: number): void {
+export function sidewalk(pc: PixelCanvas, y0: number, y1: number, slabW: number): void {
   for (let y = y0; y < y1; y++) {
     for (let x = 0; x < pc.width; x++) {
       let col = x % slabW === 0 ? S.seam : y === y0 ? S.concreteLight : S.concrete;

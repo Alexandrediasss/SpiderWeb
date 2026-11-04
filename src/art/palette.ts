@@ -271,6 +271,29 @@ export const PAL = {
    * Ato 3: a casa vizinha sem energia. Cores "de dia" (o mapa de luz escurece), o brilho da gosma, o sangue,
    * o doente, o lustre e os enfeites. Spec: docs/features/act3-lights-out.md
    */
+  /** Cutscenes do ato 3 (a chaminé e a janela). Spec: docs/features/act3-cutscenes.md */
+  act3Cut: {
+    /** Céu azul visto da boca da chaminé. */
+    mouthSky: 0x24304e,
+    mouthSkyLight: 0x3a4a72,
+    /** A Mary preta de fuligem, recortada contra o céu, e a marca (`!`, `?`) em cima dela. */
+    maryDirty: 0x24211f,
+    marySilhouette: 0x1a1c2c,
+    maryOutside: 0x8d97c0,
+    mark: 0xf4efe2,
+    markEdge: 0x14121a,
+    /** A Mary pequenininha descendo no fio, no plano da casa inteira. */
+    miniBody: 0x9a7a54,
+    miniLight: 0xe8cf9c,
+    /** Parapeito de madeira molhado e a parede vista de fora. */
+    sillWet: 0x8a93b8,
+    streak: 0x141a26,
+    /** Os cacos contra o céu claro, vistos de dentro. */
+    glassDark: 0x10172c,
+    /** Por dentro da janela, visto de fora: o escuro e o brilho verde da gosma lá no fundo. */
+    insideDark: 0x06080c,
+    gutter: 0x2e3344,
+  },
   act3: {
     /** Escuro da casa sem energia: mais escuro que o da casa do ato 1. */
     ambient: 0x3a3e5c,

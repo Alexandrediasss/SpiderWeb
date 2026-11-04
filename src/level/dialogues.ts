@@ -4,6 +4,9 @@ import type { DialogueLine } from '../systems/dialogue';
 
 export type DialogueId = 'arrival' | 'day35' | 'day40';
 
+/** O que a Mary faz na cutscene da chegada, em cada linha de `arrival`. Spec: docs/features/act3-cutscenes.md */
+export type Acting = 'tired' | 'startled' | 'puzzled' | 'pacing' | 'named';
+
 export const DIALOGUES: Record<DialogueId, DialogueLine[]> = {
   // Logo depois de cair pela chaminé: ela descobre que fala e que se chama Mary.
   arrival: [
@@ -24,3 +27,6 @@ export const DIALOGUES: Record<DialogueId, DialogueLine[]> = {
     { text: 'I wanted them to be happy.', mood: 'cry' },
   ],
 };
+
+/** Uma atuação por linha da fala `arrival` (o teste confere). */
+export const ARRIVAL_ACTING: Acting[] = ['tired', 'startled', 'puzzled', 'pacing', 'named'];

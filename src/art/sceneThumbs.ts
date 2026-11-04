@@ -1,7 +1,8 @@
 // Miniaturas do SCENES: cada cena ganha um quadro feito com a própria arte do jogo (16:9).
 // Spec: docs/features/scenes.md
 import { CHANDELIER, SPIDER, TILE, WEB } from '../config';
-import { ACT3_ENDING_START, CHANDELIER_DEF, CHIMNEY_BREACH, SICK_DEF } from '../level/neighborHouse';
+import { SILL, buildSillBack, buildSillFront } from './act3CutArt';
+import { CHANDELIER_DEF, CHIMNEY_BREACH, SICK_DEF } from '../level/neighborHouse';
 import type { SceneId } from '../level/scenes';
 import { ROOFTOP_MAP } from '../level/rooftops';
 import { buildActArt } from './actArt';
@@ -23,7 +24,7 @@ const HOUSES_LIFT = 6;
 /** Ato 3: a casa sem energia clareada um pouco (na miniatura pequena ela some no preto) e a luz dos bonecos. */
 const NEIGHBOR_LIFT = 1.7;
 const ACT3_SPRITE_LIGHT = 0.6;
-/** Chegada e janela: recorte de meia miniatura ampliado 2× (a Mary é pequena). */
+/** Chegada e janela: quadro de meia miniatura ampliado 2× (a Mary é pequena). */
 const ACT3_ZOOM = 2;
 
 /** Recorte do cenário da casa já com a luz da noite (cor × mapa de luz). */
@@ -182,11 +183,11 @@ export function buildSceneThumb(id: SceneId): PixelCanvas {
       return pc;
     }
     case 'act3-ending': {
-      // A janela quebrada da cozinha, com a Mary no parapeito saindo para a chuva.
-      const s = ACT3_ENDING_START;
-      const y0 = (s.ty + 1) * TILE + 30 - H / ACT3_ZOOM;
-      const pc = neighborCrop(0, y0, ACT3_ZOOM);
-      drawMary(pc, (s.tx + 0.5) * TILE, (s.ty + 1) * TILE - SPIDER.half - y0, true);
+      // A janela quebrada de perto, com a Mary recortada contra o céu, olhando a chuva.
+      const pc = buildSillBack();
+      const frame = dim(spiderFrame((f) => f.name === 'idle0'), 0.18);
+      pc.blit(frame, Math.round(SILL.x + SILL.gw / 2 - SPIDER.frameW / 2), SILL.sillY - SPIDER.frameH, true);
+      pc.blit(buildSillFront(), 0, 0);
       return enlarge(pc, ACT3_ZOOM);
     }
   }

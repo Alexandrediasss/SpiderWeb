@@ -36,6 +36,6 @@ Testes: `tests/dialogue.test.ts`.
    - com a linha inteira: passa para a próxima;
    - na última: fecha e o jogo volta.
 4. **Quando a Mary fala** (cada fala uma vez por jogada do ato):
-   - `arrival`: logo depois da cutscene de chegada;
+   - `arrival`: dentro da cutscene de chegada, com a Mary atuando em cada linha ([act3-cutscenes.md](act3-cutscenes.md)); toca toda vez que se escolhe o ato;
    - `day35`: ao fechar a carta do Dia 35;
    - `day40`: ao fechar a carta do Dia 40 (ela chora).

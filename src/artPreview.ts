@@ -17,6 +17,17 @@ import {
 } from './art/streetArt';
 import { buildZombieSheets } from './art/zombieArt';
 import { buildActArt } from './art/actArt';
+import {
+  buildHouseFront,
+  buildMoonBeam,
+  buildOutsideBack,
+  buildOutsideFront,
+  buildShaftBack,
+  buildShaftMouth,
+  buildShaftWalls,
+  buildSillBack,
+  buildSillFront,
+} from './art/act3CutArt';
 import { bakeRooftops, buildDebrisSheet, buildZombieFoot } from './art/rooftopArt';
 import { drawGoo, drawPowerOut, drawWeb } from './art/transitionArt';
 import { getNeighborArt, litNeighbor } from './art/neighborArt';
@@ -148,6 +159,16 @@ const lustres = new PixelCanvas(70, 20);
 lustres.blit(buildChandelier(), 0, 0);
 lustres.blit(buildChandelier(true), 36, 0);
 show('Ato 3: o lustre (inteiro e quebrado)', lustres, 6);
+// Palcos das cutscenes do ato 3 (a chaminé e a janela).
+show('Chegada: as paredes da chaminé', buildShaftWalls(), 2);
+show('Chegada: a parede de trás da chaminé', buildShaftBack(), 2);
+show('Chegada: a boca da chaminé', buildShaftMouth(), 2);
+show('Chegada: o feixe de lua', buildMoonBeam(), 3);
+show('Fim: a janela por dentro', buildSillBack(), 3);
+show('Fim: os cacos, por dentro', buildSillFront(), 3);
+show('Fim: a janela por fora', buildOutsideBack(), 3);
+show('Fim: os cacos, por fora', buildOutsideFront(), 3);
+show('Fim: a casa inteira', buildHouseFront(), 3);
 show('Ato 3: a casa vizinha à noite, sem energia', litNeighbor(), 1);
 show('Ato 3: a casa vizinha sem luz (cores pintadas)', getNeighborArt().canvas, 1);
 

@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { VIEW } from './config';
 import { BootScene } from './scenes/BootScene';
+import { ChimneyScene } from './scenes/ChimneyScene';
 import { GameScene } from './scenes/GameScene';
 import { IntroScene } from './scenes/IntroScene';
 import { NeighborScene } from './scenes/NeighborScene';
 import { RooftopScene } from './scenes/RooftopScene';
 import { StreetScene } from './scenes/StreetScene';
+import { WindowScene } from './scenes/WindowScene';
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -21,5 +23,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, GameScene, IntroScene, StreetScene, RooftopScene, NeighborScene],
+  scene: [BootScene, GameScene, IntroScene, StreetScene, RooftopScene, NeighborScene, ChimneyScene, WindowScene],
 });

@@ -411,8 +411,15 @@ export class GameScene extends Phaser.Scene {
       case 'act2-ending':
         this.scene.start('act2', { replay: id });
         break;
-      default:
+      case 'act3-intro':
+        this.scene.start('chimney', { replay: true });
+        break;
+      case 'act3-ending':
+        this.scene.start('window', { replay: true });
+        break;
+      case 'act3-recap':
         this.scene.start('act3', { replay: id });
+        break;
     }
   }
 
@@ -459,7 +466,7 @@ export class GameScene extends Phaser.Scene {
     this.title.hide();
     this.actsMenu.hide();
     if (act.id === 'act1') this.scene.start('intro');
-    else if (act.id === 'act3') this.scene.start('act3', { intro: true });
+    else if (act.id === 'act3') this.scene.start('chimney');
     else this.scene.start('act2', { intro: true });
   }
 

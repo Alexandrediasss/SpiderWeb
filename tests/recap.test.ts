@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ACT3, RECAP, TILE } from '../src/config';
+import { RECAP, TILE } from '../src/config';
 import { HOUSE_MAP, RATS } from '../src/level/houseMap';
 import { isSolidChar } from '../src/level/legend';
 import {
-  ACT3_ENDING_START,
-  ACT3_WINDOW,
   CHANDELIER_DEF,
   GOO,
   NEIGHBOR_MAP,
@@ -18,10 +16,8 @@ import { SpiderMotor } from '../src/systems/SpiderMotor';
 import { Chandelier } from '../src/systems/chandelier';
 import { Combat } from '../src/systems/combat';
 import { GooField } from '../src/systems/goo';
-import { emptyInput } from '../src/systems/input';
 import { Kitchen, type KitchenEvent, kitchenCues } from '../src/systems/kitchen';
 import { type RecapActors, RecapDirector, type RecapShot, RecapRun, goalReached } from '../src/systems/recap';
-import { inRoofHole } from '../src/systems/roofHole';
 import { Sick } from '../src/systems/sick';
 import { DT } from './helpers';
 
@@ -228,20 +224,5 @@ describe('resumo do ato 3 (THE HOUSE NEXT DOOR)', () => {
       expect(r.grid.isSolidTile(s.start.tx, s.start.ty), s.name).toBe(false);
       expect(r.grid.isSolidTile(s.start.tx, s.start.ty + 1), s.name).toBe(true);
     }
-  });
-});
-
-describe('janela assistida pelo SCENES', () => {
-  it('da bancada, andando para a esquerda, a Mary sobe a parede e entra no vão da janela', () => {
-    const grid = LevelGrid.fromAscii(NEIGHBOR_MAP, TILE, isSolidChar);
-    const s = ACT3_ENDING_START;
-    expect(grid.isSolidTile(s.tx, s.ty)).toBe(false);
-    expect(grid.isSolidTile(s.tx, s.ty + 1)).toBe(true);
-    const motor = new SpiderMotor(grid, (s.tx + 0.5) * TILE, (s.ty + 1) * TILE - 5);
-    motor.surface = 'floor';
-    const input = { ...emptyInput(), move: { x: -1, y: 0 } };
-    let frames = 0;
-    while (frames++ < 60 * ACT3.endApproachMaxSec && !inRoofHole(motor.body, ACT3_WINDOW, TILE)) motor.update(DT, input);
-    expect(inRoofHole(motor.body, ACT3_WINDOW, TILE)).toBe(true);
   });
 });

@@ -484,6 +484,8 @@ export const RECAP = {
   letterGlimpse: 0.62,
   /** Entrar numa cena a partir do SCENES: escurecer (s). */
   enterFadeSec: 0.5,
+  /** Aviso de pular (s). */
+  skipHintAfterSec: 0.8,
   /** Ato 2: força do vento nos planos sem rajada (só a chuva e o som; a aranha não sente). */
   breeze: 0.15,
 };
@@ -576,27 +578,114 @@ export const DIALOGUE = {
   openGraceSec: 0.35,
 };
 
-/** Ato 3: cutscenes, câmera, morte e fim. Spec: docs/features/act3-lights-out.md */
+/** Ato 3: morte e gemidos. Spec: docs/features/act3-lights-out.md */
 export const ACT3 = {
-  /** Chegada (s): tela preta, a queda pela chaminé e a sacudida. */
-  introDarkSec: 1.1,
-  introFallSec: 1.0,
-  introCoughSec: 1.6,
-  /** Pular a chegada e o aviso de pular (s). */
-  skipFadeSec: 0.25,
-  skipHintAfterSec: 0.8,
-  /** Zoom da câmera na chegada e no fim. */
-  introZoom: 1.6,
   /** Morte: tempo virada antes do escurecer e o escurecer (s). */
   deathHoldSec: 0.6,
   deathFadeSec: 0.8,
-  /** Fim: andando para fora pela janela, olhando a janela e o escurecer (s). */
-  endOutSec: 1.2,
-  endLookSec: 1.8,
-  endFadeSec: 1.2,
-  endZoom: 1.5,
-  /** A janela pelo SCENES: a Mary anda sozinha da bancada até o vão; tempo máximo (s) antes de forçar o fim. */
-  endApproachMaxSec: 4,
   /** Gemido abafado vindo de baixo, no 1º andar (s, mín–máx). */
   moanGapSec: [5, 10] as const,
 };
+
+/** Cutscene da chegada do ato 3 (MARY). Spec: docs/features/act3-cutscenes.md */
+export const CHIMNEY_CUT = {
+  /** Duração de cada etapa (s). */
+  darkSec: 1.1,
+  fallSec: 3.4,
+  burstSec: 1.1,
+  settleSec: 2.0,
+  twitchSec: 1.0,
+  flipSec: 0.5,
+  shakeSec: 1.2,
+  lookSec: 6.6,
+  backSec: 0.8,
+  outroSec: 1.0,
+  /** A tela clareando na boca da chaminé (s). */
+  firstFadeInSec: 0.22,
+  /** Pular e o aviso de pular (s). */
+  skipFadeSec: 0.25,
+  skipHintAfterSec: 0.8,
+  /** Zoom da chaminé e da abertura; zoom da panorâmica do sótão. */
+  closeZoom: 3,
+  panZoom: 1.7,
+  /** Faixas pretas de cinema (px da tela de 480×270). */
+  letterboxPx: 20,
+  /** Na queda: instantes (s desde o começo do `fall`) em que a Mary bate numa parede. */
+  wallHits: [0.7, 1.3, 1.8, 2.2, 2.55, 2.85, 3.1, 3.3],
+  /** Velocidade dos tijolos passando (px/s no começo, e quanto acelera por s) e o giro da Mary (graus/s). */
+  scrollSpeed: 60,
+  scrollAccel: 150,
+  spinDegSec: 520,
+  /** Parede de trás da chaminé: anda esta fração da velocidade das paredes dos lados (profundidade). */
+  backParallax: 0.45,
+  /** Voo pela abertura: de que altura sai (px acima do chão) e a altura de cada um dos três arcos (px). */
+  burstFromHeight: 12,
+  burstArcs: [10, 7, 2] as const,
+  /** Câmera na abertura: o centro em x (px do mundo); em y, ela deixa o chão acima da caixa de diálogo. */
+  breachCamX: 1006,
+  /** Panorâmica do sótão: de onde até onde vai o centro da câmera (x) e em que altura; o raio (0..1 da etapa). */
+  panFromX: 900,
+  panToX: 660,
+  panY: 130,
+  panStrikeAt: 0.35,
+  /** Acima de cada atuação: a marca (`!`, `?`) fica este tempo (s). */
+  markSec: 1.4,
+  /** Zoom do tranco do "WAIT, I'M TALKING!" e do fim da fala. */
+  startleZoom: 3.3,
+  namedZoom: 3.7,
+  /** Quanto ela anda em `pacing` (px) e a velocidade (px/s). */
+  paceDist: 22,
+  paceSpeed: 26,
+};
+
+/** Cutscene do fim do ato 3 (THE WINDOW). Spec: docs/features/act3-cutscenes.md */
+export const WINDOW_CUT = {
+  /** No jogo: a tela escurece ao entrar no vão (s) e a Mary anda este tanto para fora (px/s). */
+  exitFadeSec: 0.9,
+  exitWalkSpeed: 18,
+  /** Duração de cada etapa (s). */
+  sillInSec: 1.3,
+  walkSec: 2.6,
+  stopSec: 2.6,
+  turnSec: 0.9,
+  kitchenSec: 6.4,
+  turnBackSec: 1.1,
+  leaveSec: 2.2,
+  outInSec: 1.6,
+  rainSec: 2.6,
+  threadSec: 2.2,
+  wideSec: 7.4,
+  outroSec: 1.8,
+  /** Pular e o aviso de pular (s). */
+  skipFadeSec: 0.35,
+  skipHintAfterSec: 1.2,
+  /** Zoom dos palcos da janela; da cozinha (cabe do lustre ao chão); e da casa inteira (começa fechado e abre). */
+  closeZoom: 3,
+  kitchenZoom: 1.4,
+  wideZoomFrom: 2.6,
+  wideZoomTo: 2,
+  /** Faixas pretas de cinema (px da tela de 480×270). */
+  letterboxPx: 20,
+  /** Saindo pela janela: o tamanho da Mary quando chega lá fora. */
+  leaveScale: 0.5,
+  /** Quanto o fio desce no palco de fora (px/s). */
+  threadSpeed: 24,
+  /** Panorâmica da cozinha: de onde até onde vai o centro da câmera (x), e em que altura. */
+  kitchenFromX: 380,
+  kitchenToX: 240,
+  kitchenY: 590,
+  /** Quando cai o raio (0..1 da etapa) em `stop` e em `wide`. */
+  stopStrikeAt: 0.45,
+  wideStrikeAt: 0.45,
+  /** A Mary some no gramado, descendo no fio (0..1 da etapa `wide`). */
+  threadEndAt: 0.8,
+  /** Gotas de chuva por palco e velocidade (px/s do palco). */
+  rainDrops: 120,
+  rainSpeed: [170, 240] as const,
+  rainWind: -30,
+  /** Fileiras de doentes em volta da casa (como `HORDE`), do tamanho da porta: no gramado e na calçada. */
+  horde: [
+    { u: 1, count: 7, speed: [3, 5], voice: 0.5, steps: 0 },
+    { u: 1, count: 6, speed: [4, 6], voice: 0.8, steps: 0.2 },
+  ],
+} as const;

@@ -23,6 +23,18 @@ export type KitchenEvent =
   /** O lustre caiu em cima da Mary. */
   | { type: 'maryCrushed' };
 
+/** Como a cozinha ficou na jogada: a cutscene da janela mostra isso. */
+export interface KitchenSnapshot {
+  sickX: number;
+  alive: boolean;
+  /** Vivo e provocado (fica virado para a janela). */
+  aggro: boolean;
+  /** Morreu embaixo do lustre. */
+  crushed: boolean;
+  /** O lustre não está mais na corda. */
+  chandelierDown: boolean;
+}
+
 export class Kitchen {
   /** Alvos das teias de combate (vão para `Combat.targets`). */
   readonly sickTarget: ShotTarget;
@@ -74,6 +86,30 @@ export class Kitchen {
       if (mary && boxesOverlap(c.box, bodyBox(mary))) out.push({ type: 'maryCrushed' });
     }
     return out;
+  }
+
+  snapshot(): KitchenSnapshot {
+    const { sick, chandelier } = this;
+    return { sickX: sick.x, alive: sick.alive, aggro: sick.aggro, crushed: sick.crushed, chandelierDown: chandelier.state !== 'hanging' };
+  }
+
+  /** Deixa o doente e o lustre como na foto, já parados (o lustre caído, o doente no chão). */
+  restore(s: KitchenSnapshot): void {
+    const { sick, chandelier } = this;
+    sick.x = s.sickX;
+    if (s.chandelierDown) {
+      chandelier.cut();
+      chandelier.top = chandelier.def.floorY;
+      chandelier.update(0);
+    }
+    if (!s.alive) {
+      if (s.crushed) sick.crush();
+      else sick.damage(sick.hp);
+      sick.flashLeft = 0;
+    } else if (s.aggro) {
+      sick.aggro = true;
+      sick.state = 'chase';
+    }
   }
 
   /** A Mary voltou no checkpoint: o doente vivo volta ao normal e o lustre à corda. Devolve se o lustre voltou. */

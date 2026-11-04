@@ -446,6 +446,39 @@ export class Sfx {
     src.connect(low).connect(this.envelope(t + 0.6, SFX.shotVolume * 0.4, 0.02, 0.38)).connect(this.destination);
   }
 
+  /** Batida seca na parede da chaminé, com um sopro de fuligem. */
+  thud(volume = 1): void {
+    const t = this.ctx.currentTime;
+    const vol = SFX.shotVolume * volume;
+    this.click(t, 150 * this.vary(), 55, 0.13, vol);
+    const src = this.noiseSource(t, 0.14);
+    const low = this.ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.value = 1100;
+    src.connect(low).connect(this.envelope(t, vol * 0.45, 0.003, 0.12)).connect(this.destination);
+  }
+
+  /** A fuligem explodindo pela abertura da chaminé: baque grave e um sopro que vai morrendo. */
+  sootBurst(): void {
+    const t = this.ctx.currentTime;
+    const vol = SFX.crashVolume;
+    this.click(t, 120, 38, 0.32, vol);
+    const src = this.noiseSource(t, 1.1);
+    const low = this.ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.setValueAtTime(2600, t);
+    low.frequency.exponentialRampToValueAtTime(320, t + 1);
+    src.connect(low).connect(this.envelope(t, vol * 0.7, 0.01, 1.05)).connect(this.destination);
+  }
+
+  /** Um pedaço de tijolo batendo no chão. */
+  brickClack(volume = 1): void {
+    const t = this.ctx.currentTime;
+    const vol = SFX.shotVolume * volume;
+    this.click(t, 720 * this.vary(), 240, 0.05, vol * 0.8);
+    this.click(t + 0.07, 560 * this.vary(), 210, 0.04, vol * 0.4);
+  }
+
   // ---------- peças ----------
 
   /** Variação determinística de ±6% no tom, para os sons não serem idênticos. */
